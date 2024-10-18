@@ -13,7 +13,7 @@ library(parallel)
 
 # choose the sample size and upload accordingly the datset, either 500, 2K, 5K
 setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI")
-load("./Simulated_data_MM/simulation500_MM_all.RData")
+load("./Simulated_data_MM/simulation5K_MM_all.RData")
 
 setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
 source("./functions_wrapper/prepare_coxph_flex.R")

@@ -12,12 +12,14 @@ library(ggplot2)
 
 setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI")
 load("./Simulated_data_MM/simulation500_MM_all.RData")
+load("./wrapper_MM/ground_truthMM.RData")
 
 setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
 source("./functions_wrapper/prepare_coxph_flex.R")
 source("./functions_wrapper/prepare_msm.R")
 source("./functions_wrapper/prepare_imputation.R")
 source("./functions_wrapper/run_imputation.R")
+source("./functions_performance/compute_bias.R")
 
 
 seed <- 5 # 1:100
@@ -79,7 +81,7 @@ save(fits_gompertz, file = file.path(model_dir, "flexsurv_model.RData"))
 # msm model
 ######################
 
-temp <- prepare_msm(data)
+temp <- prepare_msm(data) 
 
 Q <- rbind(c(0, 1, 1), 
            c(0, 0, 1),
@@ -113,17 +115,51 @@ Q <- rbind(c(0, 1, 1),
            c(0, 0, 1),
            c(0, 0, 0)) 
 
+intial_guess <- qmatrix.msm(model.msm)$estimates
+
 time_msm_age<- system.time({
   model.msm_age <- msm(state ~ age, 
                        subject = patient_id,
                        data = temp, 
-                       qmatrix = Q,
+                       qmatrix = intial_guess,
                        covariates = ~ cov1 + cov2 + cov3 + age ,
-                       gen.inits= TRUE,
+                       gen.inits= F,
                        control = list(fnscale = 1000, maxit = 500),
                        center= TRUE,
                        deathexact = TRUE) 
 })[3]
+
+# + veloce scalato e con bias leggermente minore scalando dati, inizalizzazione Q velocizza un po'
+# system.time({
+# min_age <- min(temp$age)
+# temp$age <- temp$age - min_age
+# 
+# model_age.msm_scaled <- msm(state ~ age,
+#                      subject = patient_id,
+#                      data = temp, 
+#                      qmatrix = Q,
+#                      covariates = ~ cov1 + cov2 + cov3 + age , #elect wants factors as dummy
+#                      gen.inits=TRUE,
+#                      control = list(fnscale = 1000),
+#                      #censor = 99,
+#                      center= FALSE,# requested by elect
+#                      deathexact = TRUE) 
+# })[3]
+
+
+# params_msm_age <- matrix(model.msm_age$estimates[4:12], nrow = 3, ncol = 3) #1:3 rate 12:15 age
+# params_msm_age <- cbind(params_msm_age, exp(params_msm_age[,1]), exp(params_msm_age[,2]), exp(params_msm_age[,3]))
+# colnames(params_msm_age) <- colnames(ground_truth_params)[3:8]
+# 
+# bias_msm_age <- compute_bias(params_msm_age, ground_truth_params)
+# 
+# params_msm_age <- matrix(model_age.msm_scaled$estimates[4:12], nrow = 3, ncol = 3) #1:3 rate 12:15 age
+# params_msm_age <- cbind(params_msm_age, exp(params_msm_age[,1]), exp(params_msm_age[,2]), exp(params_msm_age[,3]))
+# colnames(params_msm_age) <- colnames(ground_truth_params)[3:8]
+# 
+# bias_msm_age_scaled <- compute_bias(params_msm_age, ground_truth_params)
+# 
+# bias_msm_age<bias_msm_age_scaled
 
 comp_time[4] <- as.numeric(round(time_msm_age,3))
 
@@ -142,8 +178,16 @@ tmat_3 <- rbind(c(0,7,8),c(0,0,9),rep(0,3))
 temp$patient_id <- as.factor(temp$patient_id) 
 temp=as.data.frame(temp)
 
-initial_guess <-  append(msm_estimates, rep(0.5, 3), after = 3)
+#initial_guess <-  append(msm_estimates, rep(0.5, 3), after = 3)
 # we have estimates for rate and covs, so we add initial estimate to 0.5 of shape -> not helping
+ 
+# we set split t 50% percentile
+find_splits <- function(age) {
+  quantiles <- quantile(age, probs = seq(0, 1, 0.1))
+  return(quantiles[-c(1, length(quantiles))])  
+}
+
+split_points <- find_splits(temp$age)[6:9]
 
 time_nhm <- system.time({
   object_nhm <- model.nhm(state ~ age,
@@ -160,13 +204,51 @@ time_nhm <- system.time({
   
   model_nhm <- nhm(object_nhm, 
                    gen_inits = TRUE,
-                   initial = initial_guess,
+                   #initial = initial_guess,
                    score_test = FALSE, 
-                   control = nhm.control(ncores = 4, obsinfo = FALSE, coarsen = T, coarsen.vars = c(1), coarsen.lv = 10))
+                   control = nhm.control(ncores = 4, obsinfo = FALSE, coarsen = T, coarsen.vars = c(1), coarsen.lv = 5, splits = split_points))
 })[3]
 
-#comp.time 500 pats, no coarsening 30 min
-#comp.time 500 pats, coarsening to 10 values 5min
+params_nhm <- matrix(model_nhm$par, nrow = 3, ncol = 5) 
+params_nhm <- cbind(params_nhm, exp(params_nhm[,3]), exp(params_nhm[,4]), exp(params_nhm[,5]))
+colnames(params_nhm) <- colnames(ground_truth_params)
+
+bias_nhm_c5 <- compute_bias(params_nhm, ground_truth_params)
+
+time_nhm_cont <- system.time({
+  object_nhm <- model.nhm(state ~ age,
+                          subject = patient_id,
+                          data = temp, 
+                          trans = tmat_1,
+                          nonh = tmat_1,
+                          type = "gompertz",
+                          covariates = c("cov1", "cov2", "cov3"),
+                          covm = list(cov1= tmat_1, cov2=tmat_2, cov3=tmat_3),
+                          death = T, 
+                          death.states = c(3))
+  
+  
+  model_nhm <- nhm(object_nhm, 
+                   gen_inits = TRUE,
+                   #initial = initial_guess,
+                   score_test = FALSE, 
+                   control = nhm.control(ncores = 4, obsinfo = FALSE, splits = split_points))
+})[3]
+
+params_nhm <- matrix(model_nhm$par, nrow = 3, ncol = 5) 
+params_nhm <- cbind(params_nhm, exp(params_nhm[,3]), exp(params_nhm[,4]), exp(params_nhm[,5]))
+colnames(params_nhm) <- colnames(ground_truth_params)
+
+bias_nhm_cont <- compute_bias(params_nhm, ground_truth_params)
+
+bias_nhm_cont<bias_nhm_c5
+bias_increase_cors <- (bias_nhm_c5-bias_nhm_cont)/bias_nhm_cont*100
+
+save(bias_increase_cors, file="bias_increase_cors.RData")
+
+#both model have automatic initialization and splits
+#comp.time 500 pats, no coarsening 2052.836 more than 4 times slower than the version with coarsening
+#comp.time 500 pats, coarsening to 5 values 431 errore percentual salvato in bias_increase_cors
 
 comp_time[5] <- as.numeric(round(time_nhm,3))
 
