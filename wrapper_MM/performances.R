@@ -91,8 +91,7 @@ bias_flexsurv <- compute_bias(params_flexsurv, ground_truth_params)
 
 params_msm <- matrix(model.msm$estimates[4:12], nrow = 3, ncol = 3) #1:3 rate
 params_msm <- cbind(params_msm, exp(params_msm[,1]), exp(params_msm[,2]), exp(params_msm[,3]))
-param_names <- names(params_flexsurv)
-colnames(params_msm) <- colnames(params_flexsurv)[3:8]
+colnames(params_msm) <- colnames(ground_truth_params)[3:8]
 
 bias_msm <- compute_bias(params_msm, ground_truth_params)
 
@@ -102,9 +101,23 @@ bias_msm <- compute_bias(params_msm, ground_truth_params)
 
 params_msm_age <- matrix(model.msm_age$estimates[4:12], nrow = 3, ncol = 3) #1:3 rate 12:15 age
 params_msm_age <- cbind(params_msm_age, exp(params_msm_age[,1]), exp(params_msm_age[,2]), exp(params_msm_age[,3]))
-param_names <- names(params_flexsurv)
-colnames(params_msm_age) <- colnames(params_flexsurv)[3:8]
+colnames(params_msm_age) <- colnames(ground_truth_params)[3:8]
 
 bias_msm_age <- compute_bias(params_msm_age, ground_truth_params)
+
+# ============
+# nhm
+# ============
+
+# ============
+# imputation
+# ============
+
+params_imp <- results_imp[[1]]
+params_imp <- params_imp[, c(2, 1, 3, 4, 5)]
+params_imp <- cbind(params_imp, exp(params_imp[,3]), exp(params_imp[,4]), exp(params_imp[,4]))
+colnames(params_imp)[6:8] <- c("exp(cov1)", "exp(cov2)", "exp(cov3)")
+
+bias_imputation <- compute_bias(params_imp, ground_truth_params)
 
 

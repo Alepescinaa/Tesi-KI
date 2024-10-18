@@ -56,10 +56,6 @@ wrapper_functions_MM <- function(data,n_pats){
   
   temp <- prepare_msm(data)
 
-  Q <- rbind(c(0, 1, 1),
-             c(0, 0, 1),
-             c(0, 0, 0))
-
   time_msm<- system.time({
     model.msm <- msm(state ~ age,
                      subject = patient_id,
@@ -73,7 +69,7 @@ wrapper_functions_MM <- function(data,n_pats){
 
   comp_time[3] <- as.numeric(round(time_msm,3))
 
-  #initial_guess <- qmatrix.msm(model.msm)$estimates
+  initial_guess_msmage <- qmatrix.msm(model.msm)$estimates
   msm_estimates <- model.msm$estimates.t
 
   save(model.msm, file = file.path(model_dir, "msm_model.RData"))
@@ -92,7 +88,7 @@ wrapper_functions_MM <- function(data,n_pats){
     model.msm_age <- msm(state ~ age,
                          subject = patient_id,
                          data = temp,
-                         qmatrix = Q,
+                         qmatrix = initial_guess_age,
                          covariates = ~ cov1 + cov2 + cov3 + age ,
                          gen.inits= TRUE,
                          control = list(fnscale = 1000, maxit = 500),
