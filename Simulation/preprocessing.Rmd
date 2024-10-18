@@ -1,0 +1,499 @@
+---
+title: "Preprocessing"
+author: "Alessandra Pescina"
+date: "2024-09-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(2024)
+
+library(dplyr)
+library(haven)
+library(mstate)
+library(flexsurv)
+library(lubridate)
+library(hesim)
+library(data.table)
+
+
+```
+
+```{r}
+load("SNAC_data_Alessandra.RData")
+data_raw <- SNAC_K_dataset
+#setting last observed visit
+data_raw$last_obs <-pmax(data_raw$age_wave1, 
+                         data_raw$age_wave2, 
+                         data_raw$age_wave3, 
+                         data_raw$age_wave4, 
+                         data_raw$age_wave5, 
+                         data_raw$age_wave6,
+                         na.rm = TRUE) 
+
+#censoring patients death-free
+# - those lost to follow up censored at the time of the next expected visit
+# - those event-free (no death) but observed until wave 6 censored at the end of the study (censoring patient observed at the end of study one day later)
+
+end_of_study <- max(data_raw$Date_wave6, na.rm=T)
+data_raw$Date_wave6[data_raw$Date_wave6==end_of_study] <- end_of_study+1
+data_raw$age_end_of_study<- data_raw$age_wave6 + interval(data_raw$Date_wave6, end_of_study) / years(1)
+
+
+data_raw$censoring <- ifelse(data_raw$last_obs<78, data_raw$last_obs + 6, data_raw$last_obs + 3) 
+data_raw$censoring <- ifelse(!is.na(data_raw$dementia_wave6), data_raw$age_end_of_study, data_raw$censoring)
+
+#time up which transition to death is at risk
+# -death if dead=1
+# -censoring value if dead=0
+data_raw$death_time <- ifelse(data_raw$dead == 1, data_raw$age_death, data_raw$censoring)
+  
+age_columns <- c("age_wave1", "age_wave2", "age_wave3", "age_wave4", "age_wave5", "age_wave6")
+dementia_columns <- c("dementia_wave1", "dementia_wave2", "dementia_wave3", 
+                      "dementia_wave4", "dementia_wave5", "dementia_wave6")
+
+
+data_raw <- data_raw %>%
+  mutate(across(dementia_columns, ~ as.factor(as.character(.))))
+
+
+data_raw$onset_age <- apply(data_raw, 1, function(row) {
+  onset_index <- which(row[dementia_columns] == 2)[1] #to extract from each row column indeces in dementia columns having value equal to 2, then selecting the first one 
+  
+  if (!is.na(onset_index)) { #if exists at least one index respecting constraint
+    return(row[age_columns[onset_index]]) #selecting the age column having that index, that is the minimum
+  } else {
+    return(NA) # if non return onset age=NA
+  }
+})
+
+#we set dementia status=1 when at least one of demtnia colos has value=2
+data_raw$onset <- rep(0,nrow(data_raw))
+data_raw <- data_raw %>%
+  mutate(onset = if_else(!is.na(onset_age), 1, 0))
+
+#time up which transition to dementia is at risk
+# -onset_age if dementia=1
+# -death_time if dementia=0
+data_raw <- data_raw %>%
+  mutate(onset_age = if_else(is.na(onset_age), death_time, as.numeric(onset_age))) 
+
+
+```
+
+
+```{r}
+#converting smoking to bivariate covariate
+# 0 has never smoked, 1 used to smoke, 2 current smoker
+# we keep 0 doesn't smoke, 1 smokes
+data_raw$Smoking <- if_else(data_raw$Smoking==0|data_raw$Smoking==1,0,1) 
+
+#converting education to bivariate covariate
+# 0 elementary, 1 high school, 2 uni or more
+# we keep 0 more than elementary, 1 elementary
+data_raw$education <- if_else(data_raw$education!=0,0,1)
+
+#covariates distribtuion
+covariates <- c("bmi_combined", "education","Diabetes","Smoking","Physical_level")
+
+
+prevalence <- numeric(0)
+for (i in 1:5){
+  count_na <- sum(is.na(data_raw[,covariates[i]]))
+  prevalence[i]<-(nrow(data_raw)-count_na)/nrow(data_raw)
+}
+names(prevalence) <- covariates
+prevalence*100
+
+summary(data_raw[,covariates[1]])
+
+data_raw %>%
+  group_by(education) %>% # 15% elementary
+  summarise(count = n()) %>%
+  mutate(prevalence = count / sum(count))
+
+data_raw %>% #15% smokers
+  group_by(Smoking) %>% 
+  summarise(count = n()) %>%
+  mutate(prevalence = count / sum(count))
+
+data_raw %>%
+  group_by(Physical_level) %>% #(I don't know levels)
+  summarise(count = n()) %>%
+  mutate(prevalence = count / sum(count))
+
+data_raw %>% # 10% have diabetes
+  group_by(Diabetes) %>% 
+  summarise(count = n()) %>%
+  mutate(prevalence = count / sum(count))
+
+#rename covariates for the sake of generalization
+new_names <- c("Smoking" = "cov1", "education" = "cov2", "Diabetes"="cov3", "age_wave1"="age")
+names(data_raw)[names(data_raw) %in% names(new_names)] <- new_names[names(data_raw)[names(data_raw) %in% names(new_names)]]
+
+
+```
+
+```{r}
+#specify allowed transitions
+tmat <- mstate::transMat(x = list(c(2, 3),c(3),c()), names = c("Healthy","Dementia", "Death")) 
+print(tmat)
+
+data_long <- msprep(data = data_raw, trans = tmat, 
+                 time = c(NA, "onset_age", "death_time"), 
+                 status = c(NA, "onset", "dead"), 
+                 keep = c("age","cov1", "cov2", "cov3"),
+                 id="lopnr")
+
+data_long$Tstart[data_long$trans<3] <- data_long$Tstart[data_long$trans<3] +data_long$age[data_long$trans<3]
+data_long$time <- data_long$Tstop-data_long$Tstart
+
+
+```
+
+## Markov model
+```{r}
+#fitting a parametric model for each transition adjust for covariates at their baseline level
+n_trans <- max(tmat, na.rm = TRUE)
+fits_wei <- vector(mode = "list", length = n_trans)
+for (i in 1:3){
+  #for semi set 3rd transition with (time,status)
+  fits_wei[[i]] <- flexsurvreg(Surv(Tstart, Tstop, status) ~ cov1+cov2+cov3,  
+                       data = subset(data_long, trans == i),
+                       dist = "gompertz")
+                       #control = list(maxit=500) ) 
+} 
+
+for (i in 1:3){
+  print(fits_wei[[i]])
+}
+ 
+# all hazards increase over time (less steep for dem-> death)
+# education protective while smoking and diabetes increase the hazard
+
+plot(fits_wei[[1]],type="cumhaz", xlim=c(60,100))
+plot(fits_wei[[2]],type="cumhaz", xlim=c(60,100))
+plot(fits_wei[[3]],type="cumhaz", xlim=c(min(data_raw$age_death[data_raw$onset==1], na.rm = T),100))
+
+```
+## Semi Markov model
+```{r}
+#fitting a parametric model for each transition adjust for covariates at their baseline level
+n_trans <- max(tmat, na.rm = TRUE)
+fits_wei <- vector(mode = "list", length = n_trans)
+for (i in 1:3){
+  fits_wei[[i]] <- flexsurvreg(Surv(time, status) ~ cov1+cov2+cov3,  
+                       data = subset(data_long, trans == i),
+                       dist = "gompertz")
+                       #control = list(maxit=500) ) 
+} 
+
+
+for (i in 1:3){
+  print(fits_wei[[i]])
+}
+
+
+#plot(fits_wei[[1]],type="cumhaz", xlim=c(60,100))
+#plot(fits_wei[[2]],type="cumhaz", xlim=c(60,100))
+
+#time_points <- seq(60, 100, by = 1) 
+#summary(fits_wei[[1]], type = "cumhaz", t = time_points)
+
+#plot(fits_wei[[3]],type="cumhaz", xlim=c(60,100)) ??
+
+```
+
+## simulation hesim
+```{r}
+# defyining covariates distribtuion and running a simulation of the model
+
+#for age a right-skewed distribution would assign lower probabilities to higher ages, reflecting the fact that older participants are less likely to be present in the cohort (α > β, the distribution is skewed to the left, meaning more values are closer to right boundary)
+
+covariates_distr <- function(n_obs){
+  cov1 <- rbinom(n=n_obs, size=1, prob=0.15)  #smoking people, people with diabetes, people with elementary education
+  cov2 <- rbinom(n=n_obs, size=1, prob=0.3)   #hypertension, high cholesterol level, hearth diseases
+  cov3 <- rbinom(n=n_obs, size=1, prob=0.45)  # male sex, sedentary life
+  x1 <- runif(n_obs, min = 60, max = 96)
+  Intercept <- matrix(1,n_pats,1)
+  cov_df <- data.frame(Intercept, x1, cov1, cov2, cov3)
+  colnames(cov_df)[1]="(Intercept)"
+  return(cov_df)    
+}
+
+
+create_input_data<- function(n_pats){
+  patients <- covariates_distr(n_pats) 
+  patients$patient_id <- 1:n_pats
+  strategies <- data.frame(strategy_id = 1)  
+
+  hesim_dat <- hesim_data(strategies = strategies,
+                          patients = patients)
+  input_data <- hesim::expand(hesim_dat, by = c("strategies", "patients"), times = NULL ) 
+  return(input_data[, ])
+}
+
+
+fic_tmat <- mstate::transMat(x = list(c(2),c(3, 4),c(4),c()), names = c("Zero","Healthy","Dementia", "Death")) 
+print(fic_tmat)
+
+
+
+
+simulation <- function(n_pats, point_estimate = "none", n_samples = 1) {
+  input_data <- create_input_data(n_pats)
+  entry_matrix <- matrix(0,n_pats,4)
+  entry_matrix[,1] <- 1
+  colnames(entry_matrix) <- c("x1","cov1","cov2","cov3")
+  object <- params_surv_list(
+      det_model = params_surv( coefs = list(est = entry_matrix), dist="fixed"), 
+      create_params(fits_wei[[1]],n=n_pats),
+      create_params(fits_wei[[2]],n=n_pats),
+      create_params(fits_wei[[3]],n=n_pats)
+    )
+  
+  dismod <- create_IndivCtstmTrans(
+    object,
+    input_data,
+    trans_mat = fic_tmat,
+    clock = "forward",
+    #uncertainty = point_estimate,
+    #n = n_samples,
+    start_age = 0
+  )
+  return(dismod)
+}
+
+
+
+n_pats=200
+sim_data <- simulation(n_pats) 
+
+
+temp <- sim_data$sim_disease(max_age=102) 
+temp <-  temp[temp$sample==1,]
+temp[, c("sample", "strategy_id", "grp_id") := NULL]
+temp
+
+delete <- which(temp$to==1|temp$to==2)
+temp <- temp[-delete,]
+temp$from <- temp$from-1
+temp$to <- temp$to-1
+
+#probs <- sim_data$sim_stateprobs(t=5)
+```
+
+
+
+```{r}
+# censoring
+# simulate censoring as a uniform over an interval of 20 years
+# create a variable indicating when the transition is final
+# if the event in the final transition happens before censoring time then the event is observed at death time, otherwise we set censored=1 and stop time and censoring time
+
+apply_right_censoring <- function(temp){
+  right_censoring <- runif (n=n_pats, min=0, max=20) 
+  rc_id <- data_frame(rc = right_censoring,
+                    id = 1:n_pats)
+  temp$right_censoring[temp$final == 1] <- rc_id$rc[match(temp$patient_id[temp$final == 1], rc_id$id)] +   temp$time_start[temp$final == 1]
+  if (all(temp$right_censoring[temp$final == 1]>temp$time_start[temp$final == 1])==FALSE)
+    print(error)
+  temp$censored[temp$final==1] <- if_else(temp$time_stop[temp$final==1] > temp$right_censoring[temp$final==1],1,0)
+  temp$death_time[temp$final==1]<-if_else(temp$time_stop[temp$final==1]<temp$right_censoring[temp$final==1],temp$time_stop[temp$final==1],temp$right_censoring[temp$final==1]) 
+  return(temp)
+}
+
+temp <- apply_right_censoring(temp)
+
+# observation scheme 
+# first of all for each patient I generate the visit time accounting for variability in time even if the scheme is deterministic, subsequently 
+
+# index for which I will have to apply observation scheme
+# once obtained, set dementia_onset at first visit for which
+keep_index <- temp$patient_id[temp$from==1 & temp$to==2]
+
+observation_scheme <- function(start_age, n_visits = 6, age_threshold = 78, avg_spacing_low = 6, avg_spacing_high = 3) {
+  
+  
+  current_age <- start_age
+  obs_scheme <- numeric(n_visits-1)
+  
+  for (i in 1:(n_visits-1)) {
+    if (current_age < age_threshold) {
+      obs_scheme[i] <- runif(1, min = avg_spacing_low - 0.5, max = avg_spacing_low + 0.5)
+    } else {
+      obs_scheme[i] <- runif(1, min = avg_spacing_high - 0.5, max = avg_spacing_high + 0.5)
+    }
+    current_age <- current_age + obs_scheme[i]
+  }
+  
+  return(obs_scheme)
+}
+
+
+interval_censoring <- function(temp,id, scheme){
+  if (scheme==1){
+    n_visits <- 20
+    avg_spacing <- 1
+    obs_scheme <- runif(n_visits - 1, min = avg_spacing - 0.5, max = avg_spacing + 0.5)
+  }
+  if (scheme==2){
+    n_visits <- 7
+    avg_spacing <- 3
+    obs_scheme <- runif(n_visits - 1, min = avg_spacing - 0.5, max = avg_spacing + 0.5)
+  }
+  if (scheme==3)
+  {
+    n_visits = 6
+    start_age <- temp$time_start[temp$patient_id==id][1]
+    obs_scheme <- observation_scheme(start_age, n_visits = n_visits)
+  }
+  visit_times <- c(0, cumsum(obs_scheme))
+  visit_times <- visit_times + temp$time_start[temp$patient_id==id][1]
+  censor_index <- which(visit_times >= temp$death_time[temp$patient_id==id][2])[1]
+  if (!is.na(censor_index)) {
+    censor_index <- ifelse(censor_index > 1, censor_index, 2)
+    visit_times <- visit_times[1:(censor_index - 1)]
+    last_visit <- visit_times[censor_index - 1]
+  }else {
+    last_visit <- visit_times[n_visits]
+  }
+
+  temp$onset[temp$patient_id==id][2] <- ifelse(temp$time_start[temp$patient_id==id][2]>last_visit,0,1)
+  onset_index <- which(visit_times >= temp$time_start[temp$patient_id==id][2])[1]
+  temp$onset_age[temp$patient_id==id][2] <- ifelse(temp$onset[temp$patient_id==id][2]==1, visit_times[onset_index], temp$death_time[temp$patient_id==id][2])
+  return (temp)
+}
+
+original <- temp
+temp_1 <- temp
+temp_2 <- temp
+temp_3 <- temp
+
+for (id in keep_index)
+  temp_1 <- interval_censoring(temp_1,id,scheme=1)  
+
+
+for (id in keep_index)
+  temp_2 <- interval_censoring(temp_2,id,scheme=2)  
+
+for (id in keep_index)
+  temp_3 <- interval_censoring(temp_3,id,scheme=3)  
+
+exactly_obs <- c(sum((original$from==1 & original$to==2), na.rm = TRUE))
+res_A <- c(sum(temp_1$onset, na.rm = TRUE), sum(temp_1$censored, na.rm = TRUE))
+res_B <- c(sum(temp_2$onset, na.rm = TRUE), sum(temp_2$censored, na.rm = TRUE))
+res_C <- c(sum(temp_3$onset, na.rm = TRUE), sum(temp_3$censored, na.rm = TRUE))
+
+results <- data.frame(
+  dementia_onset = c(exactly_obs, res_A[1], res_B[1], res_C[1]),
+  #censored = c(res_A[2], res_B[2]),
+  row.names = c("Exactly Observed", "Scheme A", "Scheme B", "Scheme C")
+)
+print(results)
+```
+
+
+
+## simulation flexsurv
+
+does it work with markov modelsas well?
+I am choosing value of covariates, not distribution..
+
+```{r}
+covariates_distr <- function(n_obs){
+  cov1 <- rbinom(n=n_obs, size=1, prob=0.15)  #smoking people, people with diabetes, people with elementary education
+  cov2 <- rbinom(n=n_obs, size=1, prob=0.3)   #hypertension, high cholesterol level, hearth diseases
+  cov3 <- rbinom(n=n_obs, size=1, prob=0.45)  # male sex, sedentary life
+  
+  cov_df <- data.frame( cov1, cov2, cov3)
+  
+  return(cov_df)    
+}
+
+cov <- covariates_distr(n_pats)
+cov <- data.frame(cov1=1, cov2=0, cov3=0)
+n_pats=1000
+
+
+data_sim <- sim.fmsm(
+  fits_wei, 
+  trans = tmat,
+  t=50,
+  newdata = cov, #???
+  start = 1,
+  M = n_pats,
+  tcovs = names(cov),
+  tidy = T
+)
+
+data_sim$delay <-format(data_sim$delay, scientific = FALSE, digits =3)
+data_sim$delay <- round(as.numeric(data_sim$delay),7)
+data_sim
+
+
+count <- as.numeric(table(data_sim$id))
+age <- runif(length(count), min = 60, max = 85)
+data_sim$entry_age <- rep(age, times = count)
+data_sim$time <- data_sim$time + data_sim$entry_age 
+#should i cut unrealistic times??
+
+#we are simulating at exact transition times, so death is always observed
+#we observe 3 cases but we are gonna absorb the last case in the 1 and 2
+# case 1) 1->3 time=delay so the patient has been in state 1 till death
+# case 2)  1->2  2->3 delay≠0 in this transition represents time spent in dementia and time when finally patient dies
+# case 3)  1->2  2->3 delay small set a threshold, delay < threshold case 1) , delay> threshold case 3)
+# I think a reasonable time spent from dementia onset to death is at least 1/2 month, so threshold = 0.1 years
+
+
+threshold <- 0.05
+data_sim$flag[data_sim$delay < threshold] <- 1
+sum(data_sim$flag, na.rm = T)
+id <- data_sim[data_sim$flag==1, 1]
+data_sim$trans[data_sim$id %in% id] <- "1 - 3"
+delete <- which(data_sim$flag==1)
+data_sim <- data_sim[-delete, ]  
+data_sim$flag <- NULL
+
+
+```
+
+```{r}
+# censoring
+# simulate censoring as a uniform over an interval of 20 years
+# create a variable indicating when the transition is final
+# if the event in the final transition happens before censoring time then the event is observed at death time, otherwise we set censored=1 and stop time and censoring time
+
+# remark censoring is independently generated from observation scheme
+
+data_sim$final <- 0
+data_sim$final[data_sim$trans!="1 - 2"] <- 1
+count_final <- sum(data_sim$final)
+data_sim$right_censoring[data_sim$final==1] <- runif (n=count_final, min=0, max=20) + data_sim$entry_age[data_sim$final==1]
+data_sim$censored[data_sim$final==1] <- 0 
+data_sim$censored[data_sim$final==1] <-if_else(data_sim$time[data_sim$final==1]<data_sim$right_censoring[data_sim$final==1],0,1)
+
+data_sim$time_stop[data_sim$final==1]<-if_else(data_sim$censored[data_sim$final==1]==1,data_sim$right_censoring[data_sim$final==1],data_sim$time[data_sim$final==1] ) 
+```
+
+```{r}
+# observation scheme 
+#first of all for each patient I generate the visit time accounting for variability in time even if the scheme is deterministic, subsequently 
+
+keep_index <- data_sim[data_sim$trans=="1 - 2",id]
+data_restricted <- data_sim[data_sim$id%in%keep_index,]
+
+interval_censoring <- function(id){
+  n_visits <- 20
+  avg_spacing <- 1
+  obs_scheme <- runif(n_visits - 1, min = avg_spacing - 0.5, max = avg_spacing + 0.5)
+  visit_times <- c(0, cumsum(obs_scheme))
+  visit_times <- visit_times + data_restricted$entry_age[data_restricted$id==id]
+  censor_index <- which(visit_times >= data_restricted$right_censoring[data_restricted$id==id])[1]
+  visit_times <- visit_times[1:censor_index-1]
+  data_restricted <- data_restricted[data_restricted$id==id,]
+  data_restricted[data_restricted$trans=="1 - 2", 5]
+}
+```
+
