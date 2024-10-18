@@ -12,10 +12,10 @@ library(ggplot2)
 library(parallel)
 
 # choose the sample size and upload accordingly the datset, either 500, 2K, 5K
-setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code")
+setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI")
 load("./Simulated_data_MM/simulation500_MM_all.RData")
 
-setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/wrapper_MM")
+setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
 source("./functions_wrapper/prepare_coxph_flex.R")
 source("./functions_wrapper/prepare_msm.R")
 source("./functions_wrapper/prepare_imputation.R")

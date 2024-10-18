@@ -7,12 +7,12 @@ library(elect)
 library(flexsurv)
 library(nhm)
 
-setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/Simulated_data_MM")
+setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/Simulated_data_MM")
 load("simulation500_MM_all.RData")
-#setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/Simulated_data_MM")
+#setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/Simulated_data_MM")
 #load("simulation5K_SM_all.RData")
 
-setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/FittingPanelData")
+setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/FittingPanelData")
 source("hazards_mine.R")
 
 

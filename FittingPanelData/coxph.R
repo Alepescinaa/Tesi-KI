@@ -4,10 +4,10 @@
 
 library (survival)
 library(survminer)
-setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/Simulated_data_MM")
+setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/Simulated_data_MM")
 load("simulation5K_MM_all.RData")
 
-setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/FittingPanelData")
+setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/FittingPanelData")
 
 
 data <- dataset_all_MM_2K[[2]] 

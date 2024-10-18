@@ -10,10 +10,10 @@ library(flexsurv)
 library(nhm)
 library(ggplot2)
 
-setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code")
+setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI")
 load("./Simulated_data_MM/simulation500_MM_all.RData")
 
-setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/wrapper_MM")
+setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
 source("./functions_wrapper/prepare_coxph_flex.R")
 source("./functions_wrapper/prepare_msm.R")
 source("./functions_wrapper/prepare_imputation.R")
@@ -28,16 +28,16 @@ n_pats <- length(unique(data$patient_id))
 comp_time <- numeric()
 
 if (scheme==2){
-  model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/wrapper_MM/saved_models_scheme2/seed_", seed)
+  model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/saved_models_scheme2/seed_", seed)
   dir.create(model_dir, showWarnings = FALSE)
 } else if (scheme==3){
-  model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/wrapper_MM/saved_models_scheme3/seed_", seed)
+  model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/saved_models_scheme3/seed_", seed)
   dir.create(model_dir, showWarnings = FALSE)
 } else if (scheme==4){
-  model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/wrapper_MM/saved_models_scheme4/seed_", seed)
+  model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/saved_models_scheme4/seed_", seed)
   dir.create(model_dir, showWarnings = FALSE)
 } else if (scheme==5){
-  model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/wrapper_MM/saved_models_scheme5/seed_", seed)
+  model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/saved_models_scheme5/seed_", seed)
   dir.create(model_dir, showWarnings = FALSE)
 }
 

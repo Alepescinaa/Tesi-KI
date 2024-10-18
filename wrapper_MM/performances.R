@@ -4,18 +4,18 @@
 
 library(fs)
 
-main_dir <- "/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/wrapper_MM/saved_models_scheme"
+main_dir <- "/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-Ki/wrapper_MM/saved_models_scheme"
 scheme <-  2
 seed <- 1
 
 if (scheme == 2){
-  scheme_dir <- "/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/wrapper_MM/saved_models_scheme2"
+  scheme_dir <- "/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-Ki/wrapper_MM/saved_models_scheme2"
 } else if (scheme == 3){
-  scheme_dir <- "/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/wrapper_MM/saved_models_scheme3"
+  scheme_dir <- "/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-Ki/wrapper_MM/saved_models_scheme3"
 } else if (scheme == 4){
-  scheme_dir <- "/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/wrapper_MM/saved_models_scheme4"
+  scheme_dir <- "/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-Ki/wrapper_MM/saved_models_scheme4"
 } else if (scheme == 5){
-  scheme_dir <- "/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/wrapper_MM/saved_models_scheme5"
+  scheme_dir <- "/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-Ki/wrapper_MM/saved_models_scheme5"
 }
   
 
