@@ -47,3 +47,9 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Ignore Simulated_data_MM folder
+Simulated_data_MM/
+
+# Ignore Simulated_data_SM folder
+Simulated_data_SM/
