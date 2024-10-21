@@ -1,20 +1,20 @@
-wrapper_functions_MM <- function(data,n_pats,seed){
+wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   
   comp_time <- numeric()
   
+  
   if (scheme==2){
-    model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/saved_models_scheme2/seed_", seed)
-    dir.create(model_dir, showWarnings = FALSE)
+    model_dir <- paste0("results_500/saved_models_scheme2/seed_", seed)
+    dir.create(model_dir, showWarnings = FALSE, recursive= T)
   } else if (scheme==3){
-    model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/saved_models_scheme3/seed_", seed)
-    dir.create(model_dir, showWarnings = FALSE)
+    model_dir <- paste0("results_500/saved_models_scheme3/seed_", seed)
+    dir.create(model_dir, showWarnings = FALSE, recursive= T)
   } else if (scheme==4){
-    model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/saved_models_scheme4/seed_", seed)
-    dir.create(model_dir, showWarnings = FALSE)
-  } else if (scheme==5){
-    model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/saved_models_scheme5/seed_", seed)
-    dir.create(model_dir, showWarnings = FALSE)
-  }
+    model_dir <- paste0("results_500/saved_models_scheme4/seed_", seed)
+    dir.create(model_dir, showWarnings = FALSE, recursive= T)  } 
+  else if (scheme==5){
+    model_dir <- paste0("results_500/saved_models_scheme5/seed_", seed)
+    dir.create(model_dir, showWarnings = FALSE, recursive= T)  }
   
   #####################
   # coxph model
@@ -50,6 +50,8 @@ wrapper_functions_MM <- function(data,n_pats,seed){
   
   save(fits_gompertz, file = file.path(model_dir, "flexsurv_model.RData"))
   
+  gc()
+  
   ######################
   # msm model
   ######################
@@ -67,6 +69,7 @@ wrapper_functions_MM <- function(data,n_pats,seed){
                      qmatrix = Q,
                      covariates = ~ cov1 + cov2 + cov3 ,
                      gen.inits = TRUE,
+                     censor = 99,
                      control = list(fnscale = 1000, maxit = 500),
                      deathexact = TRUE)
   })[3]
@@ -83,8 +86,10 @@ wrapper_functions_MM <- function(data,n_pats,seed){
   #####################
   
   temp <- prepare_msm(data)
+  
+  # min_age <- min(temp$age)
+  # temp$age <- temp$age - min_age
 
- 
 
   time_msm_age<- system.time({
     model.msm_age <- msm(state ~ age,
@@ -94,13 +99,16 @@ wrapper_functions_MM <- function(data,n_pats,seed){
                          covariates = ~ cov1 + cov2 + cov3 + age ,
                          gen.inits= TRUE,
                          control = list(fnscale = 1000, maxit = 500),
-                         center= TRUE,
+                         censor = 99,
+                         center= FALSE,
                          deathexact = TRUE)
   })[3]
 
   comp_time[4] <- as.numeric(round(time_msm_age,3))
 
   save(model.msm_age, file = file.path(model_dir, "model_msm_age.RData"))
+  
+  gc()
   
   ######################
   # nhm model
@@ -124,39 +132,57 @@ wrapper_functions_MM <- function(data,n_pats,seed){
 
   initial_guess <-  append(msm_estimates, rep(0.5, 3), after = 3)
   # we have estimates for rate and covs, so we add initial estimate to 0.5 of shape -> not helping
-
+  error <- F
+  
   time_nhm <- system.time({
-    object_nhm <- model.nhm(state ~ age,
-                            subject = patient_id,
-                            data = temp,
-                            trans = tmat_1,
-                            nonh = tmat_1,
-                            type = "gompertz",
-                            covariates = c("cov1", "cov2", "cov3"),
-                            covm = list(cov1= tmat_1, cov2=tmat_2, cov3=tmat_3),
-                            death = T,
-                            death.states = c(3))
-
-
-    model_nhm <- nhm(object_nhm,
-                     gen_inits = TRUE,
-                     #initial = initial_guess,
-                     score_test = FALSE,
-                     control = nhm.control(ncores = 4, obsinfo = FALSE, coarsen = T, coarsen.vars = c(1), coarsen.lv = 5, splits = split_points ))
+    tryCatch({
+      object_nhm <- model.nhm(state ~ age,
+                              subject = patient_id,
+                              data = temp, 
+                              trans = tmat_1,
+                              nonh = tmat_1,
+                              type = "gompertz",
+                              covariates = c("cov1", "cov2", "cov3"),
+                              covm = list(cov1= tmat_1, cov2=tmat_2, cov3=tmat_3),
+                              censor.states = c(1,2),
+                              censor = 99,
+                              death = T, 
+                              death.states = c(3))
+      
+      
+      model_nhm <- nhm(object_nhm, 
+                       gen_inits = TRUE, 
+                       score_test = FALSE, 
+                       control = nhm.control(ncores = 4, obsinfo = FALSE))
+      return(model_nhm)
+    },
+    error = function(e) {
+      error <<- TRUE
+      return(NULL) 
+    })
   })[3]
-
+  
+  if (error) {
+    print(paste("No convergence for seed:", seed))
+  } else {
+    print("Model fitted successfully.")
+  }
+  
   #comp.time 500 pats, no coarsening 30 min
   #comp.time 500 pats, coarsening to 10 values 5min
+  
 
   comp_time[5] <- as.numeric(round(time_nhm,3))
 
   save(model_nhm, file = file.path(model_dir, "model_nhm.RData"))
+  
+  gc()
 
   ####################
   # imputation model
   ####################
   
-  temp <- prepare_imputation(data)
+  temp <- prepare_imputation(data, n_pats)
   m <- 30
   type <- "forward"
   

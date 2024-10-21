@@ -26,19 +26,23 @@ source("./functions_wrapper/wrapper_functions_MM.R")
 
 for (scheme in 2:5){
   for (seed in 1:3){
-    data <-dataset_all_MM_2K[[seed]][[scheme]]
+    data <-dataset_all_MM_500[[seed]][[scheme]]
     n_pats <- length(unique(data$patient_id))
-    wrapper_functions_MM(data,n_pats,seed)
+    wrapper_functions_MM(data, n_pats, seed, cores_nhm)
     print("models completed for seed_", seed)
   }
 }
 
+cores <- 4
+cores_nhm <- 4
+scheme <- 2
 
 for (scheme in 2:5) {
-  mclapply(7:10, function(seed) {
+  mclapply(1:3, function(seed) {
     data <- dataset_all_MM_500[[seed]][[scheme]]
     n_pats <- length(unique(data$patient_id))
-    wrapper_functions_MM(data, n_pats, seed)
-  }, mc.cores = 4)
+    wrapper_functions_MM(data, n_pats, seed, cores_nhm)
+    cat("models completed for seed:", seed, "\n")
+    }, mc.cores = cores)
 }
 

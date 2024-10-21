@@ -6,6 +6,7 @@ library(msm)
 library(elect)
 library(flexsurv)
 library(nhm)
+library(dplyr)
 
 setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/Simulated_data_MM")
 load("simulation500_MM_all.RData")
@@ -16,12 +17,26 @@ setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo 
 source("hazards_mine.R")
 
 
-data <- dataset_all_MM_500[[5]] 
+data <- dataset_all_MM_500[[1]] 
 n_pats <- nrow(data[[1]])
 
 
 temp <-data[[2]]
 temp$state <- 1
+
+temp <- temp %>%
+  group_by(patient_id) %>%
+  do({
+    if (nrow(.) == 1) {
+      duplicated_row <- bind_rows(., .)
+      duplicated_row$age[2] <- duplicated_row$death_time[1]
+      duplicated_row$visits[2] <- 2
+      duplicated_row
+    } else {
+      .
+    }
+  }) %>%
+  ungroup()
 
 update_state <- function(df) {
   df <- df %>%
@@ -29,7 +44,7 @@ update_state <- function(df) {
     mutate(
       state = ifelse(onset == 1, 2, state),
       state = ifelse(row_number() == n() & dead == 1, 3, state),
-      #state = ifelse(row_number() == n() & dead == 0, 99, state)
+      state = ifelse(row_number() == n() & dead == 0 & onset == 0, 99, state)
     ) %>%
     ungroup() 
   
@@ -56,7 +71,7 @@ model.msm <- msm(state ~ age,
                  covariates = ~ cov1 + cov2 + cov3 ,
                  gen.inits = TRUE,
                  control = list(fnscale = 1000),
-                 #censor = 99,
+                 censor = 99,
                  deathexact = TRUE)
 
 hazard.msm(model.msm)
@@ -169,19 +184,36 @@ rate
 # Fitting a model with nhm over panel data
 ################################################
 
-temp <- data[[2]]
+temp <-data[[2]]
 temp$state <- 1
+
+temp <- temp %>%
+  group_by(patient_id) %>%
+  do({
+    if (nrow(.) == 1) {
+      duplicated_row <- bind_rows(., .)
+      duplicated_row$age[2] <- duplicated_row$death_time[1]
+      duplicated_row$visits[2] <- 2
+      duplicated_row
+    } else {
+      .
+    }
+  }) %>%
+  ungroup()
 
 update_state <- function(df) {
   df <- df %>%
     group_by(patient_id) %>%
     mutate(
       state = ifelse(onset == 1, 2, state),
-      state = ifelse(row_number() == n() & dead == 1, 3, state)
+      state = ifelse(row_number() == n() & dead == 1, 3, state),
+      state = ifelse(row_number() == n() & dead == 0 & onset == 0, 99, state)
     ) %>%
     ungroup() 
-}
   
+  return(df)
+}
+
 temp <- update_state(temp)
 
 tmat_1 <- rbind(c(0,1,2),c(0,0,3),rep(0,3))
@@ -193,25 +225,40 @@ temp$patient_id <- as.factor(temp$patient_id)
 temp=as.data.frame(temp)
 
 #here I restrained all covs to have same effect over the same transition
+error <- F
 
-object_nhm <- model.nhm(state ~ age,
-                        subject = patient_id,
-                        data = temp, 
-                        trans = tmat_1,
-                        nonh = tmat_1,
-                        type = "gompertz",
-                        covariates = c("cov1", "cov2", "cov3"),
-                        covm = list(cov1= tmat_1, cov2=tmat_2, cov3=tmat_3),
-                        #censor.states = c(3),
-                        #censor = 99,
-                        death = T, 
-                        death.states = c(3))
+tryCatch({
+  object_nhm <- model.nhm(state ~ age,
+                                  subject = patient_id,
+                                  data = temp, 
+                                  trans = tmat_1,
+                                  nonh = tmat_1,
+                                  type = "gompertz",
+                                  covariates = c("cov1", "cov2", "cov3"),
+                                  covm = list(cov1= tmat_1, cov2=tmat_2, cov3=tmat_3),
+                                  censor.states = c(1,2),
+                                  censor = 99,
+                                  death = T, 
+                                  death.states = c(3))
 
 
-model_nhm <- nhm(object_nhm, 
+  model_nhm <- nhm(object_nhm, 
                  gen_inits = TRUE, 
                  score_test = FALSE, 
                  control = nhm.control(ncores = 4, obsinfo = FALSE))
+  return(model_nhm)
+  },
+  error = function(e) {
+    error <<- TRUE
+    return(NULL) 
+  })
+
+if (error) {
+  print(paste("No convergence for seed:", seed))
+} else {
+  print("Model fitted successfully.")
+}
+
 # we get evidence of nonhomogeneity checking with score test for all transitions
 #save(model_nhm, file="model_nhm.RData")
 

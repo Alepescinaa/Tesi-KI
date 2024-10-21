@@ -1,4 +1,4 @@
-prepare_imputation <- function(data){
+prepare_imputation <- function(data, n_pats){
   scheme_visits <- data
   scheme_data <- data
   original_index <- unique(scheme_data$patient_id)

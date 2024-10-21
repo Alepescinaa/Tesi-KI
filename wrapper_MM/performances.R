@@ -3,20 +3,23 @@
 ####################################
 
 library(fs)
+library(elect)
 
-main_dir <- "/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-Ki/wrapper_MM/saved_models_scheme"
+load("ground_truthMM.RData")
+source("./functions_performance/compute_bias.R")
+source("./functions_performance/hazards_mine.R")
 
 scheme <-  2
-seed <- 5
+seed <- 1
 
 if (scheme == 2){
-  scheme_dir <- "/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-Ki/wrapper_MM/saved_models_scheme2"
+  scheme_dir <- "results_500/saved_models_scheme2"
 } else if (scheme == 3){
-  scheme_dir <- "/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-Ki/wrapper_MM/saved_models_scheme3"
+  scheme_dir <-  "results_500/saved_models_scheme3"
 } else if (scheme == 4){
-  scheme_dir <- "/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-Ki/wrapper_MM/saved_models_scheme4"
+  scheme_dir <-  "results_500/saved_models_scheme4"
 } else if (scheme == 5){
-  scheme_dir <- "/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-Ki/wrapper_MM/saved_models_scheme5"
+  scheme_dir <-  "results_500/saved_models_scheme5"
 }
   
 
@@ -43,9 +46,6 @@ if (dir.exists(seed_dir)) {
   warning(paste("Seed directory does not exist:", seed_dir))
 }
 
-setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-Ki/wrapper_MM")
-load("ground_truthMM.RData")
-source("./functions_performance/compute_bias.R")
 
 # =========
 # coxph
@@ -64,6 +64,7 @@ params_coxph <- cbind(params_coxph, exp(params_coxph[,1]), exp(params_coxph[,2])
 colnames(params_coxph)[4:6] <- c("exp(cov1)", "exp(cov2)", "exp(cov3)")
 
 bias_coxph <- compute_bias(params_coxph, ground_truth_params)
+bias_coxph[,1:2] <- NA
 
 # ============
 # flexsurv
@@ -94,6 +95,7 @@ params_msm <- cbind(params_msm, exp(params_msm[,1]), exp(params_msm[,2]), exp(pa
 colnames(params_msm) <- colnames(ground_truth_params)[3:8]
 
 bias_msm <- compute_bias(params_msm, ground_truth_params)
+bias_msm[,1:2] <-NA
 
 # ============
 # msm + age
@@ -103,6 +105,27 @@ params_msm_age <- matrix(model.msm_age$estimates[4:12], nrow = 3, ncol = 3) #1:3
 params_msm_age <- cbind(params_msm_age, exp(params_msm_age[,1]), exp(params_msm_age[,2]), exp(params_msm_age[,3]))
 colnames(params_msm_age) <- colnames(ground_truth_params)[3:8]
 
+min_age <- min(model.msm_age$data[[1]]$age)
+max_age <- max(model.msm_age$data[[1]]$age)
+haz <- hazards_mine(model.msm_age, b.covariates = list(age = 0, cov1 = 0, cov2 = 0, cov3 = 0), no.years = 40)
+
+# Assuming this hazards come from fitting a gompertz model I wanna retrieve for each transition 
+# shape and rate value, parameters of the distribution
+# h(t)=rate*exp(shape*t)
+# log(h(t))= log(rate) + shape*t 
+# can be seen as y(t)= a+b*t
+shape <- numeric()
+rate <- numeric()
+
+for (i in 1:3){
+  age_grid <- seq(min_age, max_age , length.out = length(unlist(haz[[1]])))
+  y <- log(as.numeric(unlist(haz[[i]])))
+  reg_model <- lm(y ~ age_grid)
+  rate[[i]] <- reg_model$coefficients[1]
+  shape[[i]]<- reg_model$coefficients[2] 
+}
+
+params_msm_age <- cbind(rate,shape,params_msm_age)
 bias_msm_age <- compute_bias(params_msm_age, ground_truth_params)
 
 # ============
@@ -143,28 +166,28 @@ colMeans(bias_imputation)<colMeans(bias_nhm)
 
 #introducing age as covariate improves estimates for covariate effect
 colMeans(bias_msm_age)<colMeans(bias_msm)
-
+colMeans(bias_msm)<colMeans(bias_imputation)
 #nhm performs really poorly
 
 
-if (scheme==2){
-  model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/saved_performance2/seed_", seed)
-  dir.create(model_dir, showWarnings = FALSE)
-} else if (scheme==3){
-  model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/saved_performance3/seed_", seed)
-  dir.create(model_dir, showWarnings = FALSE)
-} else if (scheme==4){
-  model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/saved_performance4/seed_", seed)
-  dir.create(model_dir, showWarnings = FALSE)
-} else if (scheme==5){
-  model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/saved_performance5/seed_", seed)
-  dir.create(model_dir, showWarnings = FALSE)
-}
-
-setwd(model_dir)
-save(bias_coxph, file = file.path(model_dir,"bias_coxph.RData"))
-save(bias_flexsurv, file = file.path(model_dir,"bias_flexsurv.RData"))
-save(bias_msm, file = file.path(model_dir,"bias_msm.RData"))
-save(bias_msm_age, file = file.path(model_dir,"bias_msm_age.RData"))
-save(bias_nhm, file = file.path(model_dir,"bias_nhm.RData"))
-save(bias_imputation, file = file.path(model_dir,"bias_imputation.RData"))
+# if (scheme==2){
+#   model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/saved_performance2/seed_", seed)
+#   dir.create(model_dir, showWarnings = FALSE)
+# } else if (scheme==3){
+#   model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/saved_performance3/seed_", seed)
+#   dir.create(model_dir, showWarnings = FALSE)
+# } else if (scheme==4){
+#   model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/saved_performance4/seed_", seed)
+#   dir.create(model_dir, showWarnings = FALSE)
+# } else if (scheme==5){
+#   model_dir <- paste0("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/saved_performance5/seed_", seed)
+#   dir.create(model_dir, showWarnings = FALSE)
+# }
+# 
+# setwd(model_dir)
+# save(bias_coxph, file = file.path(model_dir,"bias_coxph.RData"))
+# save(bias_flexsurv, file = file.path(model_dir,"bias_flexsurv.RData"))
+# save(bias_msm, file = file.path(model_dir,"bias_msm.RData"))
+# save(bias_msm_age, file = file.path(model_dir,"bias_msm_age.RData"))
+# save(bias_nhm, file = file.path(model_dir,"bias_nhm.RData"))
+# save(bias_imputation, file = file.path(model_dir,"bias_imputation.RData"))
