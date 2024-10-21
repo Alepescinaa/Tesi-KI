@@ -1,4 +1,4 @@
-wrapper_functions_MM <- function(data,n_pats){
+wrapper_functions_MM <- function(data,n_pats,seed){
   
   comp_time <- numeric()
   
