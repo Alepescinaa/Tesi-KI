@@ -42,7 +42,6 @@ for (scheme in 2:5) {
     data <- dataset_all_MM_500[[seed]][[scheme]]
     n_pats <- length(unique(data$patient_id))
     wrapper_functions_MM(data, n_pats, seed, cores_nhm)
-    cat("models completed for seed:", seed, "\n")
     }, mc.cores = cores)
 }
 
