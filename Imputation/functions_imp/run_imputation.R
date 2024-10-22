@@ -1,5 +1,5 @@
-source("./functions_imp /fit_model.R")
-source("./functions_imp /averaging_params.R")
+source("./functions_imp/fit_model.R")
+source("./functions_imp/averaging_params.R")
 
 run_imputation <- function(data, data_visits, onsethaz, deathhaz, m, nIter, nx1, nx2, eps, type){
   

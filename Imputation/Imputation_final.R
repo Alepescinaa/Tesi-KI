@@ -13,13 +13,13 @@ library(flexsurv)
 library(tidyr)
 library(ggplot2)
 
-setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code")
+setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI")
 load("./Simulated_data_MM/simulation5K_MM_all.RData")
 
-setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi_code/Imputation")
-source("./functions_imp /run_imputation.R")
-source("./functions_imp /compute_CI.R")
-source("./functions_imp /compare_CI.R")
+setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/Imputation")
+source("./functions_imp/run_imputation.R")
+source("./functions_imp/compute_CI.R")
+source("./functions_imp/compare_CI.R")
 
 data <-dataset_all_MM_2K[[1]] 
 n_pats <- nrow(data[[1]])
