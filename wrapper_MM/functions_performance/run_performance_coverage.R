@@ -1,5 +1,4 @@
-
-run_performance <- function(n_pats, scheme, seed){
+run_performance_coverage <- function(n_pats, scheme, seed){
   
   if (n_pats == 500){
     if (scheme == 2){

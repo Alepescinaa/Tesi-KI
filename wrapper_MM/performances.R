@@ -9,7 +9,7 @@ library(dplyr)
 load("ground_truthMM.RData")
 source("./functions_performance/compute_bias.R")
 source("./functions_performance/hazards_mine.R")
-source("./functions_performance/run_performance.R")
+source("./functions_performance/run_performance_bias.R")
 
 n_pats <- 500
 scheme <-  2
@@ -44,10 +44,13 @@ for (scheme in 2:5){
 
 temp <- bias_all_schemes[[1]]
 temp <- as.data.frame(temp)
+temp <- temp %>%
+  mutate(across(1:8, as.numeric))
+
 mean_results <- temp %>%
   group_by(model, transition) %>%
   summarise(
-    across(c(rate, shape, cov1, cov2, cov3, exp(cov1), exp(cov2), exp(cov3)), 
+    across(c(rate, shape, cov1, cov2, cov3, `exp(cov1)`, `exp(cov2)`, `exp(cov3)`), 
            ~ mean(.x, na.rm = TRUE)), 
     .groups = 'drop'
   )
