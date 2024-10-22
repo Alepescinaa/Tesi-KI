@@ -46,8 +46,11 @@ temp <- bias_all_schemes[[1]]
 temp <- as.data.frame(temp)
 mean_results <- temp %>%
   group_by(model, transition) %>%
-  summarise(across(-c(seed, model, transition), mean, na.rm = TRUE), .groups = 'drop')
- 
+  summarise(
+    across(c(rate, shape, cov1, cov2, cov3, exp(cov1), exp(cov2), exp(cov3)), 
+           ~ mean(.x, na.rm = TRUE)), 
+    .groups = 'drop'
+  )
 
 # =============
 # compare bias
