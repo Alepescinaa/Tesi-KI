@@ -65,7 +65,7 @@ for (scheme in 2:5) {
 }
 
 
-plan(multisession)  
+plan(multisession, workers = cores)  
 for (scheme in 2:5) {
   future_lapply(1:2, function(seed) {
     data <- dataset_all_MM_500[[seed]][[scheme]]
