@@ -33,7 +33,7 @@ for (scheme in 2:5){
   )
   
   results_list <- mclapply(1:3, function(seed) {
-    temp_results <- run_performance(n_pats, scheme, seed)
+    temp_results <- run_performance_bias(n_pats, scheme, seed)
     return(temp_results)  
   }, mc.cores = cores)
   

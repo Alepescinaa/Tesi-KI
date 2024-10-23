@@ -153,7 +153,7 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
       model_nhm <- nhm(object_nhm, 
                        gen_inits = TRUE, 
                        score_test = FALSE, 
-                       control = nhm.control(ncores = 4, obsinfo = FALSE))
+                       control = nhm.control(ncores = 1, obsinfo = FALSE))
       return(model_nhm)
     },
     error = function(e) {
@@ -164,6 +164,7 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   
   if (error) {
     print(paste("No convergence for seed:", seed))
+    model_nhm <- NULL
   } else {
     print("Model fitted successfully.")
   }
@@ -208,3 +209,4 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   cat("models completed for seed:", seed, "\n")
   
 }
+
