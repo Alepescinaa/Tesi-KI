@@ -173,8 +173,15 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   
 
   comp_time[5] <- as.numeric(round(time_nhm,3))
+  
+  if (!is.null(model_nhm)) {
+    save(model_nhm, file = file.path(model_dir, "model_nhm.RData"))
+  } else {
+    print("Model is NULL; not saving.")
+  }
 
-  save(model_nhm, file = file.path(model_dir, "model_nhm.RData"))
+
+  
   
   gc()
 
