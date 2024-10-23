@@ -5,6 +5,7 @@
 library(fs)
 library(elect)
 library(dplyr)
+library(parallel)
 
 load("ground_truthMM.RData")
 source("./functions_performance/compute_bias.R")
@@ -13,7 +14,7 @@ source("./functions_performance/run_performance_bias.R")
 
 n_pats <- 500
 scheme <-  2
-seed <- 3
+seed <- 5
 cores <- 4
 
 bias_all_schemes <- vector(mode = "list", length = 4)

@@ -153,12 +153,12 @@ run_performance_bias <- function(n_pats, scheme, seed){
   # nhm
   # ============
   
-  params_nhm <- matrix(model_nhm$par, nrow = 3, ncol = 5) 
-  params_nhm <- cbind(params_nhm, exp(params_nhm[,3]), exp(params_nhm[,4]), exp(params_nhm[,5]))
-  colnames(params_nhm) <- colnames(ground_truth_params)
-  
-  bias_nhm <- compute_bias(params_nhm, ground_truth_params)
-  
+  # params_nhm <- matrix(model_nhm$par, nrow = 3, ncol = 5) 
+  # params_nhm <- cbind(params_nhm, exp(params_nhm[,3]), exp(params_nhm[,4]), exp(params_nhm[,5]))
+  # colnames(params_nhm) <- colnames(ground_truth_params)
+  # 
+  # bias_nhm <- compute_bias(params_nhm, ground_truth_params)
+  # 
   # ============
   # imputation
   # ============
@@ -175,7 +175,7 @@ run_performance_bias <- function(n_pats, scheme, seed){
     cbind(bias_flexsurv, model = "flexusrv", seed = seed, transition = c(1,2,3)),
     cbind(bias_msm, model = "msm", seed = seed, transition = c(1,2,3)),
     cbind(bias_msm_age, model = "msm_age", seed = seed, transition = c(1,2,3)),
-    cbind(bias_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
+    # cbind(bias_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
     cbind(bias_imputation, model = "imputation", seed = seed, transition = c(1,2,3))
   )
   
