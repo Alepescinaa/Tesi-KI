@@ -1,5 +1,8 @@
 run_performance_coverage <- function(n_pats, scheme, seed){
   
+  load("ground_truthMM.RData")
+  ground_truth_params <- ground_truth_params[,1:5]
+  
   if (n_pats == 500){
     if (scheme == 2){
       scheme_dir <- "results_500/saved_models_scheme2"
@@ -71,87 +74,141 @@ run_performance_coverage <- function(n_pats, scheme, seed){
   # coxph
   # =========
   
-  params_coxph <- matrix(0, nrow = 3, ncol = 3)
-  param_names <- names(model_cox[[1]]$coefficients)
-  colnames(params_coxph) <- param_names
+  coverage_cox <- matrix(0, nrow = 3, ncol = 3)
+  
   
   for (i in 1:3){
-    for (j in 1:3){
-      params_coxph[i,j] <- model_cox[[i]] $coefficients[j]
-    }
+      ci<- confint(model_cox[[i]])
+      for (j in 1:length(ci[,1])) {
+        ci_lower <- ci[j, 1]
+        ci_upper <- ci[j, 2]
+        coverage_cox[i,j] <- (ground_truth_params[i,j+2] >= ci_lower) && (ground_truth_params[i,j+2] <= ci_upper)
+      }
   }
-  params_coxph <- cbind(params_coxph, exp(params_coxph[,1]), exp(params_coxph[,2]), exp(params_coxph[,3]))
-  colnames(params_coxph)[4:6] <- c("exp(cov1)", "exp(cov2)", "exp(cov3)")
   
-  bias_coxph <- compute_bias(params_coxph, ground_truth_params)
-  bias_coxph[,1:2] <- NA
+  empty <- numeric(3)
+  empty[] <- NA  
+  coverage_cox <- cbind(empty, empty,coverage_cox)
+  param_names <- colnames(ground_truth_params)
+  colnames(coverage_cox) <- param_names
   
   # ============
   # flexsurv
   # ============
   
-  params_flexsurv <- matrix(0, nrow = 3, ncol = 5)
-  param_names <- names(fits_gompertz[[1]]$coefficients)
-  colnames(params_flexsurv) <- param_names
-  
+  coverage_flexsurv <- matrix(0, nrow = 3, ncol = 5)
+ 
   for (i in 1:3){
     for (j in 1:5){
-      params_flexsurv[i,j] <- fits_gompertz[[i]] $coefficients[j]
+      ci<- confint(fits_gompertz[[i]])
+      ci <- ci[c(2,1,3,4,5),]
+      for (j in 1:length(ci[,1])) {
+        ci_lower <- ci[j, 1]
+        ci_upper <- ci[j, 2]
+        coverage_flexsurv[i,j] <- (ground_truth_params[i,j] >= ci_lower) && (ground_truth_params[i,j] <= ci_upper)
+      }
     }
-  }
-  
-  params_flexsurv <- params_flexsurv[, c(2, 1, 3, 4, 5)]
-  params_flexsurv <- cbind(params_flexsurv, exp(params_flexsurv[,3]), exp(params_flexsurv[,4]), exp(params_flexsurv[,4]))
-  colnames(params_flexsurv)[6:8] <- c("exp(cov1)", "exp(cov2)", "exp(cov3)")
-  
-  bias_flexsurv <- compute_bias(params_flexsurv, ground_truth_params)
+  } 
+ 
+  param_names <- colnames(ground_truth_params)
+  colnames(coverage_flexsurv) <- param_names
   
   # ============
   # msm
   # ============
   
-  params_msm <- matrix(model.msm$estimates[4:12], nrow = 3, ncol = 3) #1:3 rate
-  params_msm <- cbind(params_msm, exp(params_msm[,1]), exp(params_msm[,2]), exp(params_msm[,3]))
-  colnames(params_msm) <- colnames(ground_truth_params)[3:8]
+  coverage_msm <- matrix(0, nrow = 3, ncol = 3)
   
-  bias_msm <- compute_bias(params_msm, ground_truth_params)
-  bias_msm[,1:2] <-NA
+  for (k in 1:3) {
+    ci <- model.msm$ci[(3 * (k - 1) + 4):(3 * k + 3), ] 
+    for (j in 1:nrow(ci)) {
+      ci_lower <- ci[j, 1]
+      ci_upper <- ci[j, 2]
+      coverage_msm[k, j] <- (ground_truth_params[k, j + 2] >= ci_lower) && (ground_truth_params[k, j + 2] <= ci_upper)
+    }
+  }
   
+  empty <- numeric(3)
+  empty[] <- NA  
+  coverage_msm <- cbind(empty, empty,coverage_msm)
+  param_names <- colnames(ground_truth_params)
+  colnames(coverage_msm) <- param_names 
+  
+
   # ============
   # msm + age
   # ============
   
-  params_msm_age <- matrix(model.msm_age$estimates[4:12], nrow = 3, ncol = 3) #1:3 rate 12:15 age
-  params_msm_age <- cbind(params_msm_age, exp(params_msm_age[,1]), exp(params_msm_age[,2]), exp(params_msm_age[,3]))
-  colnames(params_msm_age) <- colnames(ground_truth_params)[3:8]
+  # FIX RATE E SHAPE CI
   
-  min_age <- min(model.msm_age$data[[1]]$age)
-  max_age <- max(model.msm_age$data[[1]]$age)
-  haz <- hazards_mine(model.msm_age, b.covariates = list(age = 0, cov1 = 0, cov2 = 0, cov3 = 0), no.years = 40)
+
+  # min_age <- min(model.msm_age$data[[1]]$age)
+  # max_age <- max(model.msm_age$data[[1]]$age)
+  # haz <- hazards_mine(model.msm_age, b.covariates = list(age = 0, cov1 = 0, cov2 = 0, cov3 = 0), no.years = 40)
   
   # Assuming this hazards come from fitting a gompertz model I wanna retrieve for each transition 
   # shape and rate value, parameters of the distribution
   # h(t)=rate*exp(shape*t)
   # log(h(t))= log(rate) + shape*t 
   # can be seen as y(t)= a+b*t
-  shape <- numeric()
-  rate <- numeric()
+  # shape <- numeric()
+  # rate <- numeric()
+  # 
+  # for (i in 1:3){
+  #   age_grid <- seq(min_age, max_age , length.out = length(unlist(haz[[1]])))
+  #   y <- log(as.numeric(unlist(haz[[i]])))
+  #   reg_model <- lm(y ~ age_grid)
+  #   rate[[i]] <- reg_model$coefficients[1]
+  #   shape[[i]]<- reg_model$coefficients[2] 
+  # }
   
-  for (i in 1:3){
-    age_grid <- seq(min_age, max_age , length.out = length(unlist(haz[[1]])))
-    y <- log(as.numeric(unlist(haz[[i]])))
-    reg_model <- lm(y ~ age_grid)
-    rate[[i]] <- reg_model$coefficients[1]
-    shape[[i]]<- reg_model$coefficients[2] 
+  coverage_msm_age <- matrix(0, nrow = 3, ncol = 3)
+  
+  ci <- model.msm_age$ci[4:6, ] 
+  for (j in 1:nrow(ci)) {
+      ci_lower <- ci[j, 1]
+      ci_upper <- ci[j, 2]
+      coverage_msm_age[1, j] <- (ground_truth_params[1, j + 2] >= ci_lower) && (ground_truth_params[1, j + 2] <= ci_upper)
+    }
+  
+  ci <- model.msm_age$ci[8:10, ] 
+  for (j in 1:nrow(ci)) {
+  ci_lower <- ci[j, 1]
+  ci_upper <- ci[j, 2]
+  coverage_msm_age[2, j] <- (ground_truth_params[2, j + 2] >= ci_lower) && (ground_truth_params[2, j + 2] <= ci_upper)
   }
-  
-  params_msm_age <- cbind(rate,shape,params_msm_age)
-  bias_msm_age <- compute_bias(params_msm_age, ground_truth_params)
+  ci <- model.msm_age$ci[12:14, ] 
+  for (j in 1:nrow(ci)) {
+  ci_lower <- ci[j, 1]
+  ci_upper <- ci[j, 2]
+  coverage_msm_age[3, j] <- (ground_truth_params[3, j + 2] >= ci_lower) && (ground_truth_params[3, j + 2] <= ci_upper)
+  }
+
+  empty <- numeric(3)
+  empty[] <- NA  
+  coverage_msm_age <- cbind(empty, empty,coverage_msm_age)
+  param_names <- colnames(ground_truth_params)
+  colnames(coverage_msm_age) <- param_names 
   
   # ============
   # nhm
   # ============
   
+  coverage_nhm <- matrix(0, nrow = 3, ncol = 5)
+  
+  coef_estimates <- model_nhm$par 
+  std_errors <- sqrt(diag(vcov(model_nhm))) 
+  
+  # Calculate the confidence intervals (95% CI)
+  ci_lower <- coef_estimates - 1.96 * std_errors
+  ci_upper <- coef_estimates + 1.96 * std_errors
+  
+  # Combine into a data frame for better readability
+  ci <- data.frame(
+    Estimate = coef_estimates,
+    Lower = ci_lower,
+    Upper = ci_upper
+  )
   params_nhm <- matrix(model_nhm$par, nrow = 3, ncol = 5) 
   params_nhm <- cbind(params_nhm, exp(params_nhm[,3]), exp(params_nhm[,4]), exp(params_nhm[,5]))
   colnames(params_nhm) <- colnames(ground_truth_params)
@@ -162,22 +219,33 @@ run_performance_coverage <- function(n_pats, scheme, seed){
   # imputation
   # ============
   
-  params_imp <- results_imp[[1]]
-  params_imp <- params_imp[, c(2, 1, 3, 4, 5)]
-  params_imp <- cbind(params_imp, exp(params_imp[,3]), exp(params_imp[,4]), exp(params_imp[,4]))
-  colnames(params_imp)[6:8] <- c("exp(cov1)", "exp(cov2)", "exp(cov3)")
+  coverage_imputation <- matrix(0, nrow = 3, ncol = 5)
+  results_imp
+  for (i in 1:3){
+    for (j in 1:5){
+      ci<- confint(fits_gompertz[[i]])
+      ci <- ci[c(2,1,3,4,5),]
+      for (j in 1:length(ci[,1])) {
+        ci_lower <- ci[j, 1]
+        ci_upper <- ci[j, 2]
+        coverage_imputation[i,j] <- (ground_truth_params[i,j] >= ci_lower) && (ground_truth_params[i,j] <= ci_upper)
+      }
+    }
+  } 
   
-  bias_imputation <- compute_bias(params_imp, ground_truth_params)
+  param_names <- colnames(ground_truth_params)
+  colnames(coverage_imputation) <- param_names
   
-  bias_tot <- rbind(
-    cbind(bias_coxph, model = "coxph", seed = seed, transition = c(1,2,3)),
-    cbind(bias_flexsurv, model = "flexusrv", seed = seed, transition = c(1,2,3)),
-    cbind(bias_msm, model = "msm", seed = seed, transition = c(1,2,3)),
-    cbind(bias_msm_age, model = "msm_age", seed = seed, transition = c(1,2,3)),
-    cbind(bias_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
-    cbind(bias_imputation, model = "imputation", seed = seed, transition = c(1,2,3))
-  )
   
+  # bias_tot <- rbind(
+  #   cbind(bias_coxph, model = "coxph", seed = seed, transition = c(1,2,3)),
+  #   cbind(bias_flexsurv, model = "flexusrv", seed = seed, transition = c(1,2,3)),
+  #   cbind(bias_msm, model = "msm", seed = seed, transition = c(1,2,3)),
+  #   cbind(bias_msm_age, model = "msm_age", seed = seed, transition = c(1,2,3)),
+  #   cbind(bias_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
+  #   cbind(bias_imputation, model = "imputation", seed = seed, transition = c(1,2,3))
+  # )
+  # 
   return (bias_tot)
 }
 
