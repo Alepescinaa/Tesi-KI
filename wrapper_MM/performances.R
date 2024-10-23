@@ -11,10 +11,13 @@ load("ground_truthMM.RData")
 source("./functions_performance/compute_bias.R")
 source("./functions_performance/hazards_mine.R")
 source("./functions_performance/run_performance_bias.R")
+source("./functions_performance/run_performance_coverage.R")
+source("./functions_performance/compute_CI.R")
+source("./functions_performance/compute_coverage.R")
 
 n_pats <- 500
 scheme <-  2
-seed <- 5
+seed <- 3
 cores <- 4
 
 bias_all_schemes <- vector(mode = "list", length = 4)
@@ -48,7 +51,8 @@ temp <- as.data.frame(temp)
 temp <- temp %>%
   mutate(across(1:8, as.numeric))
 
-mean_results <- temp %>%
+# this would be a function comparing mean bias berween models for each scheme 
+mean_bias <- temp %>%
   group_by(model, transition) %>%
   summarise(
     across(c(rate, shape, cov1, cov2, cov3, `exp(cov1)`, `exp(cov2)`, `exp(cov3)`), 
@@ -56,6 +60,43 @@ mean_results <- temp %>%
     .groups = 'drop'
   )
 
+
+coverage_all_schemes <- vector(mode = "list", length = 4)
+
+for (scheme in 2:5){
+  results_bias <- data.frame(
+    rate = numeric(0),
+    shape = numeric(0),
+    cov1 = numeric(0),
+    cov2 = numeric(0),
+    cov3 = numeric(0),
+    model = character(0),
+    seed = integer(0)
+  )
+  
+  results_list <- mclapply(1:3, function(seed) {
+    temp_results <- run_performance_coverage(n_pats, scheme, seed)
+    return(temp_results)  
+  }, mc.cores = cores)
+  
+  results_coverage <- do.call(rbind, results_list)
+  
+  coverage_all_schemes[[scheme-1]] <- results_coverage
+  
+}
+# this would be a function comparing mean coverage berween models for each scheme 
+temp <- coverage_all_schemes[[1]]
+temp <- as.data.frame(temp)
+temp <- temp %>%
+  mutate(across(1:5, as.numeric))
+
+mean_coverage <- temp %>%
+  group_by(model, transition) %>%
+  summarise(
+    across(c(rate, shape, cov1, cov2, cov3), 
+           ~ round(mean(.x, na.rm = TRUE), 3)), 
+    .groups = 'drop'
+  )
 # =============
 # compare bias
 # =============
