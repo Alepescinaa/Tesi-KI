@@ -208,5 +208,5 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   
   cat("models completed for seed:", seed, "\n")
   
-}
+  }
 

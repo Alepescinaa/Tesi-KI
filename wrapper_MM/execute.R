@@ -25,7 +25,7 @@ source("./functions_wrapper/wrapper_functions_MM.R")
 
 # loop
 for (scheme in 2:5){
-  for (seed in 1:3){
+  for (seed in 1:2){
     data <-dataset_all_MM_500[[seed]][[scheme]]
     n_pats <- length(unique(data$patient_id))
     wrapper_functions_MM(data, n_pats, seed, cores_nhm)
