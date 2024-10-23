@@ -142,25 +142,63 @@ run_performance_coverage <- function(n_pats, scheme, seed){
   # FIX RATE E SHAPE CI
   
 
-  # min_age <- min(model.msm_age$data[[1]]$age)
-  # max_age <- max(model.msm_age$data[[1]]$age)
-  # haz <- hazards_mine(model.msm_age, b.covariates = list(age = 0, cov1 = 0, cov2 = 0, cov3 = 0), no.years = 40)
+  min_age <- min(model.msm_age$data[[1]]$age)   
+  max_age <- max(model.msm_age$data[[1]]$age)   
+  haz <- hazards_mine(model.msm_age, b.covariates = list(age = 0, cov1 = 0, cov2 = 0, cov3 = 0), no.years = 40, CI = T)
   
-  # Assuming this hazards come from fitting a gompertz model I wanna retrieve for each transition 
-  # shape and rate value, parameters of the distribution
-  # h(t)=rate*exp(shape*t)
-  # log(h(t))= log(rate) + shape*t 
-  # can be seen as y(t)= a+b*t
-  # shape <- numeric()
-  # rate <- numeric()
+  haz_estimates <- list()
+  for (i in 1:3){
+    haz_estimates[[i]] <- haz[[1]][[i]]
+  }
+ 
+  # rate <- numeric(3)   
+  # shape <- numeric(3)   
+  # rate_CI <- matrix(NA, nrow = 3, ncol = 2) 
+  # shape_CI <- matrix(NA, nrow = 3, ncol = 2)
   # 
-  # for (i in 1:3){
-  #   age_grid <- seq(min_age, max_age , length.out = length(unlist(haz[[1]])))
-  #   y <- log(as.numeric(unlist(haz[[i]])))
-  #   reg_model <- lm(y ~ age_grid)
-  #   rate[[i]] <- reg_model$coefficients[1]
-  #   shape[[i]]<- reg_model$coefficients[2] 
+  # for (i in 1:3) {   
+  #   age_grid <- seq(min_age, max_age, length.out = length(unlist(haz_estimates[[1]])))   
+  #   y <- log(as.numeric(unlist(haz_estimates[[i]])))  
+  #   reg_model <- lm(y ~ age_grid)   
+  #   rate[i] <- reg_model$coefficients[1]   
+  #   shape[i] <- reg_model$coefficients[2] 
   # }
+  # for (i in 1:3) {   
+  #   y <- log(as.numeric(unlist(haz_LB[[i]])))  
+  #   reg_model <- lm(y ~ age_grid)   
+  #   rate_CI[i,1] <- reg_model$coefficients[1]   
+  #   shape_CI[i,1] <- reg_model$coefficients[2] 
+  # }
+  # for (i in 1:3) {   
+  #   y <- log(as.numeric(unlist(haz_UB[[i]])))  
+  #   reg_model <- lm(y ~ age_grid)   
+  #   rate_CI[i,2] <- reg_model$coefficients[1]   
+  #   shape_CI[i,2] <- reg_model$coefficients[2] 
+  # }
+  #   
+  
+  set.seed(2024) 
+  n_bootstrap <- 1000 
+  rate_bootstrap <- matrix(NA, nrow = n_bootstrap, ncol = 3)
+  shape_bootstrap <- matrix(NA, nrow = n_bootstrap, ncol = 3)
+  
+  for (i in 1:3) {
+    for (b in 1:n_bootstrap) {
+    
+      sample_indices <- sample(1:length(haz_estimates[[i]]), replace = TRUE)
+      sample_haz <- unlist(haz_estimates[[i]])[sample_indices]
+      
+      age_grid <- seq(min_age, max_age, length.out = length(sample_haz))
+      y <- log(sample_haz)
+      reg_model <- lm(y ~ age_grid)
+      
+      rate_bootstrap[b, i] <- reg_model$coefficients[1]
+      shape_bootstrap[b, i] <- reg_model$coefficients[2]
+    }
+  }
+  
+  rate_CI <- apply(rate_bootstrap, 2, quantile, probs = c(0.025, 0.975))
+  shape_CI <- apply(shape_bootstrap, 2, quantile, probs = c(0.025, 0.975))
   
   coverage_msm_age <- matrix(0, nrow = 3, ncol = 3)
   
@@ -170,7 +208,6 @@ run_performance_coverage <- function(n_pats, scheme, seed){
       ci_upper <- ci[j, 2]
       coverage_msm_age[1, j] <- (ground_truth_params[1, j + 2] >= ci_lower) && (ground_truth_params[1, j + 2] <= ci_upper)
     }
-  
   ci <- model.msm_age$ci[8:10, ] 
   for (j in 1:nrow(ci)) {
   ci_lower <- ci[j, 1]
@@ -183,10 +220,13 @@ run_performance_coverage <- function(n_pats, scheme, seed){
   ci_upper <- ci[j, 2]
   coverage_msm_age[3, j] <- (ground_truth_params[3, j + 2] >= ci_lower) && (ground_truth_params[3, j + 2] <= ci_upper)
   }
+  
+  for (i in 1:3){
+    col1[i] <- (ground_truth_params[i,1] >= rate_CI[1,i]) && (ground_truth_params[i,1] <= rate_CI[2,i])
+    col2[i] <- (ground_truth_params[i,2] >= shape_CI[1,i]) && (ground_truth_params[i,2] <= shape_CI[2,i])
+  }
 
-  empty <- numeric(3)
-  empty[] <- NA  
-  coverage_msm_age <- cbind(empty, empty,coverage_msm_age)
+  coverage_msm_age <- cbind(col1,col2,coverage_msm_age)
   param_names <- colnames(ground_truth_params)
   colnames(coverage_msm_age) <- param_names 
   
