@@ -10,6 +10,8 @@ library(flexsurv)
 library(nhm)
 library(ggplot2)
 library(parallel)
+library(future)
+library(future.apply)
 
 # choose the sample size and upload accordingly the datset, either 500, 2K, 5K
 #setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI")
@@ -34,12 +36,12 @@ for (scheme in 2:5){
 }
 
 cores <- 4
-cores_nhm <- 4
+cores_nhm <- 1
 scheme <- 2
 
 # Mac
 for (scheme in 2:5) {
-  mclapply(1:100, function(seed) {
+  mclapply(1:2, function(seed) {
     data <- dataset_all_MM_500[[seed]][[scheme]]
     n_pats <- length(unique(data$patient_id))
     wrapper_functions_MM(data, n_pats, seed, cores_nhm)
@@ -50,9 +52,9 @@ for (scheme in 2:5) {
 # Windows
 for (scheme in 2:5) {
   cl <- makeCluster(cores)
-  clusterExport(cl, varlist = c("dataset_all_MM_500", "wrapper_functions_MM", "scheme", "prepare_coxph_flex.R", "prepare_msm.R", "prepare_imputation.R", "run_imputation.R" ))
+  clusterExport(cl, varlist = c("dataset_all_MM_500", "wrapper_functions_MM", "scheme", "prepare_coxph_flex", "prepare_msm", "prepare_imputation", "run_imputation" ))
   
-  results <- parLapply(cl, 1:100, function(seed) {
+  parLapply(cl, 1:2, function(seed) {
     data <- dataset_all_MM_500[[seed]][[scheme]]
     n_pats <- length(unique(data$patient_id))
     wrapper_functions_MM(data, n_pats, seed, cores_nhm)
@@ -61,3 +63,15 @@ for (scheme in 2:5) {
   stopCluster(cl)
 
 }
+
+
+plan(multisession)  
+for (scheme in 2:5) {
+  future_lapply(1:2, function(seed) {
+    data <- dataset_all_MM_500[[seed]][[scheme]]
+    n_pats <- length(unique(data$patient_id))
+    wrapper_functions_MM(data, n_pats, seed, cores_nhm)
+    #return(paste("Completed seed:", seed))
+  })
+}
+ hola
