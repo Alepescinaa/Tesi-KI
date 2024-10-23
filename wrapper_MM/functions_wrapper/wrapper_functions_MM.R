@@ -180,9 +180,6 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   } else {
     print("Model is NULL; not saving.")
   }
-
-
-  
   
   gc()
 
