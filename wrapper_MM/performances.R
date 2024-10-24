@@ -14,6 +14,8 @@ source("./functions_performance/run_performance_bias.R")
 source("./functions_performance/run_performance_coverage.R")
 source("./functions_performance/compute_CI.R")
 source("./functions_performance/compute_coverage.R")
+source("./functions_performance/get_params_nhm.R")
+
 
 n_pats <- 500
 scheme <-  2
