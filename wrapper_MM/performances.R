@@ -16,6 +16,8 @@ source("./functions_performance/compute_CI.R")
 source("./functions_performance/compute_coverage.R")
 source("./functions_performance/get_params_nhm.R")
 source("./functions_performance/mean_bias_comparison.R")
+source("./functions_performance/mean_coverage_comparison.R")
+source("./functions_performance/check_existence.R")
 
 setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
 
@@ -26,6 +28,17 @@ n_pats <- 500
 scheme <-  2
 cores <- 4
 
+######################
+# check of convergence
+######################
+
+res_checking <- vector(mode = "list", length = 100)
+for (seed in 1:100){
+  setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
+  res_checking[[seed]] <- check_existence(n_pats, scheme, seed)
+}
+
+res_checking <-  do.call(rbind, res_checking)
 
 #######################
 # bias comparison
@@ -58,9 +71,9 @@ for (scheme in 2:5){
   bias_all_schemes[[scheme-1]] <- results_bias
 }
 
-res <- vector(mode = "list", length = 4)
+res_bias <- vector(mode = "list", length = 4)
 for (scheme in 2:5){
-  res[[scheme-1]] <- mean_bias_comparison(bias_all_schemes, scheme)
+  res_bias[[scheme-1]] <- mean_bias_comparison(bias_all_schemes, scheme)
 }
 
 #######################
@@ -70,7 +83,7 @@ for (scheme in 2:5){
 coverage_all_schemes <- vector(mode = "list", length = 4)
 
 for (scheme in 2:5){
-  results_bias <- data.frame(
+  results_coverage <- data.frame(
     rate = numeric(0),
     shape = numeric(0),
     cov1 = numeric(0),
@@ -91,19 +104,8 @@ for (scheme in 2:5){
   coverage_all_schemes[[scheme-1]] <- results_coverage
   
 }
-# this would be a function comparing mean coverage berween models for each scheme 
-temp <- coverage_all_schemes[[1]]
-temp <- as.data.frame(temp)
-temp <- temp %>%
-  mutate(across(1:5, as.numeric))
 
-mean_coverage <- temp %>%
-  group_by(model, transition) %>%
-  summarise(
-    across(c(rate, shape, cov1, cov2, cov3), 
-           ~ round(mean(.x, na.rm = TRUE), 3)), 
-    .groups = 'drop'
-  )
-
-
-
+res_cov <- vector(mode = "list", length = 4)
+for (scheme in 2:5){
+  res_cov[[scheme-1]] <- mean_coverage_comparison(coverage_all_schemes, scheme)
+}

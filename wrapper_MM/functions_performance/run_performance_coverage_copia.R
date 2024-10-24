@@ -62,6 +62,7 @@ run_performance_coverage <- function(n_pats, scheme, seed) {
         load(file)
       } else {
         warning(paste("File does not exist:", file))
+        model_nhm <- NULL
       }
     }
   } else {
@@ -103,83 +104,103 @@ run_performance_coverage <- function(n_pats, scheme, seed) {
   # msm
   # ============
   
-  coverage_msm <- matrix(0, nrow = 3, ncol = 5)
-  
-  ci_lower_msm <- model.msm$ci[4:12, 1] # are ordered by transition ex 1.cov1,2.cov1,3.cov1,1.cov2,2.cov2..
-  ci_upper_msm <- model.msm$ci[4:12, 2]
-  
-  ci_lower_msm <- matrix(ci_lower_msm, nrow = 3, ncol = 3, byrow= T)
-  ci_upper_msm <- matrix(ci_upper_msm, nrow = 3, ncol = 3, byrow= T)
-  rownames(ci_lower_msm) <- c("cov1", "cov2", "cov3")
-  rownames(ci_upper_msm) <- c("cov1", "cov2", "cov3")
-  
-  coverage_msm <- compute_coverage(ci_lower_msm, ci_upper_msm, ground_truth_params)
-  coverage_msm[,1:2] <- NA
+  if (!is.null(model.msm$ci)){
+    coverage_msm <- matrix(0, nrow = 3, ncol = 5)
+    
+    ci_lower_msm <- model.msm$ci[4:12, 1] # are ordered by transition ex 1.cov1,2.cov1,3.cov1,1.cov2,2.cov2..
+    ci_upper_msm <- model.msm$ci[4:12, 2]
+    
+    ci_lower_msm <- matrix(ci_lower_msm, nrow = 3, ncol = 3, byrow= T)
+    ci_upper_msm <- matrix(ci_upper_msm, nrow = 3, ncol = 3, byrow= T)
+    rownames(ci_lower_msm) <- c("cov1", "cov2", "cov3")
+    rownames(ci_upper_msm) <- c("cov1", "cov2", "cov3")
+    
+    coverage_msm <- compute_coverage(ci_lower_msm, ci_upper_msm, ground_truth_params)
+    coverage_msm[,1:2] <- NA
+  } else{
+    coverage_msm <- matrix(NA, nrow = nrow(ground_truth_params), ncol = ncol(ground_truth_params))
+    colnames(coverage_msm) <- colnames(ground_truth_params)
+    rownames(coverage_msm) <- rownames(ground_truth_params)
+  }
+ 
   
   # ============
   # msm + age
   # ============
   
-  min_age <- min(model.msm_age$data[[1]]$age)
-  max_age <- max(model.msm_age$data[[1]]$age)
-  haz <- hazards_mine(model.msm_age, b.covariates = list(age = 0, cov1 = 0, cov2 = 0, cov3 = 0), no.years = 40, CI = F)
-  
-  haz_estimates <- numeric()
-  for (i in 1:3) {
-    haz_estimates[i] <- haz[[i]]
-  }
-  
-  set.seed(2024)
-  n_bootstrap <- 1000
-  rate_bootstrap <- matrix(NA, nrow = n_bootstrap, ncol = 3)
-  shape_bootstrap <- matrix(NA, nrow = n_bootstrap, ncol = 3)
-  
-  for (i in 1:3) {
-    for (b in 1:n_bootstrap) {
-      sample_indices <- sample(1:length(haz_estimates[[i]]), replace = TRUE)
-      sample_haz <- unlist(haz_estimates[[i]])[sample_indices]
-      
-      age_grid <- seq(min_age, max_age, length.out = length(sample_haz))
-      y <- log(sample_haz)
-      reg_model <- lm(y ~ age_grid)
-      
-      rate_bootstrap[b, i] <- reg_model$coefficients[1]
-      shape_bootstrap[b, i] <- reg_model$coefficients[2]
+  if (!is.null(model.msm_age$ci)){
+    min_age <- min(model.msm_age$data[[1]]$age)
+    max_age <- max(model.msm_age$data[[1]]$age)
+    haz <- hazards_mine(model.msm_age, b.covariates = list(age = 0, cov1 = 0, cov2 = 0, cov3 = 0), no.years = 40, CI = F)
+    
+    haz_estimates <- numeric()
+    for (i in 1:3) {
+      haz_estimates[i] <- haz[[i]]
     }
+    
+    set.seed(2024)
+    n_bootstrap <- 1000
+    rate_bootstrap <- matrix(NA, nrow = n_bootstrap, ncol = 3)
+    shape_bootstrap <- matrix(NA, nrow = n_bootstrap, ncol = 3)
+    
+    for (i in 1:3) {
+      for (b in 1:n_bootstrap) {
+        sample_indices <- sample(1:length(haz_estimates[[i]]), replace = TRUE)
+        sample_haz <- unlist(haz_estimates[[i]])[sample_indices]
+        
+        age_grid <- seq(min_age, max_age, length.out = length(sample_haz))
+        y <- log(sample_haz)
+        reg_model <- lm(y ~ age_grid)
+        
+        rate_bootstrap[b, i] <- reg_model$coefficients[1]
+        shape_bootstrap[b, i] <- reg_model$coefficients[2]
+      }
+    }
+    
+    rate_CI <- apply(rate_bootstrap, 2, quantile, probs = c(0.025, 0.975))
+    shape_CI <- apply(shape_bootstrap, 2, quantile, probs = c(0.025, 0.975))
+    
+    coverage_msm_age <- matrix(0, nrow = 3, ncol = 3)
+    
+    ci_lower_msm_age <- model.msm_age$ci[c(4:6, 8:10, 12:14), 1]
+    ci_upper_msm_age <- model.msm_age$ci[c(4:6, 8:10, 12:14), 2]
+    
+    ci_lower_msm_age <- matrix(ci_lower_msm_age, nrow = 3, ncol = 3, byrow=T)
+    ci_upper_msm_age <- matrix(ci_upper_msm_age, nrow = 3, ncol = 3, byrow=T)
+    
+    ci_lower_msm_age <- rbind(rate_CI[1, ], shape_CI[1, ], ci_lower_msm_age)
+    ci_upper_msm_age <- rbind(rate_CI[2, ], shape_CI[2, ], ci_upper_msm_age)
+    rownames(ci_lower_msm_age) <- c("rate", "shape", "cov1", "cov2", "cov3")
+    rownames(ci_upper_msm_age) <- c("rate", "shape", "cov1", "cov2", "cov3")
+    
+    coverage_msm_age <- compute_coverage(ci_lower_msm_age, ci_upper_msm_age, ground_truth_params)
+  } else{
+    coverage_msm_age <- matrix(NA, nrow = nrow(ground_truth_params), ncol = ncol(ground_truth_params))
+    colnames(coverage_msm_age) <- colnames(ground_truth_params)
+    rownames(coverage_msm_age) <- rownames(ground_truth_params)
   }
   
-  rate_CI <- apply(rate_bootstrap, 2, quantile, probs = c(0.025, 0.975))
-  shape_CI <- apply(shape_bootstrap, 2, quantile, probs = c(0.025, 0.975))
-  
-  coverage_msm_age <- matrix(0, nrow = 3, ncol = 3)
-  
-  ci_lower_msm_age <- model.msm_age$ci[c(4:6, 8:10, 12:14), 1]
-  ci_upper_msm_age <- model.msm_age$ci[c(4:6, 8:10, 12:14), 2]
-  
-  ci_lower_msm_age <- matrix(ci_lower_msm_age, nrow = 3, ncol = 3, byrow=T)
-  ci_upper_msm_age <- matrix(ci_upper_msm_age, nrow = 3, ncol = 3, byrow=T)
-  
-  ci_lower_msm_age <- rbind(rate_CI[1, ], shape_CI[1, ], ci_lower_msm_age)
-  ci_upper_msm_age <- rbind(rate_CI[2, ], shape_CI[2, ], ci_upper_msm_age)
-  rownames(ci_lower_msm_age) <- c("rate", "shape", "cov1", "cov2", "cov3")
-  rownames(ci_upper_msm_age) <- c("rate", "shape", "cov1", "cov2", "cov3")
-  
-  coverage_msm_age <- compute_coverage(ci_lower_msm_age, ci_upper_msm_age, ground_truth_params)
   
   # ========
   # nhm
   # ========
   
-  ci_nhm <- get_params_nhm(model_nhm, ci = TRUE)
-  
-  ci_lower_nhm <- ci_nhm[,2]
-  ci_lower_nhm <- matrix(ci_lower_nhm, 5, 3, byrow = T)
-  ci_upper_nhm <- ci_nhm[,3]
-  ci_upper_nhm <- matrix(ci_upper_nhm, 5, 3, byrow = T)
-  rownames(ci_lower_nhm) <- c("rate", "shape", "cov1", "cov2", "cov3")
-  rownames(ci_upper_nhm) <- c("rate", "shape", "cov1", "cov2", "cov3")
-  
-  coverage_nhm <- compute_coverage(ci_lower_nhm, ci_upper_nhm, ground_truth_params)
+  if (!is.null(model_nhm)){
+    ci_nhm <- get_params_nhm(model_nhm, ci = TRUE)
+    
+    ci_lower_nhm <- ci_nhm[,2]
+    ci_lower_nhm <- matrix(ci_lower_nhm, 5, 3, byrow = T)
+    ci_upper_nhm <- ci_nhm[,3]
+    ci_upper_nhm <- matrix(ci_upper_nhm, 5, 3, byrow = T)
+    rownames(ci_lower_nhm) <- c("rate", "shape", "cov1", "cov2", "cov3")
+    rownames(ci_upper_nhm) <- c("rate", "shape", "cov1", "cov2", "cov3")
+    
+    coverage_nhm <- compute_coverage(ci_lower_nhm, ci_upper_nhm, ground_truth_params)
+  } else {
+    coverage_nhm <- matrix(NA, nrow = nrow(ground_truth_params), ncol = ncol(ground_truth_params))
+    colnames(coverage_nhm) <- colnames(ground_truth_params)
+    rownames(coverage_nhm) <- rownames(ground_truth_params)
+    }
   
   # ============ 
   # imputation 
@@ -264,6 +285,7 @@ run_performance_coverage <- function(n_pats, scheme, seed) {
     cbind(coverage_flexsurv, model = "flexsurv", seed = seed, transition = c(1, 2, 3)),
     cbind(coverage_msm, model = "msm", seed = seed, transition = c(1, 2, 3)),
     cbind(coverage_msm_age, model = "msm_age", seed = seed, transition = c(1, 2, 3)),
+    cbind(coverage_nhm, model = "nhm", seed = seed, transition = c(1, 2, 3)),
     cbind(coverage_imputation, model = "imputation", seed = seed, transition = c(1, 2, 3))
   )
   
