@@ -61,6 +61,7 @@ run_performance_bias <- function(n_pats, scheme, seed){
         load(file)
       } else {
         warning(paste("File does not exist:", file))
+        model_nhm <- NULL
       }
     }
   } else {
@@ -153,11 +154,19 @@ run_performance_bias <- function(n_pats, scheme, seed){
   # nhm
   # ============
   
-  # params_nhm <- matrix(model_nhm$par, nrow = 3, ncol = 5) 
-  # params_nhm <- cbind(params_nhm, exp(params_nhm[,3]), exp(params_nhm[,4]), exp(params_nhm[,5]))
-  # colnames(params_nhm) <- colnames(ground_truth_params)
-  # 
-  # bias_nhm <- compute_bias(params_nhm, ground_truth_params)
+  if (!is.null(model_nhm)){
+    params_nhm <- matrix(model_nhm$par, nrow = 3, ncol = 5)
+    params_nhm <- cbind(params_nhm, exp(params_nhm[,3]), exp(params_nhm[,4]), exp(params_nhm[,5]))
+    colnames(params_nhm) <- colnames(ground_truth_params)
+    
+    bias_nhm <- compute_bias(params_nhm, ground_truth_params)
+  } else{
+    bias_nhm <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
+    colnames(bias_nhm) <- colnames(ground_truth_params)
+    rownames(bias_nhm) <- rownames(ground_truth_params)
+    
+  }
+  
   # 
   # ============
   # imputation
@@ -175,7 +184,7 @@ run_performance_bias <- function(n_pats, scheme, seed){
     cbind(bias_flexsurv, model = "flexusrv", seed = seed, transition = c(1,2,3)),
     cbind(bias_msm, model = "msm", seed = seed, transition = c(1,2,3)),
     cbind(bias_msm_age, model = "msm_age", seed = seed, transition = c(1,2,3)),
-    # cbind(bias_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
+    cbind(bias_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
     cbind(bias_imputation, model = "imputation", seed = seed, transition = c(1,2,3))
   )
   
