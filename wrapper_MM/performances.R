@@ -18,6 +18,7 @@ source("./functions_performance/get_params_nhm.R")
 source("./functions_performance/mean_bias_comparison.R")
 source("./functions_performance/mean_coverage_comparison.R")
 source("./functions_performance/check_convergence.R")
+source("./functions_performance/wrapper_convergence.R")
 
 setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
 
@@ -32,13 +33,13 @@ cores <- 4
 # check of convergence
 ######################
 
-res_checking <- vector(mode = "list", length = 100)
-for (seed in 1:100){
-  setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
-  res_checking[[seed]] <- check_convergence(n_pats, scheme, seed)
+convergence_schemes <- vector(mode = "data", length = 4)
+
+for (scheme in 2:5){
+  convergence_schemes[[scheme-1]] <- wrapper_convergence(n_pats, scheme, seed )
 }
 
-res_checking <-  do.call(rbind, res_checking)
+
 
 #######################
 # bias comparison
