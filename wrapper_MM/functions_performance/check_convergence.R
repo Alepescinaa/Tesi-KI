@@ -3,6 +3,7 @@ check_convergence <- function(n_pats, scheme, seed) {
   nhm_computed <- 0
   converged_msm <- 1
   converged_msm_age <- 1
+  converged_coxph <- 1
   
   if (n_pats == 500){
     if (scheme == 2){
@@ -50,7 +51,7 @@ check_convergence <- function(n_pats, scheme, seed) {
   if (dir.exists(seed_dir)) {
     setwd(seed_dir)
     files_to_check <- c("model_nhm.RData")
-    files_to_load <- c("msm_model.RData", "model_msm_age.RData")
+    files_to_load <- c("msm_model.RData", "model_msm_age.RData", "cox_model.RData")
       if (file.exists(files_to_check)) {
         nhm_computed <- 1
       } else {
@@ -67,8 +68,10 @@ check_convergence <- function(n_pats, scheme, seed) {
     converged_msm <- 0
   if (is.null(model.msm_age$covmat)) 
     converged_msm_age <- 0
-  
-  return(list(nhm_computed=nhm_computed, converged_msm=converged_msm, converged_msm_age=converged_msm_age ))
+  if (any(c(det(model_cox[[1]]$var), det(model_cox[[2]]$var), det(model_cox[[3]]$var)) < 1e-4)) 
+    converged_coxph <- 0
+    
+  return(list(nhm_computed=nhm_computed, converged_msm=converged_msm, converged_msm_age=converged_msm_age, converged_coxph= converged_coxph))
 }
 
 

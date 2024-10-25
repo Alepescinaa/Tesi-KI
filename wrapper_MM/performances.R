@@ -22,6 +22,7 @@ source("./functions_performance/mean_coverage_comparison.R")
 source("./functions_performance/check_convergence.R")
 source("./functions_performance/wrapper_convergence.R")
 source("./functions_performance/plot_convergence.R")
+source("./functions_performance/plot_bias.R")
 
 setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
 
@@ -29,7 +30,7 @@ setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo 
 # select number of patients and core to use 
 
 n_pats <- 500
-scheme <-  2
+scheme <-  4
 cores <- 4
 
 ######################
@@ -41,8 +42,6 @@ convergence_schemes <- vector(mode = "list", length = 4)
 for (scheme in 2:5){
   convergence_schemes[[scheme-1]] <- wrapper_convergence(n_pats, scheme, seed )
 }
-
-
 
 #######################
 # bias comparison
@@ -120,7 +119,21 @@ for (scheme in 2:5){
 ##########
 
 titles <- c("Convergence for scheme 1y", "Convergence for scheme 3y", "Convergence for Snac-k", "Convergence for UkBiobank")
+par(mfrow = c(2, 2))
+plot_convergence(2, titles)
+plot_convergence(3, titles)
+plot_convergence(4, titles)
+plot_convergence(5, titles)
 
-for (scheme in 2:5){
-  plot_convergence(scheme, titles)
-}
+titles <- c("Bias for scheme 1y", "Bias for scheme 3y", "Bias for Snac-k", "Bias for UkBiobank")
+plot_bias(2, titles)
+plot_bias(3, titles)
+plot_bias(4, titles)
+plot_bias(5, titles)
+
+# keep in mind that in these estimates of the bias are accounted also those models for which convergence was reached but
+# but not to the optimum, so that might increase bias extremely
+# yess much better removing them from the computation
+
+
+
