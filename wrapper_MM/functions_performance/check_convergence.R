@@ -1,4 +1,4 @@
-check_existence <- function(n_pats, scheme, seed) {
+check_convergence <- function(n_pats, scheme, seed) {
   
   nhm_computed <- 0
   converged_msm <- 1
@@ -63,10 +63,29 @@ check_existence <- function(n_pats, scheme, seed) {
     warning(paste("Seed directory does not exist:", seed_dir))
   }
   
-  if (model.msm$opt$convergence!=0)
+  if (is.null(model.msm$covmat))
     converged_msm <- 0
-  if (model.msm_age$opt$convergence!=0) 
+  if (is.null(model.msm_age$covmat)) 
     converged_msm_age <- 0
   
   return(list(nhm_computed=nhm_computed, converged_msm=converged_msm, converged_msm_age=converged_msm_age ))
 }
+
+
+# what are we checking here?
+# if the model nhm has been computed
+# -> if not it means that the transition probability matrix is singular for some intervals of time
+# By default nhm finds the transition probabilities by solving a single initial value problem for each unique covariate pattern. 
+# Specifically solves a single system of differential equations starting from 0 to obtain P(0,t) for each t, then uses it to   
+# find P(t0,t)=P(0,t0)^-1*P(0,t) for t0>0 
+# The method relies on the fact that P(0,t0) is invertible, if the algorithm fails because of the presence of a 
+# singular matrix a message error is raised. This problem can be solved by split option in control.
+# If a split s is given, P(t0,t) will be find by solving the system of equations for P(t*,t) where t0>t* 
+# and t* closest to the s  (that apparently is not always working for me also in those cases I had a warning form 
+# LSODA asking for increasing step size )
+
+# if the covariance matrix of the estimated parameter has been computed for msm model and msm_age model
+# -> if not we won't compute the confidence intervals. The cov matrix = H^-1 so it is NULL when the Hessian is not definite positive.
+# This means that actually the global maximum of the likelihood has not been reached but if optmim reports that convergence is 
+# reached it means that the criteria imposed has been satisfied so parameters were not improving anymore. We could try to select
+# other criteria or intial values or other method for algorithm...

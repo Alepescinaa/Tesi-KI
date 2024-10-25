@@ -11,13 +11,13 @@ load("ground_truthMM.RData")
 source("./functions_performance/compute_bias.R")
 source("./functions_performance/hazards_mine.R")
 source("./functions_performance/run_performance_bias.R")
-source("./functions_performance/run_performance_coverage_copia.R")
+source("./functions_performance/run_performance_coverage.R")
 source("./functions_performance/compute_CI.R")
 source("./functions_performance/compute_coverage.R")
 source("./functions_performance/get_params_nhm.R")
 source("./functions_performance/mean_bias_comparison.R")
 source("./functions_performance/mean_coverage_comparison.R")
-source("./functions_performance/check_existence.R")
+source("./functions_performance/check_convergence.R")
 
 setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
 
@@ -35,7 +35,7 @@ cores <- 4
 res_checking <- vector(mode = "list", length = 100)
 for (seed in 1:100){
   setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
-  res_checking[[seed]] <- check_existence(n_pats, scheme, seed)
+  res_checking[[seed]] <- check_convergence(n_pats, scheme, seed)
 }
 
 res_checking <-  do.call(rbind, res_checking)
