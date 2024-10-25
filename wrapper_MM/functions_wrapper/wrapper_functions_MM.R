@@ -152,6 +152,7 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
 
       model_nhm <- nhm(object_nhm,
                        gen_inits = TRUE,
+                       #initial = initial_guess,
                        score_test = FALSE,
                        control = nhm.control(ncores = cores_nhm, obsinfo = FALSE, coarsen = T, coarsen.vars = c(1), coarsen.lv = 10))
     },
@@ -167,9 +168,6 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   } else {
     print("Model fitted successfully.")
   }
-
-  #comp.time 500 pats, no coarsening 30 min
-  #comp.time 500 pats, coarsening to 10 values 5min
 
 
   comp_time[5] <- as.numeric(round(time_nhm,3))
