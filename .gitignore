@@ -56,3 +56,9 @@ Simulated_data_MM/
 
 # Ignore Simulated_data_SM folder
 Simulated_data_SM/
+
+# Ignore Fitted models for all samples sizes
+results_500/
+results_2K/
+results_5K/
+results_10K/
