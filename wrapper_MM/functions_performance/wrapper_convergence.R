@@ -10,5 +10,5 @@ wrapper_convergence <- function(n_pats, scheme, seed){
   res_checking <- res_checking %>%
     mutate(across(1:3, as.numeric))
   res_checking <- rbind(res_checking, colMeans(res_checking)) 
-  rerturn(res_checking)
+  return(res_checking)
 }

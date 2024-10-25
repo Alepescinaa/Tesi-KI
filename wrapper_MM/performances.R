@@ -4,8 +4,10 @@
 
 library(fs)
 library(elect)
-library(dplyr)
 library(parallel)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
 
 load("ground_truthMM.RData")
 source("./functions_performance/compute_bias.R")
@@ -19,6 +21,7 @@ source("./functions_performance/mean_bias_comparison.R")
 source("./functions_performance/mean_coverage_comparison.R")
 source("./functions_performance/check_convergence.R")
 source("./functions_performance/wrapper_convergence.R")
+source("./functions_performance/plot_convergence.R")
 
 setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
 
@@ -33,7 +36,7 @@ cores <- 4
 # check of convergence
 ######################
 
-convergence_schemes <- vector(mode = "data", length = 4)
+convergence_schemes <- vector(mode = "list", length = 4)
 
 for (scheme in 2:5){
   convergence_schemes[[scheme-1]] <- wrapper_convergence(n_pats, scheme, seed )
@@ -109,4 +112,15 @@ for (scheme in 2:5){
 res_cov <- vector(mode = "list", length = 4)
 for (scheme in 2:5){
   res_cov[[scheme-1]] <- mean_coverage_comparison(coverage_all_schemes, scheme)
+}
+
+
+##########
+# Plots
+##########
+
+titles <- c("Convergence for scheme 1y", "Convergence for scheme 3y", "Convergence for Snac-k", "Convergence for UkBiobank")
+
+for (scheme in 2:5){
+  plot_convergence(scheme, titles)
 }
