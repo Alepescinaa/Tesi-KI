@@ -51,7 +51,7 @@ for (scheme in 2:5) {
 # Windows
 plan(multisession, workers = cores)  
 for (scheme in 2:5) {
-  future_lapply(1:2, function(seed) {
+  future_lapply(1:100, function(seed) {
     data <- dataset_all_MM_500[[seed]][[scheme]]
     n_pats <- length(unique(data$patient_id))
     wrapper_functions_MM(data, n_pats, seed, cores_nhm)

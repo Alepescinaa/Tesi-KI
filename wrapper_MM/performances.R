@@ -24,6 +24,8 @@ source("./functions_performance/wrapper_convergence.R")
 source("./functions_performance/plot_convergence.R")
 source("./functions_performance/plot_bias.R")
 source("./functions_performance/plot_coverage.R")
+source("./functions_performance/extract_comp_time.R")
+source("./functions_performance/plot_ct.R")
 
 
 setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
@@ -116,6 +118,26 @@ for (scheme in 2:5){
 }
 
 
+
+#####################
+# computational time
+#####################
+
+ct_all_schemes <- vector(mode = "list", length = 4)
+
+for (scheme in 2:5){
+  results_list <- mclapply(1:100, function(seed) {
+    setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
+    temp_results <- extract_comp_time(n_pats, scheme, seed)
+    return(temp_results)  
+  }, mc.cores = cores)
+  
+  results_ct <- do.call(rbind, results_list)
+  
+  ct_all_schemes[[scheme-1]] <- results_ct
+}
+
+
 ##########
 # Plots
 ##########
@@ -143,4 +165,29 @@ plot_coverage(2, titles)
 plot_coverage(3, titles)
 plot_coverage(4, titles)
 plot_coverage(5, titles)
+
+titles <- c("Mean CT for scheme 1y", "Mean CT for scheme 3y", "Mean CT  for Snac-k", "Mean CT  for UkBiobank")
+plot_ct(2, titles)
+plot_ct(3, titles)
+plot_ct(4, titles)
+plot_ct(5, titles)
+
+setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
+if (n_pats==500){
+  model_dir <- paste0("saved_performance_500")
+  dir.create(model_dir, showWarnings = FALSE, recursive= T)
+} else if (n_pats==2000){
+  model_dir <- paste0("saved_performance_2K", seed)
+  dir.create(model_dir, showWarnings = FALSE, recursive= T)
+} else if (n_pats==5000){
+  model_dir <- paste0("saved_performance_5K", seed)
+  dir.create(model_dir, showWarnings = FALSE, recursive= T)  
+} else if (n_pats==10000){
+  model_dir <- paste0("saved_performance_10K", seed)
+  dir.create(model_dir, showWarnings = FALSE, recursive= T)  }
+
+save(convergence_schemes, file = file.path(model_dir,"convergence.RData"))
+save(res_bias, file = file.path(model_dir,"bias.RData"))
+save(res_cov, file = file.path(model_dir,"95%coverage.RData"))
+save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
 
