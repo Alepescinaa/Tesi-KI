@@ -87,8 +87,8 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   
   temp <- prepare_msm(data)
   
-  # min_age <- min(temp$age)
-  # temp$age <- temp$age - min_age
+  min_age <- min(temp$age)
+  temp$age <- temp$age - min_age
 
 
   time_msm_age<- system.time({
@@ -97,7 +97,7 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
                          data = temp,
                          qmatrix = initial_guess_age,
                          covariates = ~ cov1 + cov2 + cov3 + age ,
-                         gen.inits= TRUE,
+                         gen.inits= FALSE,
                          control = list(fnscale = 1000, maxit = 1000),
                          censor = 99,
                          center= FALSE,
@@ -124,11 +124,11 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   temp=as.data.frame(temp)
 
   find_splits <- function(age) {
-    quantiles <- quantile(age, probs = seq(0, 1, 0.1))
+    quantiles <- quantile(age, probs = seq(0, 1, 0.05))
     return(quantiles[-c(1, length(quantiles))])
   }
 
-  split_points <- find_splits(temp$age)[6:9]
+  split_points <- find_splits(temp$age)[10:19]
 
   initial_guess <-  append(msm_estimates, rep(0.5, 3), after = 3)
   # we have estimates for rate and covs, so we add initial estimate to 0.5 of shape -> not helping
@@ -154,7 +154,7 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
                        gen_inits = TRUE,
                        #initial = initial_guess,
                        score_test = FALSE,
-                       control = nhm.control(ncores = cores_nhm, obsinfo = FALSE, coarsen = T, coarsen.vars = c(1), coarsen.lv = 10))
+                       control = nhm.control(ncores = cores_nhm, obsinfo = FALSE, coarsen = T, coarsen.vars = c(1), coarsen.lv = 10, splits = split_points))
     },
     error = function(e) {
       print(paste("Error during model fitting:", e$message))
