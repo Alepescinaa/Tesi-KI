@@ -8,6 +8,7 @@ library(parallel)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(patchwork)
 
 load("ground_truthMM.RData")
 source("./functions_performance/compute_bias.R")
@@ -25,7 +26,9 @@ source("./functions_performance/plot_convergence.R")
 source("./functions_performance/plot_bias.R")
 source("./functions_performance/plot_coverage.R")
 source("./functions_performance/extract_comp_time.R")
+source("./functions_performance/plot_boxplot.R")
 source("./functions_performance/plot_ct.R")
+source("./functions_performance/prepare_data_boxplot.R")
 
 
 setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
@@ -34,8 +37,8 @@ setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo 
 # select number of patients and core to use 
 
 n_pats <- 500
-scheme <-  4
 cores <- 4
+scheme <- 4
 
 ######################
 # check of convergence
@@ -82,6 +85,8 @@ res_bias <- vector(mode = "list", length = 4)
 for (scheme in 2:5){
   res_bias[[scheme-1]] <- mean_bias_comparison(bias_all_schemes, scheme)
 }
+
+
 
 #######################
 # coverage comparison
@@ -160,6 +165,18 @@ plot_bias(5, titles)
 # yess much better removing them from the computation
 # coxph performance for wide intervals performs really bad on some datasets
 
+# choose scheme 
+scheme <- 3 #2:5
+list_data <- prepare_data_boxplot(scheme)
+
+parameters <- c("cov1","cov2","cov3","rate","shape")
+plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[1])
+plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[2])
+plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[3])
+plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[4])
+plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[5])
+
+
 titles <- c("95% Coverage for scheme 1y", "95% Coverage for scheme 3y", "95% Coverage for Snac-k", "95% Coverage for UkBiobank")
 plot_coverage(2, titles)
 plot_coverage(3, titles)
@@ -186,8 +203,10 @@ if (n_pats==500){
   model_dir <- paste0("saved_performance_10K", seed)
   dir.create(model_dir, showWarnings = FALSE, recursive= T)  }
 
-save(convergence_schemes, file = file.path(model_dir,"convergence.RData"))
-save(res_bias, file = file.path(model_dir,"bias.RData"))
-save(res_cov, file = file.path(model_dir,"95%coverage.RData"))
-save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
+# save(convergence_schemes, file = file.path(model_dir,"convergence.RData"))
+# save(res_bias, file = file.path(model_dir,"bias.RData"))
+# save(res_cov, file = file.path(model_dir,"95%coverage.RData"))
+# save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
+# 
+# 
 

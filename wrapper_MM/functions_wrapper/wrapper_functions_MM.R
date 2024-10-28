@@ -4,16 +4,16 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   
   
   if (scheme==2){
-    model_dir <- paste0("results_500/saved_models_scheme2/seed_", seed)
+    model_dir <- paste0("results_5K/saved_models_scheme2/seed_", seed)
     dir.create(model_dir, showWarnings = FALSE, recursive= T)
   } else if (scheme==3){
-    model_dir <- paste0("results_500/saved_models_scheme3/seed_", seed)
+    model_dir <- paste0("results_5K/saved_models_scheme3/seed_", seed)
     dir.create(model_dir, showWarnings = FALSE, recursive= T)
   } else if (scheme==4){
-    model_dir <- paste0("results_500/saved_models_scheme4/seed_", seed)
+    model_dir <- paste0("results_5K/saved_models_scheme4/seed_", seed)
     dir.create(model_dir, showWarnings = FALSE, recursive= T)  
   } else if (scheme==5){
-    model_dir <- paste0("results_500/saved_models_scheme5/seed_", seed)
+    model_dir <- paste0("results_5K/saved_models_scheme5/seed_", seed)
     dir.create(model_dir, showWarnings = FALSE, recursive= T)  }
   
   #####################

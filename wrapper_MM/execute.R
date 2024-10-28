@@ -15,7 +15,8 @@ library(future.apply)
 
 # choose the sample size and upload accordingly the datset, either 500, 2K, 5K
 #setwd("./Tesi-KI")
-load("./Simulated_data_MM/simulation500_MM_all.RData")
+load("./Simulated_data_MM/simulation5K_MM_all.RData")
+
 
 setwd("./wrapper_MM")
 source("./functions_wrapper/prepare_coxph_flex.R")
@@ -25,34 +26,34 @@ source("./functions_wrapper/run_imputation.R")
 source("./functions_wrapper/wrapper_functions_MM.R")
 
 # loop
-for (scheme in 2:5){
-  for (seed in 1:2){
-    data <-dataset_all_MM_500[[seed]][[scheme]]
-    n_pats <- length(unique(data$patient_id))
-    wrapper_functions_MM(data, n_pats, seed, cores_nhm)
-    print("models completed for seed_", seed)
-  }
-}
+# for (scheme in 2:5){
+#   for (seed in 1:2){
+#     data <-dataset_all_MM_500[[seed]][[scheme]]
+#     n_pats <- length(unique(data$patient_id))
+#     wrapper_functions_MM(data, n_pats, seed, cores_nhm)
+#     print("models completed for seed_", seed)
+#   }
+# }
+
+
+# Mac
+# for (scheme in 2:5) {
+#   mclapply(1:2, function(seed) {
+#     data <- dataset_all_MM_500[[seed]][[scheme]]
+#     n_pats <- length(unique(data$patient_id))
+#     wrapper_functions_MM(data, n_pats, seed, cores_nhm)
+#     }, mc.cores = cores)
+# }
+
 
 cores <- 4
 cores_nhm <- 4
-scheme <- 2
-
-# Mac
-for (scheme in 2:5) {
-  mclapply(1:2, function(seed) {
-    data <- dataset_all_MM_500[[seed]][[scheme]]
-    n_pats <- length(unique(data$patient_id))
-    wrapper_functions_MM(data, n_pats, seed, cores_nhm)
-    }, mc.cores = cores)
-}
-
 
 # Windows
 plan(multisession, workers = cores)  
 for (scheme in 2:5) {
   future_lapply(1:100, function(seed) {
-    data <- dataset_all_MM_500[[seed]][[scheme]]
+    data <- dataset_all_MM_5K[[seed]][[scheme]] 
     n_pats <- length(unique(data$patient_id))
     wrapper_functions_MM(data, n_pats, seed, cores_nhm)
     return(paste("Completed seed:", seed))
