@@ -8,15 +8,7 @@ plot_bias <- function (scheme, titles){
   # df_long <- df_long %>%
   #   select(-exp(cov1), -exp(cov2), -exp(cov3))
   # 
-  ggplot(df_long, aes(x = model, y = bias, fill = model)) +
-    geom_point() +  
-    facet_wrap(~ parameter, scales = "free") +
-    labs(title = "Bias Comparison Across Models",
-         x = "Model",
-         y = "Bias") +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  
+
   ggplot(df_long, aes(x = model, y = bias, color = model, shape = transition)) +
     geom_point(size = 3) +  # You can adjust the size of the points if needed
     facet_wrap(~ parameter, scales = "free") +
