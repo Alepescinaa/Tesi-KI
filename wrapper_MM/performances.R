@@ -21,6 +21,7 @@ source("./functions_performance/get_params_nhm.R")
 source("./functions_performance/mean_bias_comparison.R")
 source("./functions_performance/mean_coverage_comparison.R")
 source("./functions_performance/check_convergence.R")
+source("./functions_performance/level_convergence.R")
 source("./functions_performance/wrapper_convergence.R")
 source("./functions_performance/plot_convergence.R")
 source("./functions_performance/plot_bias.R")
@@ -44,10 +45,25 @@ scheme <- 4
 # check of convergence
 ######################
 
+temp <- vector(mode = "list", length = 4)
 convergence_schemes <- vector(mode = "list", length = 4)
+hessian_schemes <- vector(mode = "list", length = 4)
 
 for (scheme in 2:5){
-  convergence_schemes[[scheme-1]] <- wrapper_convergence(n_pats, scheme, seed )
+  temp[[scheme-1]] <- wrapper_convergence(n_pats, scheme, seed )
+  convergence_schemes[[scheme-1]] <- temp[[scheme-1]][[1]]
+  hessian_schemes[[scheme-1]] <- temp[[scheme-1]][[2]]
+}
+
+# we set combined_conv in the following way, for each method
+# 0 if algorithm criteria of convergence were not met 
+# 1 if the algorithm converged but not to the optimum, so no hessian exists (a bit different for coxph)
+# 2 if the algorithm converged to the optimum
+
+combined_cov <- vector(mode = "list", length = 4)
+
+for (scheme in 2:5){
+  combined_cov[[scheme-1]] <- level_convergence(scheme)
 }
 
 #######################
@@ -148,7 +164,6 @@ for (scheme in 2:5){
 ##########
 
 titles <- c("Convergence for scheme 1y", "Convergence for scheme 3y", "Convergence for Snac-k", "Convergence for UkBiobank")
-par(mfrow = c(2, 2))
 plot_convergence(2, titles)
 plot_convergence(3, titles)
 plot_convergence(4, titles)
@@ -166,7 +181,7 @@ plot_bias(5, titles)
 # coxph performance for wide intervals performs really bad on some datasets
 
 # choose scheme 
-scheme <- 3 #2:5
+scheme <- 4 #2:5
 list_data <- prepare_data_boxplot(scheme)
 
 parameters <- c("cov1","cov2","cov3","rate","shape")
@@ -204,6 +219,7 @@ if (n_pats==500){
   dir.create(model_dir, showWarnings = FALSE, recursive= T)  }
 
 # save(convergence_schemes, file = file.path(model_dir,"convergence.RData"))
+#save(bias_all_schemes, file = file.path(model_dir,"all_bias.RData"))
 # save(res_bias, file = file.path(model_dir,"bias.RData"))
 # save(res_cov, file = file.path(model_dir,"95%coverage.RData"))
 # save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))

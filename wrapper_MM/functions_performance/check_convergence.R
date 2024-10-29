@@ -1,12 +1,5 @@
 check_convergence <- function(n_pats, scheme, seed) {
   
-  nhm_computed <- 0
-  converged_msm <- 1
-  converged_msm_age <- 1
-  converged_coxph <- 1
-  converged_flexsurv <- 1
-  converged_imp <- 1
-  
   if (n_pats == 500){
     if (scheme == 2){
       scheme_dir <- "results_500/saved_models_scheme2"
@@ -54,10 +47,12 @@ check_convergence <- function(n_pats, scheme, seed) {
     setwd(seed_dir)
     files_to_check <- c("model_nhm.RData")
     files_to_load <- c("msm_model.RData", "model_msm_age.RData", "cox_model.RData", "flexsurv_model.RData", "results_imp.RData")
-      if (file.exists(files_to_check)) {
-        nhm_computed <- 1
+      
+    if (!file.exists(files_to_check)) {
+      model_nhm <- NULL
+      warning(paste("File does not exist:", files_to_check))
       } else {
-        warning(paste("File does not exist:", files_to_check))
+        load(files_to_check)
       }
     for (i in files_to_load ){
       model <- load(i)
@@ -66,14 +61,91 @@ check_convergence <- function(n_pats, scheme, seed) {
     warning(paste("Seed directory does not exist:", seed_dir))
   }
   
-  if (is.null(model.msm$covmat))
-    converged_msm <- 0
-  if (is.null(model.msm_age$covmat)) 
-    converged_msm_age <- 0
-  if (any(c(det(model_cox[[1]]$var), det(model_cox[[2]]$var), det(model_cox[[3]]$var)) < 1e-4)) 
-    converged_coxph <- 0
+  models_imp <- results_imp[[2]]
+  
+  convergence_results <- tibble( # value to zero no convergence of the algorithm (1 in msm mean reached maxiter)
+    converged_coxph = 1,
+    converged_flexsurv = 1,
+    converged_nhm = 1,
+    converged_msm = 1,
+    converged_msm_age = 1,
+    converged_imp = 1
+  )
+  
+  if (any(c(model_cox[[1]]$info[[4]], model_cox[[2]]$info[[4]], model_cox[[3]]$info[[4]]) != 0)) {
+    convergence_results$converged_coxph <- 0
+  }
+  
+  if (any(c(fits_gompertz[[1]]$opt$convergence, 
+            fits_gompertz[[2]]$opt$convergence, 
+            fits_gompertz[[3]]$opt$convergence) != 0)) {
+    convergence_results$converged_flexsurv <- 0
+  }
+  
+  if (model.msm$opt$convergence != 0) {
+    convergence_results$converged_msm <- 0
+  }
+
+  if (model.msm_age$opt$convergence != 0) {
+    convergence_results$converged_msm_age <- 0
+  }
+  
+  if (is.null(model_nhm)) {
+    convergence_results$converged_nhm <- 0
+  }
+  
+  for (i in 1:length(models_imp)) {
+    if (any(c(models_imp[[i]][[1]]$opt$convergence, 
+              models_imp[[i]][[2]]$opt$convergence,
+              models_imp[[i]][[3]]$opt$convergence) != 0)) {
+      convergence_results$converged_imp <- 0
+    }
+  }
+  
+  
+  hessian_results <- tibble( # value to zero no definite positive hessian -> no convergence to optimum
+    hessian_coxph = 1,
+    hessian_flexsurv = 1,
+    hessian_nhm = 0,
+    hessian_msm = 1,
+    hessian_msm_age = 1,
+    hessian_imp = 1
+  )
+  
+
+
+  if (any(c(det(model_cox[[1]]$var), det(model_cox[[2]]$var), det(model_cox[[3]]$var)) < 1e-4)) {
+    hessian_results$hessian_coxph <- 0
+  }
+  
+  if (any(c(eigen(fits_gompertz[[1]]$opt$hessian)$values, 
+            eigen(fits_gompertz[[2]]$opt$hessian)$values, 
+            eigen(fits_gompertz[[3]]$opt$hessian)$values) < 0)) {
+    hessian_results$hessian_flexsurv <- 0
+  }
+  
+  if (any(eigen(model.msm$opt$hessian)$values < 0)) {
+    hessian_results$hessian_msm <- 0
+  }
+  
+  if (any(eigen(model.msm_age$opt$hessian)$values < 0)) {
+    hessian_results$hessian_msm_age <- 0
+  }
+  
+  if (!is.null(model_nhm) && all(eigen(model_nhm$hess)$values >0)) {
+    hessian_results$hessian_nhm <- 1
+  }
+  
+  for (i in 1:length(models_imp)) {
+    if (any(c(eigen(models_imp[[i]][[1]]$opt$hessian)$values, 
+              eigen(models_imp[[i]][[2]]$opt$hessian)$values, 
+              eigen(models_imp[[i]][[3]]$opt$hessian)$values) < 0)) {
+      hessian_results$converged_imp <- 0
+    }
+  }
     
-  return(list(nhm_computed=nhm_computed, converged_msm=converged_msm, converged_msm_age=converged_msm_age, converged_coxph= converged_coxph))
+  return(list(convergence_results = convergence_results, hessian_results = hessian_results))
+  
 }
 
 
