@@ -39,7 +39,7 @@ setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo 
 
 n_pats <- 500
 cores <- 4
-scheme <- 4
+#scheme <- 4
 
 ######################
 # check of convergence
@@ -88,7 +88,7 @@ for (scheme in 2:5){
   
   results_list <- mclapply(1:100, function(seed) {
     setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
-    temp_results <- run_performance_bias(n_pats, scheme, seed)
+    temp_results <- run_performance_bias(n_pats, scheme, seed, combined_cov[[scheme-1]])
     return(temp_results)  
   }, mc.cores = cores)
   
@@ -123,7 +123,7 @@ for (scheme in 2:5){
   
   results_list <- mclapply(1:100, function(seed) {
     setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
-    temp_results <- run_performance_coverage(n_pats, scheme, seed)
+    temp_results <- run_performance_coverage(n_pats, scheme, seed, combined_cov[[scheme-1]])
     return(temp_results)  
   }, mc.cores = cores)
   
