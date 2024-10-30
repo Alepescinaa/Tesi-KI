@@ -223,23 +223,24 @@ plot_ct(3, titles, combined_cov[[2]])
 plot_ct(4, titles, combined_cov[[3]])
 plot_ct(5, titles, combined_cov[[4]])
 
-setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
+model_dir <- here()
+setwd(model_dir)
 if (n_pats==500){
-  model_dir <- paste0("saved_performance_500")
+  model_dir <- paste0("wrapper_MM/saved_performance_500")
   dir.create(model_dir, showWarnings = FALSE, recursive= T)
 } else if (n_pats==2000){
-  model_dir <- paste0("saved_performance_2K", seed)
+  model_dir <- paste0("wrapper_MM/saved_performance_2K")
   dir.create(model_dir, showWarnings = FALSE, recursive= T)
 } else if (n_pats==5000){
-  model_dir <- paste0("saved_performance_5K", seed)
+  model_dir <- paste0("wrapper_MM/saved_performance_5K")
   dir.create(model_dir, showWarnings = FALSE, recursive= T)  
 } else if (n_pats==10000){
-  model_dir <- paste0("saved_performance_10K", seed)
+  model_dir <- paste0("wrapper_MM/saved_performance_10K")
   dir.create(model_dir, showWarnings = FALSE, recursive= T)  }
 
-# save(convergence_schemes, file = file.path(model_dir,"convergence.RData"))
-#save(bias_all_schemes, file = file.path(model_dir,"all_bias.RData"))
-# save(res_bias, file = file.path(model_dir,"bias.RData"))
-# save(res_cov, file = file.path(model_dir,"95%coverage.RData"))
-# save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
-# 
+save(combined_cov, file = file.path(model_dir,"convergence.RData"))
+save(bias_all_schemes, file = file.path(model_dir,"all_bias.RData"))
+save(res_bias, file = file.path(model_dir,"bias.RData"))
+save(res_cov, file = file.path(model_dir,"95%coverage.RData"))
+save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
+ 
