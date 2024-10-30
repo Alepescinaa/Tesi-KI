@@ -25,7 +25,8 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     warning(paste("File does not exist:", file))
   }
   
-  
+  main_directory <- here()
+
   if (n_pats == 500){
     if (scheme == 2){
       scheme_dir <- file.path(main_directory, "wrapper_MM/results_500/saved_models_scheme2")
