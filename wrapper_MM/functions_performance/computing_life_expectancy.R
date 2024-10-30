@@ -89,7 +89,26 @@ computing_life_expectancy <- function(){
     warning(paste("Seed directory does not exist:", seed_dir))
   }
   
+  # ===============
+  # EO dataset
+  # ===============
   
+  fits_gompertz_EO[[1]]$covdadata
+  
+  tmat <- mstate::transMat(x = list(c(2, 3),c(3),c()), names = c("Dementia-free","Dementia", "Death")) 
+  totlos.fs(fits_gompertz_EO, trans=tmat <- mstate::transMat(x = list(c(2, 3),c(3),c()), names = c("Dementia-free","Dementia", "Death"))  , t=Inf)
+  
+  # ========
+  # msm
+  # ========
+  
+  totlos.msm(model.msm, t=Inf) 
+  
+  # ========
+  # msm_age
+  # ========
+  
+  totlos.msm(model.msm_age, t=Inf) 
   
 }
   
