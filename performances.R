@@ -153,6 +153,10 @@ for (scheme in 2:5){
 }
 
 
+#####################
+# life expectancy
+#####################
+
 
 #####################
 # computational time
@@ -171,6 +175,7 @@ for (scheme in 2:5){
   
   ct_all_schemes[[scheme-1]] <- results_ct
 }
+
 
 
 ##########
