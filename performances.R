@@ -12,6 +12,8 @@ library(patchwork)
 library(here)
 library(future)
 library(future.apply)
+library(mstate)
+library(flexsurv)
 
 setwd(here())
 
@@ -35,13 +37,22 @@ source("./wrapper_MM/functions_performance/extract_comp_time.R")
 source("./wrapper_MM/functions_performance/plot_boxplot.R")
 source("./wrapper_MM/functions_performance/plot_ct.R")
 source("./wrapper_MM/functions_performance/prepare_data_boxplot.R")
+source("./wrapper_MM/functions_performance/gt_flexsurv.R")
 
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 5000
+n_pats <- 500
 cores <- 4
 #scheme <- 4
+
+#######################################################
+# fitting parametric model over exactly observed data
+#######################################################
+
+# for (seed in 1:100){
+#   gt_flexsurv(n_pats, seed)
+# }
 
 ######################
 # check of convergence
@@ -67,6 +78,7 @@ combined_cov <- vector(mode = "list", length = 4)
 for (scheme in 2:5){
   combined_cov[[scheme-1]] <- level_convergence(scheme)
 }
+
 
 #######################
 # bias comparison
@@ -201,10 +213,10 @@ plot_coverage(4, titles)
 plot_coverage(5, titles)
 
 titles <- c("Mean CT for scheme 1y", "Mean CT for scheme 3y", "Mean CT  for Snac-k", "Mean CT  for UkBiobank")
-plot_ct(2, titles)
-plot_ct(3, titles)
-plot_ct(4, titles)
-plot_ct(5, titles)
+plot_ct(2, titles, combined_cov[[scheme - 1]])
+plot_ct(3, titles, combined_cov[[scheme - 1]])
+plot_ct(4, titles, combined_cov[[scheme - 1]])
+plot_ct(5, titles, combined_cov[[scheme - 1]])
 
 setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
 if (n_pats==500){
@@ -226,5 +238,3 @@ if (n_pats==500){
 # save(res_cov, file = file.path(model_dir,"95%coverage.RData"))
 # save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
 # 
-# 
-

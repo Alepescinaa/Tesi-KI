@@ -116,7 +116,7 @@ check_convergence <- function(n_pats, scheme, seed) {
   
 
 
-  if (any(c(det(model_cox[[1]]$var), det(model_cox[[2]]$var), det(model_cox[[3]]$var)) < 1e-5)) {
+  if (any(c(det(model_cox[[1]]$var), det(model_cox[[2]]$var), det(model_cox[[3]]$var)) < 1e-7)) {
     hessian_results$hessian_coxph <- 0
   }
   

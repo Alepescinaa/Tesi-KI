@@ -1,8 +1,31 @@
 run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
-  load("./wrapper_MM/ground_truthMM.RData")
+
   ground_truth_params <- ground_truth_params[, 1:5]
   
   main_directory <- here()
+  
+  if (n_pats == 500){
+    scheme_dir <- file.path(main_directory, "wrapper_MM/results_500/saved_models_scheme1")
+    seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
+  } else if (n_pats == 2000){
+    scheme_dir <- file.path(main_directory, "wrapper_MM/results_2K/saved_models_scheme1")
+    seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
+  }else if (n_pats == 5000){
+    scheme_dir <- file.path(main_directory, "wrapper_MM/results_5K/saved_models_scheme1")
+    seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
+  }else if (n_pats == 10000){
+    scheme_dir <- file.path(main_directory, "wrapper_MM/results_10K/saved_models_scheme1")
+    seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
+  }
+  
+  setwd(seed_dir)
+  file <- "fits_gompertz_EO.RData"
+  if (file.exists(file)) {
+    load(file)
+  } else {
+    warning(paste("File does not exist:", file))
+  }
+
   
   if (n_pats == 500){
     if (scheme == 2){
@@ -70,6 +93,22 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
   } else {
     warning(paste("Seed directory does not exist:", seed_dir))
   }
+  
+  # ============
+  # EO dataset
+  # ============
+  
+  coverage_EO <- matrix(0, nrow = 3, ncol = 5)
+  
+  ci_lower <- lapply(fits_gompertz_EO, function(model) confint(model)[, 1])
+  ci_upper <- lapply(fits_gompertz_EO, function(model) confint(model)[, 2])
+  
+  ci_lower_EO <- do.call(cbind, ci_lower)
+  ci_upper_EO <- do.call(cbind, ci_upper)
+  ci_lower_EO <- ci_lower_EO[c(2, 1, 3, 4, 5), ]
+  ci_upper_EO <- ci_upper_EO[c(2, 1, 3, 4, 5), ]
+  
+  coverage_EO <- compute_coverage(ci_lower_EO, ci_upper_EO, ground_truth_params)
   
   # =========
   # coxph
@@ -303,6 +342,7 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
   }
   
   coverage_tot <- rbind(
+    cbind(coverage_EO, model = "flexsurv_EO", seed = seed, transition = c(1, 2, 3)),
     cbind(coverage_cox, model = "coxph", seed = seed, transition = c(1, 2, 3)),
     cbind(coverage_flexsurv, model = "flexsurv", seed = seed, transition = c(1, 2, 3)),
     cbind(coverage_msm, model = "msm", seed = seed, transition = c(1, 2, 3)),

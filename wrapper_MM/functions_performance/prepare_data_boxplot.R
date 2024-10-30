@@ -1,6 +1,9 @@
 prepare_data_boxplot <- function(scheme){
   temp <- bias_all_schemes[[scheme-1]]
   temp <- as.data.frame(temp)
+  desired_order <- c("flexsurv_EO", "coxph", "flexsurv", "msm", "msm_age", "nhm", "imputation")
+  temp$model <- factor(temp$model, levels = desired_order, ordered = TRUE)
+  temp <- temp[order(temp$model), ]
   temp1 <- temp[temp$transition==1,]
   temp2 <- temp[temp$transition==2,]
   temp3 <- temp[temp$transition==3,]

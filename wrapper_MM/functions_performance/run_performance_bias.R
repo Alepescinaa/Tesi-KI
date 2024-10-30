@@ -4,6 +4,29 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
   main_directory <- here()
   
   if (n_pats == 500){
+    scheme_dir <- file.path(main_directory, "wrapper_MM/results_500/saved_models_scheme1")
+    seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
+  } else if (n_pats == 2000){
+    scheme_dir <- file.path(main_directory, "wrapper_MM/results_2K/saved_models_scheme1")
+    seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
+  }else if (n_pats == 5000){
+    scheme_dir <- file.path(main_directory, "wrapper_MM/results_5K/saved_models_scheme1")
+    seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
+  }else if (n_pats == 10000){
+    scheme_dir <- file.path(main_directory, "wrapper_MM/results_10K/saved_models_scheme1")
+    seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
+  }
+  
+  setwd(seed_dir)
+  file <- "fits_gompertz_EO.RData"
+  if (file.exists(file)) {
+    load(file)
+  } else {
+    warning(paste("File does not exist:", file))
+  }
+  
+  
+  if (n_pats == 500){
     if (scheme == 2){
       scheme_dir <- file.path(main_directory, "wrapper_MM/results_500/saved_models_scheme2")
     } else if (scheme == 3){
@@ -68,6 +91,25 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     warning(paste("Seed directory does not exist:", seed_dir))
   }
   
+  # ===========
+  # EO dataset
+  # ===========
+  
+  params_EO <- matrix(0, nrow = 3, ncol = 5)
+  param_names <- names(fits_gompertz_EO[[1]]$coefficients)
+  colnames(params_EO) <- param_names
+  
+  for (i in 1:3){
+    for (j in 1:5){
+      params_EO[i,j] <- fits_gompertz_EO[[i]] $coefficients[j]
+    }
+  }
+  
+  params_EO <- params_EO[, c(2, 1, 3, 4, 5)]
+  params_EO <- cbind(params_EO, exp(params_EO[,3]), exp(params_EO[,4]), exp(params_EO[,4]))
+  colnames(params_EO)[6:8] <- c("exp(cov1)", "exp(cov2)", "exp(cov3)")
+  
+  bias_EO <- compute_bias(params_EO, ground_truth_params)
   
   # =========
   # coxph
@@ -218,6 +260,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
  
   
   bias_tot <- rbind(
+    cbind(bias_EO, model = "flexsurv_EO", seed=seed, transition = c(1,2,3)),
     cbind(bias_coxph, model = "coxph", seed = seed, transition = c(1,2,3)),
     cbind(bias_flexsurv, model = "flexsurv", seed = seed, transition = c(1,2,3)),
     cbind(bias_msm, model = "msm", seed = seed, transition = c(1,2,3)),

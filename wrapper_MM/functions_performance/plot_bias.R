@@ -16,7 +16,8 @@ plot_bias <- function (scheme, titles){
     theme_minimal() +
     geom_hline(yintercept = 0, color = "grey", linetype = "dashed", size = 0.5) + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis labels
-    scale_color_manual(values = c("coxph" = "red", 
+    scale_color_manual(values = c("flexsurv_EO" = "yellow", 
+                                  "coxph" = "red", 
                                   "flexsurv" = "blue", 
                                   "imputation" = "green", 
                                   "msm" = "purple", 

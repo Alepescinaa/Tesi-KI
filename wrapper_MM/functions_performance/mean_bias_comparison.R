@@ -1,6 +1,9 @@
 mean_bias_comparison <- function(bias_all_schemes, scheme){
   temp <- bias_all_schemes[[scheme-1]]
   temp <- as.data.frame(temp)
+  desired_order <- c("flexsurv_EO", "coxph", "flexsurv", "msm", "msm_age", "nhm", "imputation")
+  temp$model <- factor(temp$model, levels = desired_order, ordered = TRUE)
+  temp <- temp[order(temp$model), ]
   temp <- temp %>%
     mutate(across(1:8, as.numeric))
   
