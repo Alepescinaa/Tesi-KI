@@ -4,7 +4,6 @@ wrapper_convergence <- function(n_pats, scheme, seed){
   res_hessian <- vector(mode = "list", length = 100)
 
   for (seed in 1:100){
-    setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
     temp[[seed]] <- check_convergence(n_pats, scheme, seed)
     res_checking[[seed]] <- temp[[seed]][[1]]
     res_hessian[[seed]] <- temp[[seed]][[2]]
