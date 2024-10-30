@@ -121,6 +121,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     colnames(bias_flexsurv) <- colnames(ground_truth_params)
     rownames(bias_flexsurv) <- rownames(ground_truth_params)
   }
+  gc()
   
   # ============
   # msm
@@ -177,6 +178,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     rownames(bias_msm_age) <- rownames(ground_truth_params)
   }
   
+  gc()
   # ============
   # nhm
   # ============
@@ -194,6 +196,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     
   }
   
+  gc()
   # 
   # ============
   # imputation

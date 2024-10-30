@@ -9,6 +9,9 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(patchwork)
+library(here)
+library(future)
+library(future.apply)
 
 setwd(here())
 
@@ -36,7 +39,7 @@ source("./wrapper_MM/functions_performance/prepare_data_boxplot.R")
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 500
+n_pats <- 5000
 cores <- 4
 #scheme <- 4
 
@@ -85,11 +88,11 @@ for (scheme in 2:5){
     seed = integer(0)
   )
   
-  results_list <- mclapply(1:100, function(seed) {
-    setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
-    temp_results <- run_performance_bias(n_pats, scheme, seed, combined_cov[[scheme-1]])
-    return(temp_results)  
-  }, mc.cores = cores)
+  plan(multisession, workers = cores) 
+  results_list <- future_lapply(1:100, function(seed) {
+    temp_results <- run_performance_bias(n_pats, scheme, seed, combined_cov[[scheme - 1]])
+    return(temp_results)
+  })
   
   results_bias <- do.call(rbind, results_list)
   
@@ -120,11 +123,11 @@ for (scheme in 2:5){
     seed = integer(0)
   )
   
-  results_list <- mclapply(1:100, function(seed) {
-    setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
+  plan(multisession, workers = cores) 
+  results_list <- future_lapply(1:100, function(seed) {
     temp_results <- run_performance_coverage(n_pats, scheme, seed, combined_cov[[scheme-1]])
-    return(temp_results)  
-  }, mc.cores = cores)
+    return(temp_results)
+  })
   
   results_coverage <- do.call(rbind, results_list)
   
@@ -146,11 +149,11 @@ for (scheme in 2:5){
 ct_all_schemes <- vector(mode = "list", length = 4)
 
 for (scheme in 2:5){
-  results_list <- mclapply(1:100, function(seed) {
-    setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
+  plan(multisession, workers = cores) 
+  results_list <- future_lapply(1:100, function(seed) {
     temp_results <- extract_comp_time(n_pats, scheme, seed)
-    return(temp_results)  
-  }, mc.cores = cores)
+    return(temp_results)
+  })
   
   results_ct <- do.call(rbind, results_list)
   
