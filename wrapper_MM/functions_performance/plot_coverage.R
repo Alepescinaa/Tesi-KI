@@ -15,6 +15,7 @@ plot_coverage <- function (scheme, titles){
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     scale_color_manual(values = c("flexsurv_EO" = "yellow","coxph" = "red", "flexsurv" = "blue", "imputation" = "green", "msm" = "purple", "msm_age"="black", "nhm"="orange")) +  # Customize colors
     scale_shape_manual(values = c("1"=16, "2"=17, "3"=18)) +
-    geom_hline(yintercept = 0.95, color = "grey", linetype = "dashed", size = 0.5) 
+    geom_hline(yintercept = 0.95, color = "red", linetype = "dashed", size = 0.5) 
+    
 
 }

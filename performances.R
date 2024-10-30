@@ -213,10 +213,10 @@ plot_coverage(4, titles)
 plot_coverage(5, titles)
 
 titles <- c("Mean CT for scheme 1y", "Mean CT for scheme 3y", "Mean CT  for Snac-k", "Mean CT  for UkBiobank")
-plot_ct(2, titles, combined_cov[[scheme - 1]])
-plot_ct(3, titles, combined_cov[[scheme - 1]])
-plot_ct(4, titles, combined_cov[[scheme - 1]])
-plot_ct(5, titles, combined_cov[[scheme - 1]])
+plot_ct(2, titles, combined_cov[[1]])
+plot_ct(3, titles, combined_cov[[2]])
+plot_ct(4, titles, combined_cov[[3]])
+plot_ct(5, titles, combined_cov[[4]])
 
 setwd("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM")
 if (n_pats==500){
