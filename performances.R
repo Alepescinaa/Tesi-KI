@@ -244,3 +244,5 @@ save(res_bias, file = file.path(model_dir,"bias.RData"))
 save(res_cov, file = file.path(model_dir,"95%coverage.RData"))
 save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
  
+
+prova
