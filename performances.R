@@ -246,4 +246,3 @@ save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
  
 
 
-prova pd

@@ -1,6 +1,3 @@
-source("./functions_wrapper/fit_model.R")
-source("./functions_wrapper/averaging_params.R")
-
 run_imputation <- function(data, data_visits, m, type){
   
   schemeA_data <- data
