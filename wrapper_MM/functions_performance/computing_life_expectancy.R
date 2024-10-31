@@ -93,6 +93,7 @@ computing_life_expectancy <- function(){
   # continuous-time Markov multi-state process that starts in state r up to a maximum time t.
   # This is defined as the integral of the corresponding transition probability up to that time.
   # The argument x is either a model fitted with flexsurv or a list (one for each transition)
+  # We are interested in first line of totlos.fs since we know the starting state is 1 (totlos.msm directly computes from state 1)
   
   # ============================
   # life expectancy ground truth
@@ -125,39 +126,69 @@ computing_life_expectancy <- function(){
   )
   
   tmat <- mstate::transMat(x = list(c(2, 3),c(3),c()), names = c("Dementia-free","Dementia", "Death")) 
-  totlos.fs(generator_model, trans=tmat, newdata = newdata, t=30)
+  totlos.fs(generator_model, trans=tmat, newdata = newdata, t=100)
   
   # ===============
   # EO dataset
   # ===============
 
-  totlos.fs(fits_gompertz_EO, trans=tmat, newdata = newdata, t=30)
+  totlos.fs(fits_gompertz_EO, trans=tmat, newdata = newdata, t=100)
+  
   
   # ============
   # coxph
   # ============
   
+  time <- seq(0, 100, by = 0.1)
+  
+  p_no_dem <- predict(model_cox, type = "expected" ) 
+  surv_fit <- survfit(model_cox[[1]], newdata = cov_means, times = time)
+  
+  cox_tls <- numeric(length(surv_fit$strata))
+  
+  # Compute total length of stay for each status
+  for (i in seq_along(cox_tls)) {
+    # Calculate the survival probabilities for the i-th state
+    survival_probabilities <- surv_fit$surv[i, ]  # Extract survival probabilities for the i-th state
+    cox_tls[i] <- sum(survival_probabilities * diff(c(0, time)))
+  }
+  
+  # Print total length of stay for each status
+  names(cox_tls) <- names(surv_fit$strata)  # Assign names based on strata
+  print(cox_tls)
+  
+  
   # ==============
   # flexsurv
   # ==============
   
-  totlos.fs(fits_gompertz, trans=tmat, newdata = newdata, t=30)
+  totlos.fs(fits_gompertz, trans=tmat, newdata = newdata, t=100)
   
   # ========
   # msm
   # ========
   
-  totlos.msm(model.msm, tot=Inf) 
-  
+  totlos.msm(model.msm, tot=Inf)  #check it by hand
+
   # ========
   # msm_age
   # ========
   
-  totlos.msm(model.msm_age, tot=Inf) 
+  totlos.msm(model.msm_age, tot=Inf)  #check elect
   
   # ======
   # nhm
   # ======
+  
+  time <- seq(0,100,by=0.1)
+  nhm_probabilities <- predict(model_nhm, times= time)$probabilities # automatically uses means of covs
+  nhm_tls<- numeric(ncol(nhm_probabilities))
+  
+  for (i in 1:ncol(nhm_probabilities)) {
+    nhm_tls[i] <- sum(nhm_probabilities[, i] * diff(c(0, time)))
+  }
+  
+  nhm_tls
   
   # ==========
   # imputation
