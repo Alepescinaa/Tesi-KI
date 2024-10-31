@@ -89,27 +89,89 @@ computing_life_expectancy <- function(){
     warning(paste("Seed directory does not exist:", seed_dir))
   }
   
+  # totlos.fs computes expected amount of time spent in state s for a time-inhomogeneous,
+  # continuous-time Markov multi-state process that starts in state r up to a maximum time t.
+  # This is defined as the integral of the corresponding transition probability up to that time.
+  # The argument x is either a model fitted with flexsurv or a list (one for each transition)
+  
+  # ============================
+  # life expectancy ground truth
+  # ============================
+  
+  generator_model <- fits_gompertz_EO
+  gt <- ground_truth_params[,c(2,1,3,4,5)]
+  generator_model[[1]]$coefficients <- gt[1,]
+  generator_model[[2]]$coefficients <- gt[2,]
+  generator_model[[3]]$coefficients <- gt[3,]
+  
+  generator_model[[1]]$res.t[,1] <-  gt[1,]
+  generator_model[[2]]$res.t[,1] <-  gt[2,]
+  generator_model[[3]]$res.t[,1] <-  gt[3,]
+  
+  generator_model[[1]]$res[,1] <-  gt[1,]
+  generator_model[[2]]$res[,1] <-  gt[2,]
+  generator_model[[3]]$res[,1] <-  gt[3,]
+  
+  generator_model[[1]]$res[2,1] <- exp(gt[1,2])
+  generator_model[[2]]$res[2,2] <- exp(gt[2,2])
+  generator_model[[3]]$res[2,3] <- exp(gt[3,2])
+  
+  cov_means <- colMeans(generator_model[[1]]$data$mml$rate)
+  
+  newdata <- data.frame(
+    cov1 = cov_means[2], 
+    cov2 = cov_means[3],
+    cov3 = cov_means[4]
+  )
+  
+  tmat <- mstate::transMat(x = list(c(2, 3),c(3),c()), names = c("Dementia-free","Dementia", "Death")) 
+  totlos.fs(generator_model, trans=tmat, newdata = newdata, t=30)
+  
   # ===============
   # EO dataset
   # ===============
+
+  totlos.fs(fits_gompertz_EO, trans=tmat, newdata = newdata, t=30)
   
-  fits_gompertz_EO[[1]]$covdadata
+  # ============
+  # coxph
+  # ============
   
-  tmat <- mstate::transMat(x = list(c(2, 3),c(3),c()), names = c("Dementia-free","Dementia", "Death")) 
-  totlos.fs(fits_gompertz_EO, trans=tmat <- mstate::transMat(x = list(c(2, 3),c(3),c()), names = c("Dementia-free","Dementia", "Death"))  , t=Inf)
+  # ==============
+  # flexsurv
+  # ==============
+  
+  totlos.fs(fits_gompertz, trans=tmat, newdata = newdata, t=30)
   
   # ========
   # msm
   # ========
   
-  totlos.msm(model.msm, t=Inf) 
+  totlos.msm(model.msm, tot=Inf) 
   
   # ========
   # msm_age
   # ========
   
-  totlos.msm(model.msm_age, t=Inf) 
+  totlos.msm(model.msm_age, tot=Inf) 
   
+  # ======
+  # nhm
+  # ======
+  
+  # ==========
+  # imputation
+  # ==========
+  
+  imputation_tls <- matrix(0,3,3)
+  models_imp <- results_imp[[2]]
+  m <- length(models_imp)
+  
+  for (i in 1:m){
+    temp <- totlos.fs(models_imp[[i]], trans=tmat, newdata = newdata, t=30)
+    imputation_tls <- imputation_tls + temp
+  }
+  
+  imputation_tls <- imputation_tls/m
 }
-  
-  
+

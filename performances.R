@@ -182,17 +182,17 @@ for (scheme in 2:5){
 # Plots
 ##########
 
-titles <- c("Convergence for scheme 1y", "Convergence for scheme 3y", "Convergence for Snac-k", "Convergence for UkBiobank")
-plot_convergence(2, titles)
-plot_convergence(3, titles)
-plot_convergence(4, titles)
-plot_convergence(5, titles)
-
-titles <- c("Bias for scheme 1y", "Bias for scheme 3y", "Bias for Snac-k", "Bias for UkBiobank")
-plot_bias(2, titles)
-plot_bias(3, titles)
-plot_bias(4, titles)
-plot_bias(5, titles)
+# titles <- c("Convergence for scheme 1y", "Convergence for scheme 3y", "Convergence for Snac-k", "Convergence for UkBiobank")
+# plot_convergence(2, titles)
+# plot_convergence(3, titles)
+# plot_convergence(4, titles)
+# plot_convergence(5, titles)
+# 
+# titles <- c("Bias for scheme 1y", "Bias for scheme 3y", "Bias for Snac-k", "Bias for UkBiobank")
+# plot_bias(2, titles)
+# plot_bias(3, titles)
+# plot_bias(4, titles)
+# plot_bias(5, titles)
 
 # keep in mind that in these estimates of the bias are accounted also those models for which convergence was reached but
 # but not to the optimum, so that might increase bias extremely
@@ -200,28 +200,28 @@ plot_bias(5, titles)
 # coxph performance for wide intervals performs really bad on some datasets
 
 # choose scheme 
-scheme <- 4 #2:5
-list_data <- prepare_data_boxplot(scheme)
-
-parameters <- c("cov1","cov2","cov3","rate","shape")
-plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[1])
-plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[2])
-plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[3])
-plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[4])
-plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[5])
-
-
-titles <- c("95% Coverage for scheme 1y", "95% Coverage for scheme 3y", "95% Coverage for Snac-k", "95% Coverage for UkBiobank")
-plot_coverage(2, titles)
-plot_coverage(3, titles)
-plot_coverage(4, titles)
-plot_coverage(5, titles)
-
-titles <- c("Mean CT for scheme 1y", "Mean CT for scheme 3y", "Mean CT  for Snac-k", "Mean CT  for UkBiobank")
-plot_ct(2, titles, combined_cov[[1]])
-plot_ct(3, titles, combined_cov[[2]])
-plot_ct(4, titles, combined_cov[[3]])
-plot_ct(5, titles, combined_cov[[4]])
+# scheme <- 4 #2:5
+# list_data <- prepare_data_boxplot(scheme)
+# 
+# parameters <- c("cov1","cov2","cov3","rate","shape")
+# plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[1])
+# plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[2])
+# plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[3])
+# plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[4])
+# plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[5])
+# 
+# 
+# titles <- c("95% Coverage for scheme 1y", "95% Coverage for scheme 3y", "95% Coverage for Snac-k", "95% Coverage for UkBiobank")
+# plot_coverage(2, titles)
+# plot_coverage(3, titles)
+# plot_coverage(4, titles)
+# plot_coverage(5, titles)
+# 
+# titles <- c("Mean CT for scheme 1y", "Mean CT for scheme 3y", "Mean CT  for Snac-k", "Mean CT  for UkBiobank")
+# plot_ct(2, titles, combined_cov[[1]])
+# plot_ct(3, titles, combined_cov[[2]])
+# plot_ct(4, titles, combined_cov[[3]])
+# plot_ct(5, titles, combined_cov[[4]])
 
 model_dir <- here()
 setwd(model_dir)
