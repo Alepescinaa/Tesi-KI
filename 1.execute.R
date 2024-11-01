@@ -28,7 +28,7 @@ source("./wrapper_MM/functions_wrapper/wrapper_functions_MM.R")
 
 
 cores <- 4
-cores_nhm <- 4
+cores_nhm <- 1
 
 # Windows
 if (n_pats == 500){
