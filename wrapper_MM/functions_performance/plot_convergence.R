@@ -10,21 +10,25 @@ plot_convergence <- function(scheme, titles){
     )%>%
   pivot_longer(cols = starts_with("code_"), names_to = "status", values_to = "percentage")
   
+  count <- count %>% filter(status != "code_2")
+  count <- count %>%
+    mutate(percentage = round(percentage, 3)) 
+  
   ggplot(count, aes(x = model, y = percentage, fill = status)) +
-    geom_bar(stat = "identity", width = 0.8) + # position = "dodge" se voglio 3 barre affiancate
+    geom_bar(stat = "identity", width = 0.8, position="dodge") + # position = "dodge" se voglio 3 barre affiancate
     scale_fill_manual(values = c(
       "code_0" = "#FF9999",  
-      "code_1" = "#99CCFF",  
-      "code_2" = "#99FF99"   
+      "code_1" = "#99CCFF" 
+     # "code_2" = "#99FF99"   
     ), labels = c(
-      "code_0" = "No Convergence",
-      "code_1" = "Convergence",
-      "code_2" = "Convergence at Optimum"
+      "code_0" = "Lack of convergence",
+      "code_1" = "Suboptimal convergence"
+     # "code_2" = "Convergence at Optimum"
     )) +
     labs(title = titles[scheme-1],
          x = "Model",
          y = "Percentage",
-         fill = "Status") +
+         fill = "Convergence status") +
     theme_minimal(base_size = 14) +
     theme(
       axis.text.x = element_text(angle = 45, hjust = 1, size = 10),

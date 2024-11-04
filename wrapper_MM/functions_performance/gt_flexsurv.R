@@ -18,7 +18,7 @@ gt_flexsurv <- function(n_pats, seed ){
     model_dir <- paste0("wrapper_MM/results_5K/saved_models_scheme1/seed_", seed)
     dir.create(model_dir, showWarnings = FALSE, recursive= T)
     load("Simulated_data_MM/simulation5K_MM_all.RData")
-    EO_data <- dataset_all_MM_2K[[seed]][[1]]
+    EO_data <- dataset_all_MM_5K[[seed]][[1]]
   }else if (n_pats == 10000){
     model_dir <- paste0("wrapper_MM/results_10K/saved_models_scheme1/seed_", seed)
     dir.create(model_dir, showWarnings = FALSE, recursive= T)
