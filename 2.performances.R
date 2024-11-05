@@ -19,8 +19,10 @@ setwd(here())
 
 load("./wrapper_MM/ground_truthMM.RData")
 source("./wrapper_MM/functions_performance/compute_bias.R")
+source("./wrapper_MM/functions_performance/compute_bias_rel.R")
 source("./wrapper_MM/functions_performance/hazards_mine.R")
 source("./wrapper_MM/functions_performance/run_performance_bias.R")
+source("./wrapper_MM/functions_performance/run_performance_bias_rel.R")
 source("./wrapper_MM/functions_performance/run_performance_coverage.R")
 source("./wrapper_MM/functions_performance/compute_CI.R")
 source("./wrapper_MM/functions_performance/compute_coverage.R")
@@ -32,6 +34,7 @@ source("./wrapper_MM/functions_performance/level_convergence.R")
 source("./wrapper_MM/functions_performance/wrapper_convergence.R")
 source("./wrapper_MM/functions_performance/plot_convergence.R")
 source("./wrapper_MM/functions_performance/plot_bias.R")
+source("./wrapper_MM/functions_performance/plot_bias_rel.R")
 source("./wrapper_MM/functions_performance/plot_coverage.R")
 source("./wrapper_MM/functions_performance/extract_comp_time.R")
 source("./wrapper_MM/functions_performance/plot_boxplot.R")
@@ -133,8 +136,44 @@ for (scheme in 2:5){
 }
 
 
-save(bias_all_schemes, file = file.path(model_dir,"all_bias.RData"))
-save(res_bias, file = file.path(model_dir,"bias.RData"))
+#######################
+# relative bias comparison
+#######################
+
+rel_bias_all_schemes <- vector(mode = "list", length = 4)
+
+for (scheme in 2:5){
+  results_bias_rel <- data.frame(
+    rate = numeric(0),
+    shape = numeric(0),
+    cov1 = numeric(0),
+    cov2 = numeric(0),
+    cov3 = numeric(0),
+    `exp(cov1)` = numeric(0),
+    `exp(cov2)` = numeric(0),
+    `exp(cov3)` = numeric(0),
+    model = character(0),
+    seed = integer(0)
+  )
+  
+  plan(multisession, workers = cores) 
+  results_list <- future_lapply(1:100, function(seed) {
+    temp_results <- run_performance_bias_rel(n_pats, scheme, seed, combined_cov[[scheme - 1]])
+    return(temp_results)
+  })
+  
+  results_bias_rel <- do.call(rbind, results_list)
+  
+  rel_bias_all_schemes[[scheme-1]] <- results_bias_rel
+}
+
+res_bias_rel <- vector(mode = "list", length = 4)
+for (scheme in 2:5){
+  res_bias_rel[[scheme-1]] <- mean_bias_comparison(rel_bias_all_schemes, scheme)
+}
+
+#save(rel_bias_all_schemes, file = file.path(model_dir,"all_bias.RData"))
+#save(res_bias_rel, file = file.path(model_dir,"bias.RData"))
 
 #######################
 # coverage comparison
@@ -220,6 +259,11 @@ plot_bias(3, titles)
 plot_bias(4, titles)
 plot_bias(5, titles)
 
+for (scheme in 2:5) {
+  for (transition in 1:3) {
+    print(plot_bias_rel(scheme, titles, transition))
+  }
+}
 
 scheme <- 4 #2:5
 list_data <- prepare_data_boxplot(scheme)
@@ -245,8 +289,5 @@ plot_ct(5, titles, combined_cov[[4]])
 
 
 
-# keep in mind that in these estimates of the bias are accounted also those models for which convergence was reached but
-# but not to the optimum, so that might increase bias extremely
-# yess much better removing them from the computation
-# coxph performance for wide intervals performs really bad on some datasets
-
+# keep in mind that these estimates of the bias are accounted only for the models for which convergence at optimum
+# at least according to conv criteria and hessian existence is met

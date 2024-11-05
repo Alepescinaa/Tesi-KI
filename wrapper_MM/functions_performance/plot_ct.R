@@ -13,7 +13,6 @@ plot_ct <- function(scheme, titles, convergence){
   mean_times_df <- data.frame(model = names(mean_times), time = mean_times)
   ggplot(mean_times_df, aes(x = model, y = time, fill = model)) +
     geom_bar(stat = "identity", color = "black") +
-    scale_fill_manual(values = c("red", "blue", "green", "purple", "black", "orange")) +
     labs(title = titles[scheme-1],
          x = "Model",
          y = "Mean Computational Time (sec)") +

@@ -132,6 +132,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     bias_coxph <- compute_bias(params_coxph, ground_truth_params)
     bias_coxph[,1:2] <- NA
   }else{
+    params_coxph <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
     bias_coxph <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
     colnames(bias_coxph) <- colnames(ground_truth_params)
     rownames(bias_coxph) <- rownames(ground_truth_params)
@@ -160,6 +161,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     bias_flexsurv <- compute_bias(params_flexsurv, ground_truth_params)
     
   }else{
+    params_flexsurv <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
     bias_flexsurv <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
     colnames(bias_flexsurv) <- colnames(ground_truth_params)
     rownames(bias_flexsurv) <- rownames(ground_truth_params)
@@ -178,6 +180,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     bias_msm <- compute_bias(params_msm, ground_truth_params)
     bias_msm[,1:2] <-NA
   } else {
+    params_msm <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
     bias_msm <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
     colnames(bias_msm) <- colnames(ground_truth_params)
     rownames(bias_msm) <- rownames(ground_truth_params)
@@ -216,6 +219,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     bias_msm_age <- compute_bias(params_msm_age, ground_truth_params)
     
   } else {
+    params_msm_age <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
     bias_msm_age <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
     colnames(bias_msm_age) <- colnames(ground_truth_params)
     rownames(bias_msm_age) <- rownames(ground_truth_params)
@@ -233,6 +237,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     
     bias_nhm <- compute_bias(params_nhm, ground_truth_params)
   } else{
+    params_nhm <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
     bias_nhm <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
     colnames(bias_nhm) <- colnames(ground_truth_params)
     rownames(bias_nhm) <- rownames(ground_truth_params)
@@ -270,6 +275,20 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     cbind(bias_imputation, model = "imputation", seed = seed, transition = c(1,2,3))
   )
   
-  return (bias_tot)
+  rate <- c(NA,NA,NA)
+  shape <- c(NA,NA,NA)
+  params_coxph <- cbind(rate,shape,params_coxph)
+  params_msm <- cbind(rate,shape,params_msm)
+  estimates <- rbind(
+    cbind(params_EO, model = "flexsurv_EO", seed=seed, transition = c(1,2,3)),
+    cbind(params_coxph, model = "coxph", seed = seed, transition = c(1,2,3)),
+    cbind(params_flexsurv, model = "flexsurv", seed = seed, transition = c(1,2,3)),
+    cbind(params_msm, model = "msm", seed = seed, transition = c(1,2,3)),
+    cbind(params_msm_age, model = "msm_age", seed = seed, transition = c(1,2,3)),
+    cbind(params_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
+    cbind(params_imp, model = "imputation", seed = seed, transition = c(1,2,3)) 
+  )
+  
+  return (bias_tot, estimates)
 }
 
