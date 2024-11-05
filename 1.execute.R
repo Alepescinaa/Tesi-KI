@@ -13,6 +13,7 @@ library(parallel)
 library(future)
 library(future.apply)
 library(here)
+library(smoothHazard)
 
 # choose the sample size and upload accordingly the datset, either 500, 2K, 5K
 setwd(here())

@@ -112,6 +112,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
   
   bias_EO <- compute_bias(params_EO, ground_truth_params)
   
+  
   # =========
   # coxph
   # =========
@@ -277,8 +278,10 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
   
   rate <- c(NA,NA,NA)
   shape <- c(NA,NA,NA)
-  params_coxph <- cbind(rate,shape,params_coxph)
-  params_msm <- cbind(rate,shape,params_msm)
+  if (convergence$coxph[seed]==2)
+    params_coxph <- cbind(rate,shape,params_coxph)
+  if(convergence$msm[seed]==2)
+    params_msm <- cbind(rate,shape,params_msm)
   estimates <- rbind(
     cbind(params_EO, model = "flexsurv_EO", seed=seed, transition = c(1,2,3)),
     cbind(params_coxph, model = "coxph", seed = seed, transition = c(1,2,3)),
@@ -289,6 +292,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     cbind(params_imp, model = "imputation", seed = seed, transition = c(1,2,3)) 
   )
   
-  return (bias_tot, estimates)
+
+  return (list(bias_tot, estimates))
 }
 

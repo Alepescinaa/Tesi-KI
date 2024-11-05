@@ -241,6 +241,12 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   
   save(results_imp, file = file.path(model_dir, "results_imp.RData"))
   
+  ########################
+  # Smoothhazard
+  #########################
+  
+  
+  
   save(comp_time, file = file.path(model_dir, "computational_time.RData"))
   
   cat("models completed for seed:", seed, "\n")

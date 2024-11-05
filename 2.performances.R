@@ -49,6 +49,16 @@ n_pats <- 500
 cores <- 4
 #scheme <- 4
 
+
+####################
+# load quantities
+####################
+load("./wrapper_MM/saved_performance_500/all_bias.RData")
+load("./wrapper_MM/saved_performance_500/bias.RData")
+load("./wrapper_MM/saved_performance_500/convergence.RData")
+load("./wrapper_MM/saved_performance_500/95%coverage.RData")
+load("./wrapper_MM/saved_performance_500/comp_time.RData")
+
 #######################################################
 # fitting parametric model over exactly observed data
 #######################################################
@@ -104,9 +114,10 @@ save(combined_cov, file = file.path(model_dir,"convergence.RData"))
 #######################
 
 bias_all_schemes <- vector(mode = "list", length = 4)
+estimates <- vector(mode = "list", length = 4)
 
 for (scheme in 2:5){
-  results_bias <- data.frame(
+  results <- data.frame(
     rate = numeric(0),
     shape = numeric(0),
     cov1 = numeric(0),
@@ -125,9 +136,18 @@ for (scheme in 2:5){
     return(temp_results)
   })
   
-  results_bias <- do.call(rbind, results_list)
+  temp_bias <- list()
+  temp_est <- list()
+  for (seed in 1:100){
+    temp_bias[[seed]] <-results_list[[seed]][[1]]
+    temp_est[[seed]] <-results_list[[seed]][[2]]
+  }
   
-  bias_all_schemes[[scheme-1]] <- results_bias
+  results <- do.call(rbind, temp_bias)
+  bias_all_schemes[[scheme-1]] <- results
+  
+  results<- do.call(rbind, temp_est)
+  estimates[[scheme-1]] <- results
 }
 
 res_bias <- vector(mode = "list", length = 4)
@@ -135,7 +155,11 @@ for (scheme in 2:5){
   res_bias[[scheme-1]] <- mean_bias_comparison(bias_all_schemes, scheme)
 }
 
-
+mean_estimates <- vector(mode = "list", length = 4)
+for (scheme in 2:5){
+  mean_estimates[[scheme-1]] <- mean_bias_comparison(estimates, scheme)
+}
+  
 #######################
 # relative bias comparison
 #######################
@@ -241,11 +265,7 @@ save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
 # Plots
 ##########
 
-load("./wrapper_MM/saved_performance_500/all_bias.RData")
-load("./wrapper_MM/saved_performance_500/bias.RData")
-load("./wrapper_MM/saved_performance_500/convergence.RData")
-load("./wrapper_MM/saved_performance_500/95%coverage.RData")
-load("./wrapper_MM/saved_performance_500/comp_time.RData")
+
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 plot_convergence(2, titles)
