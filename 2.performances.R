@@ -41,6 +41,7 @@ source("./wrapper_MM/functions_performance/plot_boxplot.R")
 source("./wrapper_MM/functions_performance/plot_ct.R")
 source("./wrapper_MM/functions_performance/prepare_data_boxplot.R")
 source("./wrapper_MM/functions_performance/gt_flexsurv.R")
+source("./wrapper_MM/functions_performance/ic_comparison.R")
 
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
@@ -159,7 +160,12 @@ mean_estimates <- vector(mode = "list", length = 4)
 for (scheme in 2:5){
   mean_estimates[[scheme-1]] <- mean_bias_comparison(estimates, scheme)
 }
-  
+
+save(mean_estimates, file = file.path(model_dir,"mean_estimates.RData"))
+save(bias_all_schemes, file = file.path(model_dir,"bias_all.RData"))
+save(res_bias, file = file.path(model_dir,"res_bias.RData"))
+
+
 #######################
 # relative bias comparison
 #######################
@@ -196,8 +202,8 @@ for (scheme in 2:5){
   res_bias_rel[[scheme-1]] <- mean_bias_comparison(rel_bias_all_schemes, scheme)
 }
 
-#save(rel_bias_all_schemes, file = file.path(model_dir,"all_bias.RData"))
-#save(res_bias_rel, file = file.path(model_dir,"bias.RData"))
+save(rel_bias_all_schemes, file = file.path(model_dir,"all_bias.RData"))
+save(res_bias_rel, file = file.path(model_dir,"bias.RData"))
 
 #######################
 # coverage comparison
@@ -230,9 +236,10 @@ for (scheme in 2:5){
 
 res_cov <- vector(mode = "list", length = 4)
 for (scheme in 2:5){
-  res_cov[[scheme-1]] <- mean_coverage_comparison(coverage_all_schemes, scheme)
+  res_cov[[scheme-1]] <- ic_comparison(coverage_all_schemes, scheme)
 }
 
+save(coverage_all_schemes, file = file.path(model_dir,"all_coverage.RData"))
 save(res_cov, file = file.path(model_dir,"95%coverage.RData"))
 
 #####################
