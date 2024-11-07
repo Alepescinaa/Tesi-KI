@@ -134,7 +134,7 @@ check_convergence <- function(n_pats, scheme, seed) {
     hessian_results$hessian_msm_age <- 0
   }
   
-  if (!is.null(model_nhm) && all(eigen(model_nhm$hess)$values >0)) {
+  if (!is.null(model_nhm) && model_nhm$singular==FALSE) {
     hessian_results$hessian_nhm <- 1
   }
   

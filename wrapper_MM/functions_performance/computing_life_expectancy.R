@@ -95,6 +95,25 @@ computing_life_expectancy <- function(){
   # The argument x is either a model fitted with flexsurv or a list (one for each transition)
   # We are interested in first line of totlos.fs since we know the starting state is 1 (totlos.msm directly computes from state 1)
   
+  setwd(here())
+  
+  if (n_pats == 500){
+    load("./Simulated_data_MM/simulation500_MM_all.RData")
+    data <- dataset_all_MM_500
+    }else if(n_pats == 2000){
+    load("./Simulated_data_MM/simulation2K_MM_all.RData")
+    data <- dataset_all_MM_2K
+  } else if(n_pats == 5000){
+    load("./Simulated_data_MM/simulation5K_MM_all.RData")
+    data <- dataset_all_MM_5K
+  } else if (n_pats == 10000){
+    load("./Simulated_data_MM/simulation10K_MM_all.RData")
+    data <- dataset_all_MM_10K}
+  
+  data <- data[[seed]][[scheme]]
+  t_start <- min(data$age)
+
+  
   # ============================
   # life expectancy ground truth
   # ============================
@@ -127,74 +146,91 @@ computing_life_expectancy <- function(){
   
   tmat <- mstate::transMat(x = list(c(2, 3),c(3),c()), names = c("Dementia-free","Dementia", "Death")) 
  
-  gt_tls <- (totlos.fs(generator_model, trans=tmat, newdata = newdata, t=100)- totlos.fs(generator_model, trans=tmat, newdata = newdata, t=60))[1,]
-  
+  gt_tls <-  totlos.fs.mine(generator_model, t_start= t_start,  trans=tmat, newdata = newdata, t=105)[1,]
+ 
   # ===============
   # EO dataset
   # ===============
-
-  flexsurv_tls_EO100 <- totlos.fs(fits_gompertz_EO, trans=tmat, newdata = newdata, t=100)
-  flexsurv_tls_E060 <- totlos.fs(fits_gompertz_EO, trans=tmat, newdata = newdata, t=60)
-  flexsurv_tls_EO <- flexsurv_tls_EO100-flexsurv_tls_E060
   
-  flexsurv_tls_EO <- flexsurv_tls_EO[1,]
+  flexsurv_tls_EO <- totlos.fs.mine(fits_gompertz_EO, t_start=60,  trans=tmat, newdata = newdata, t=105)[1,]
   
   # ============
   # coxph
   # ============
   
-  time <- seq(0, 100, by = 0.1)
+  newdata_cox <- data.frame(
+    trans = 1:3,
+    cov1.1 = c(cov_means[2], 0, 0),
+    cov2.1 = c(cov_means[3], 0, 0),
+    cov3.1 = c(cov_means[4], 0, 0),
+    cov1.2 = c(0, cov_means[2], 0),
+    cov2.2 = c(0, cov_means[3], 0),
+    cov3.2 = c(0, cov_means[4], 0),
+    cov1.3 = c(0, 0, cov_means[2]),
+    cov2.3 = c(0, 0, cov_means[3]),
+    cov3.3 = c(0, 0, cov_means[4]),
+    strata = 1:3
+  )
   
-  p_no_dem <- predict(model_cox, type = "expected" ) 
-  surv_fit <- survfit(model_cox[[1]], newdata = cov_means, times = time)
+  msfit_obj <- msfit(model_cox, newdata = newdata_cox, variance=T, trans=tmat)
+
+  cox_trans_prob <- probtrans(msfit_obj, predt=t_start)[[1]]
+  check_neg <- apply(cox_trans_prob, 1, function(row) any(row < 0))
+  cox_trans_prob <- cox_trans_prob[!check_neg,]
+  time <- cox_trans_prob[,1]
+  cox_trans_prob <- cox_trans_prob[,2:4]
   
-  cox_tls <- numeric(length(surv_fit$strata))
+  coxph_tls<- numeric(ncol(cox_trans_prob))
   
-  # Compute total length of stay for each status
-  for (i in seq_along(cox_tls)) {
-    # Calculate the survival probabilities for the i-th state
-    survival_probabilities <- surv_fit$surv[i, ]  # Extract survival probabilities for the i-th state
-    cox_tls[i] <- sum(survival_probabilities * diff(c(0, time)))
+  for (i in 1:ncol(cox_trans_prob)) {
+    coxph_tls[i] <- sum(cox_trans_prob[, i] * diff(time))
   }
-  
-  # Print total length of stay for each status
-  names(cox_tls) <- names(surv_fit$strata)  # Assign names based on strata
-  print(cox_tls)
-  
-  # mstate
   
   # ==============
   # flexsurv
   # ==============
   
-  flexsurv_tls_100 <- totlos.fs(fits_gompertz, trans=tmat, newdata = newdata, t=100)
-  flexsurv_tls_60 <- totlos.fs(fits_gompertz, trans=tmat, newdata = newdata, t=60)
-  flexsurv_tls <- flexsurv_tls_100-flexsurv_tls_60
-  
-  flexsurv_tls <- flexsurv_tls[1,]
+  flexsurv_tls <-  totlos.fs.mine(fits_gompertz, t_start=60,  trans=tmat, newdata = newdata, t=105)[1,]
   
   # ========
   # msm
   # ========
   
-  totlos.msm(model.msm, tot=100)  
+  msm_tls <- totlos.msm(model.msm, fromt=t_start, tot=105)  
 
   # ========
   # msm_age
   # ========
   
-  totlos.msm(model.msm_age, tot=Inf)  #check elect
+
+  temp <- data
+  temp$age <- temp$age - t_start
+  temp <- temp %>%
+    group_by(patient_id) %>%
+    mutate(bsline = ifelse(row_number() == 1, 1, 0)) %>%
+    ungroup()
+  
+  baseline_data <- temp[temp$bsline==1,]
+  baseline_data$state <- 1
+  
+  max_age <- max(temp$age)
+  mean_age <- mean(temp$age) 
+  
+  elect_model <- elect( x = model.msm_age, b.covariates = list( age = mean_age, cov1 = cov_means[2], cov2 = cov_means[3], cov3 = cov_means[4]),
+                        statedistdata = baseline_data, h = 0.1, age.max = max_age)
+  
+  msm_age_tls <- round(elect_model$pnt,3)
   
   # ======
   # nhm
   # ======
   
-  time <- seq(60,100,by=0.1)
+  time <- seq(60,105,by=0.01)
   nhm_probabilities <- predict(model_nhm, times= time)$probabilities # automatically uses means of covs
   nhm_tls<- numeric(ncol(nhm_probabilities))
   
   for (i in 1:ncol(nhm_probabilities)) {
-    nhm_tls[i] <- sum(nhm_probabilities[, i] * diff(c(60, time)))
+    nhm_tls[i] <- sum(nhm_probabilities[, i] * diff(time))
   }
   
   
@@ -207,12 +243,11 @@ computing_life_expectancy <- function(){
   m <- length(models_imp)
   
   for (i in 1:m){
-    temp100 <- totlos.fs(models_imp[[i]], trans=tmat, newdata = newdata, t=100)
-    temp60 <- totlos.fs(models_imp[[i]], trans=tmat, newdata = newdata, t=60)
-    temp_diff <- temp100-temp60
-    imputation_tls <- imputation_tls + temp_diff
+    temp <-  totlos.fs.mine(models_imp[[i]], t_start=60,  trans=tmat, newdata = newdata, t=105)
+    imputation_tls <- imputation_tls + temp
   }
-  
   imputation_tls <- imputation_tls/m
-}
   imputation_tls <- imputation_tls[1,]
+  
+}
+ 

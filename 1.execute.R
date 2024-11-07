@@ -39,6 +39,8 @@ if (n_pats == 500){
     future_lapply(1:100, function(seed) {
       data <- dataset_all_MM_500[[seed]][[scheme]] 
       n_pats <- length(unique(data$patient_id))
+      if (n_pats<500)
+        n_pats <- 500
       wrapper_functions_MM(data, n_pats, seed, cores_nhm)
       return(paste("Completed seed:", seed))
     })
@@ -76,4 +78,8 @@ if (n_pats == 500){
   }}
   
   
-  
+for (seed in 1:100){
+  data <- dataset_all_MM_500[[seed]][[scheme]] 
+  n_pats <- length(unique(data$patient_id))
+  wrapper_functions_MM(data, n_pats, seed, cores_nhm)
+}

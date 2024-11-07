@@ -42,6 +42,8 @@ source("./wrapper_MM/functions_performance/plot_ct.R")
 source("./wrapper_MM/functions_performance/prepare_data_boxplot.R")
 source("./wrapper_MM/functions_performance/gt_flexsurv.R")
 source("./wrapper_MM/functions_performance/ic_comparison.R")
+source("./wrapper_MM/functions_performance/totlos.fs.mine .R")
+source("./wrapper_MM/functions_performance/is.flexsurvlist.R")
 
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
@@ -54,11 +56,32 @@ cores <- 4
 ####################
 # load quantities
 ####################
-load("./wrapper_MM/saved_performance_500/all_bias.RData")
-load("./wrapper_MM/saved_performance_500/bias.RData")
-load("./wrapper_MM/saved_performance_500/convergence.RData")
-load("./wrapper_MM/saved_performance_500/95%coverage.RData")
-load("./wrapper_MM/saved_performance_500/comp_time.RData")
+if (n_pats==500){
+  load("./wrapper_MM/saved_performance_500/bias_all.RData")
+  load("./wrapper_MM/saved_performance_500/res_bias.RData")
+  load("./wrapper_MM/saved_performance_500/bias_all_rel.RData")
+  load("./wrapper_MM/saved_performance_500/res_bias_rel.RData")
+  load("./wrapper_MM/saved_performance_500/mean_estimates.RData")
+  load("./wrapper_MM/saved_performance_500/convergence.RData")
+  load("./wrapper_MM/saved_performance_500/95%coverage.RData")
+  load("./wrapper_MM/saved_performance_500/all_coverage.RData")
+  load("./wrapper_MM/saved_performance_500/comp_time.RData")
+}else if (n_pats==2000){
+  
+}else if (n_pats==5000){
+  load("./wrapper_MM/saved_performance_5K/bias_all.RData")
+  load("./wrapper_MM/saved_performance_5K/res_bias.RData")
+  load("./wrapper_MM/saved_performance_5K/bias_all_rel.RData")
+  load("./wrapper_MM/saved_performance_5K/res_bias_rel.RData")
+  load("./wrapper_MM/saved_performance_5K/mean_estimates.RData")
+  load("./wrapper_MM/saved_performance_5K/convergence.RData")
+  load("./wrapper_MM/saved_performance_5K/95%coverage.RData")
+  load("./wrapper_MM/saved_performance_5K/all_coverage.RData")
+  load("./wrapper_MM/saved_performance_5K/comp_time.RData")
+}else if (n_pats=10000){
+  
+}
+
 
 #######################################################
 # fitting parametric model over exactly observed data
@@ -202,8 +225,8 @@ for (scheme in 2:5){
   res_bias_rel[[scheme-1]] <- mean_bias_comparison(rel_bias_all_schemes, scheme)
 }
 
-save(rel_bias_all_schemes, file = file.path(model_dir,"all_bias.RData"))
-save(res_bias_rel, file = file.path(model_dir,"bias.RData"))
+save(rel_bias_all_schemes, file = file.path(model_dir,"bias_all_rel.RData"))
+save(res_bias_rel, file = file.path(model_dir,"res_bias_rel.RData"))
 
 #######################
 # coverage comparison
@@ -236,7 +259,7 @@ for (scheme in 2:5){
 
 res_cov <- vector(mode = "list", length = 4)
 for (scheme in 2:5){
-  res_cov[[scheme-1]] <- ic_comparison(coverage_all_schemes, scheme)
+  res_cov[[scheme-1]] <- mean_coverage_comparison(coverage_all_schemes, scheme)
 }
 
 save(coverage_all_schemes, file = file.path(model_dir,"all_coverage.RData"))
@@ -275,10 +298,16 @@ save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
 
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
-plot_convergence(2, titles)
-plot_convergence(3, titles)
-plot_convergence(4, titles)
-plot_convergence(5, titles)
+plot1 <- plot_convergence(2, titles)
+plot2 <- plot_convergence(3, titles)
+plot3 <- plot_convergence(4, titles)
+plot4 <- plot_convergence(5, titles)
+
+plot1 + plot2 + plot3 + plot4 + 
+  plot_layout(ncol = 2, nrow = 2, 
+              widths = c(0.6, 0.6), 
+              heights = c(0.8, 0.8)) +
+  theme(plot.margin = margin(10, 10, 10, 10))
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 plot_bias(2, titles)

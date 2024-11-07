@@ -15,6 +15,6 @@ compute_coverage <- function(lower_bounds, upper_bounds, ground_truth_params) {
         ground_truth_params[, truth_index] <= upper_bounds[upper_index, ]
     )
   }
-  
+
   return(coverage)
 }

@@ -350,6 +350,6 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
     cbind(coverage_nhm, model = "nhm", seed = seed, transition = c(1, 2, 3)),
     cbind(coverage_imputation, model = "imputation", seed = seed, transition = c(1, 2, 3))
   )
-  
+  print(seed)
   return(coverage_tot)
 }
