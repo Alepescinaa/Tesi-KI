@@ -17,7 +17,8 @@ plot_ct <- function(scheme, titles, convergence){
          x = "Model",
          y = "Mean Computational Time (sec)") +
     theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_y_continuous(limits = c(0, 1000))
   
   
 }
