@@ -34,11 +34,11 @@ plot_convergence <- function(scheme, titles){
       axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
       legend.position = "top",  
       legend.title = element_text(size = 9), 
-      legend.text = element_text(size = 9),    
+      legend.text = element_text(size = 8),    
       panel.grid.major = element_line(color = "lightgrey", size = 0.3),  
       panel.grid.minor = element_blank()  # No minor grid lines
     )+
-    scale_y_continuous(limits = c(0, 0.5)) 
+    scale_y_continuous(limits = c(0, 0.2)) 
     
   
 }

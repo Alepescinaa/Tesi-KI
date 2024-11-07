@@ -1,4 +1,5 @@
-computing_life_expectancy <- function(){
+computing_life_expectancy <- function(n_pats, scheme, seed, convergence){
+  
   main_directory <- here()
   
   if (n_pats == 500){
@@ -146,91 +147,121 @@ computing_life_expectancy <- function(){
   
   tmat <- mstate::transMat(x = list(c(2, 3),c(3),c()), names = c("Dementia-free","Dementia", "Death")) 
  
-  gt_tls <-  totlos.fs.mine(generator_model, t_start= t_start,  trans=tmat, newdata = newdata, t=105)[1,]
+  gt_tls <-  totlos.fs.mine(generator_model, t_start= t_start,  trans=tmat, newdata = newdata, t=105)[1,][1:2]
+
  
   # ===============
   # EO dataset
   # ===============
   
-  flexsurv_tls_EO <- totlos.fs.mine(fits_gompertz_EO, t_start=60,  trans=tmat, newdata = newdata, t=105)[1,]
+  flexsurv_tls_EO <- totlos.fs.mine(fits_gompertz_EO, t_start=60,  trans=tmat, newdata = newdata, t=105)[1,][1:2]
   
   # ============
   # coxph
   # ============
   
-  newdata_cox <- data.frame(
-    trans = 1:3,
-    cov1.1 = c(cov_means[2], 0, 0),
-    cov2.1 = c(cov_means[3], 0, 0),
-    cov3.1 = c(cov_means[4], 0, 0),
-    cov1.2 = c(0, cov_means[2], 0),
-    cov2.2 = c(0, cov_means[3], 0),
-    cov3.2 = c(0, cov_means[4], 0),
-    cov1.3 = c(0, 0, cov_means[2]),
-    cov2.3 = c(0, 0, cov_means[3]),
-    cov3.3 = c(0, 0, cov_means[4]),
-    strata = 1:3
-  )
-  
-  msfit_obj <- msfit(model_cox, newdata = newdata_cox, variance=T, trans=tmat)
+  if (convergence$coxph[seed]==2) {
+    newdata_cox <- data.frame(
+      trans = 1:3,
+      cov1.1 = c(cov_means[2], 0, 0),
+      cov2.1 = c(cov_means[3], 0, 0),
+      cov3.1 = c(cov_means[4], 0, 0),
+      cov1.2 = c(0, cov_means[2], 0),
+      cov2.2 = c(0, cov_means[3], 0),
+      cov3.2 = c(0, cov_means[4], 0),
+      cov1.3 = c(0, 0, cov_means[2]),
+      cov2.3 = c(0, 0, cov_means[3]),
+      cov3.3 = c(0, 0, cov_means[4]),
+      strata = 1:3
+    )
+    
+    msfit_obj <- msfit(model_cox, newdata = newdata_cox, variance=T, trans=tmat)
+    
+    cox_trans_prob <- probtrans(msfit_obj, predt=t_start)[[1]]
+    check_neg <- apply(cox_trans_prob, 1, function(row) any(row < 0))
+    cox_trans_prob <- cox_trans_prob[!check_neg,]
+    time <- cox_trans_prob[,1]
+    cox_trans_prob <- cox_trans_prob[,2:4]
+    
+    coxph_tls<- numeric(ncol(cox_trans_prob))
+    
+    for (i in 1:ncol(cox_trans_prob)) {
+      coxph_tls[i] <- sum(cox_trans_prob[, i] * diff(time))
+    }
+    coxph_tls <- coxph_tls[1:2]
+  } else {
+    coxph_tls <- rep(NA,2)
 
-  cox_trans_prob <- probtrans(msfit_obj, predt=t_start)[[1]]
-  check_neg <- apply(cox_trans_prob, 1, function(row) any(row < 0))
-  cox_trans_prob <- cox_trans_prob[!check_neg,]
-  time <- cox_trans_prob[,1]
-  cox_trans_prob <- cox_trans_prob[,2:4]
-  
-  coxph_tls<- numeric(ncol(cox_trans_prob))
-  
-  for (i in 1:ncol(cox_trans_prob)) {
-    coxph_tls[i] <- sum(cox_trans_prob[, i] * diff(time))
-  }
+  } 
+    
+ 
   
   # ==============
   # flexsurv
   # ==============
   
-  flexsurv_tls <-  totlos.fs.mine(fits_gompertz, t_start=60,  trans=tmat, newdata = newdata, t=105)[1,]
+  if (convergence$flexsurv[seed]==2){
+  flexsurv_tls <-  totlos.fs.mine(fits_gompertz, t_start=60,  trans=tmat, newdata = newdata, t=105)[1,][1:2]
+  } else {
+    flexsurv_tls <- rep(NA,2)
+  }
   
   # ========
   # msm
   # ========
   
-  msm_tls <- totlos.msm(model.msm, fromt=t_start, tot=105)  
+  if (convergence$msm[seed]==2){
+    msm_tls <- totlos.msm(model.msm, fromt=t_start, tot=105) [1:2] 
+  } else{
+    msm_tls <- rep(NA,2)
+  }
+
 
   # ========
   # msm_age
   # ========
   
+  if(convergence$msm_age[seed]==2){
+    temp <- data
+    temp$age <- temp$age - t_start
+    temp <- temp %>%
+      group_by(patient_id) %>%
+      mutate(bsline = ifelse(row_number() == 1, 1, 0)) %>%
+      ungroup()
+    
+    baseline_data <- temp[temp$bsline==1,]
+    baseline_data$state <- 1
+    
+    max_age <- max(temp$age)
+    mean_age <- mean(temp$age) 
+    
+    elect_model <- elect( x = model.msm_age, b.covariates = list( age = mean_age, cov1 = cov_means[2], cov2 = cov_means[3], cov3 = cov_means[4]),
+                          statedistdata = baseline_data, h = 0.1, age.max = max_age)
+    
+    msm_age_tls <- round(elect_model$pnt,3)
+    msm_age_tls <- msm_age_tls[1:2]
 
-  temp <- data
-  temp$age <- temp$age - t_start
-  temp <- temp %>%
-    group_by(patient_id) %>%
-    mutate(bsline = ifelse(row_number() == 1, 1, 0)) %>%
-    ungroup()
+    
+  }else{
+    msm_age_tls <- rep(NA,2)
+  }
   
-  baseline_data <- temp[temp$bsline==1,]
-  baseline_data$state <- 1
-  
-  max_age <- max(temp$age)
-  mean_age <- mean(temp$age) 
-  
-  elect_model <- elect( x = model.msm_age, b.covariates = list( age = mean_age, cov1 = cov_means[2], cov2 = cov_means[3], cov3 = cov_means[4]),
-                        statedistdata = baseline_data, h = 0.1, age.max = max_age)
-  
-  msm_age_tls <- round(elect_model$pnt,3)
   
   # ======
   # nhm
   # ======
   
-  time <- seq(60,105,by=0.01)
-  nhm_probabilities <- predict(model_nhm, times= time)$probabilities # automatically uses means of covs
-  nhm_tls<- numeric(ncol(nhm_probabilities))
-  
-  for (i in 1:ncol(nhm_probabilities)) {
-    nhm_tls[i] <- sum(nhm_probabilities[, i] * diff(time))
+  if(convergence$nhm[seed]==2){
+    time <- seq(t_start,105,by=0.01)
+    nhm_probabilities <- predict(model_nhm, times= time)$probabilities # automatically uses means of covs
+    nhm_tls<- numeric(ncol(nhm_probabilities))
+    
+    for (i in 1:ncol(nhm_probabilities)) {
+      nhm_tls[i] <- sum(nhm_probabilities[, i] * diff(c(t_start,time)))
+    }
+    nhm_tls <- nhm_tls[1:2]
+  }else{
+    nhm_tls <- rep(NA,2)
   }
   
   
@@ -238,16 +269,38 @@ computing_life_expectancy <- function(){
   # imputation
   # ==========
   
-  imputation_tls <- matrix(0,3,3)
-  models_imp <- results_imp[[2]]
-  m <- length(models_imp)
-  
-  for (i in 1:m){
-    temp <-  totlos.fs.mine(models_imp[[i]], t_start=60,  trans=tmat, newdata = newdata, t=105)
-    imputation_tls <- imputation_tls + temp
+  if(convergence$imputation[seed]==2){
+    imputation_tls <- matrix(0,3,3)
+    models_imp <- results_imp[[2]]
+    m <- length(models_imp)
+    
+    for (i in 1:m){
+      temp <-  totlos.fs.mine(models_imp[[i]], t_start=60,  trans=tmat, newdata = newdata, t=105)
+      imputation_tls <- imputation_tls + temp
+    }
+    imputation_tls <- imputation_tls/m
+    imputation_tls <- imputation_tls[1,][1:2]
+  }else{
+    imputation_tls <- rep(NA,2)
   }
-  imputation_tls <- imputation_tls/m
-  imputation_tls <- imputation_tls[1,]
+  
+  # ============
+  # wrap up
+  # ============
+  
+  # check quantities
+  
+  lfe_estimates <- rbind(
+    cbind(lfe = flexsurv_tls_EO, model = "flexsurv_EO", seed=seed),
+    cbind(lfe = coxph_tls, model = "coxph", seed = seed),
+    cbind(lfe = flexsurv_tls, model = "flexsurv", seed = seed),
+    cbind(lfe = msm_tls, model = "msm", seed = seed),
+    cbind(lfe = msm_age_tls, model = "msm_age", seed = seed),
+    cbind(lfe = nhm_tls, model = "nhm", seed = seed),
+    cbind(lfe = imputation_tls, model = "imputation", seed = seed) 
+  )
+  
+  return(lfe_estimates)
   
 }
  

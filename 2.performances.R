@@ -44,11 +44,12 @@ source("./wrapper_MM/functions_performance/gt_flexsurv.R")
 source("./wrapper_MM/functions_performance/ic_comparison.R")
 source("./wrapper_MM/functions_performance/totlos.fs.mine .R")
 source("./wrapper_MM/functions_performance/is.flexsurvlist.R")
+source("./wrapper_MM/functions_performance/computing_life_expectancy.R")
 
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 500
+n_pats <- 5000
 cores <- 4
 #scheme <- 4
 
@@ -56,6 +57,8 @@ cores <- 4
 ####################
 # load quantities
 ####################
+setwd(here())
+
 if (n_pats==500){
   load("./wrapper_MM/saved_performance_500/bias_all.RData")
   load("./wrapper_MM/saved_performance_500/res_bias.RData")
@@ -78,7 +81,7 @@ if (n_pats==500){
   load("./wrapper_MM/saved_performance_5K/95%coverage.RData")
   load("./wrapper_MM/saved_performance_5K/all_coverage.RData")
   load("./wrapper_MM/saved_performance_5K/comp_time.RData")
-}else if (n_pats=10000){
+}else if (n_pats==10000){
   
 }
 
@@ -262,6 +265,11 @@ for (scheme in 2:5){
   res_cov[[scheme-1]] <- mean_coverage_comparison(coverage_all_schemes, scheme)
 }
 
+res_cov_ic <- vector(mode = "list", length = 4)
+for (scheme in 2:5){
+  res_cov_ic[[scheme-1]] <- ic_comparison(coverage_all_schemes, scheme)
+}
+
 save(coverage_all_schemes, file = file.path(model_dir,"all_coverage.RData"))
 save(res_cov, file = file.path(model_dir,"95%coverage.RData"))
 
@@ -269,6 +277,11 @@ save(res_cov, file = file.path(model_dir,"95%coverage.RData"))
 # life expectancy
 #####################
 
+#passare t_start a life expectancy in modo da non dover caricare dati ogni volta
+scheme <- 2
+seed <- 10
+convergence <- combined_cov[[scheme]]
+temp <- computing_life_expectancy(n_pats, scheme, seed, convergence)
 
 #####################
 # computational time

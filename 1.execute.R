@@ -17,7 +17,7 @@ library(SmoothHazard)
 
 # choose the sample size and upload accordingly the datset, either 500, 2K, 5K
 setwd(here())
-n_pats <- 500 # CHANGE HERE
+n_pats <- 5000 # CHANGE HERE
 
 source("./wrapper_MM/functions_wrapper/prepare_coxph_flex.R")
 source("./wrapper_MM/functions_wrapper/prepare_msm.R")
@@ -38,9 +38,6 @@ if (n_pats == 500){
   for (scheme in 2:5) {
     future_lapply(1:100, function(seed) {
       data <- dataset_all_MM_500[[seed]][[scheme]] 
-      n_pats <- length(unique(data$patient_id))
-      if (n_pats<500)
-        n_pats <- 500
       wrapper_functions_MM(data, n_pats, seed, cores_nhm)
       return(paste("Completed seed:", seed))
     })
@@ -51,7 +48,6 @@ if (n_pats == 500){
   for (scheme in 2:5) {
     future_lapply(1:100, function(seed) {
       data <- dataset_all_MM_2K[[seed]][[scheme]] 
-      n_pats <- length(unique(data$patient_id))
       wrapper_functions_MM(data, n_pats, seed, cores_nhm)
       return(paste("Completed seed:", seed))
     })}
@@ -61,7 +57,6 @@ if (n_pats == 500){
     for (scheme in 2:5) {
       future_lapply(1:100, function(seed) {
         data <- dataset_all_MM_5K[[seed]][[scheme]] 
-        n_pats <- length(unique(data$patient_id))
         wrapper_functions_MM(data, n_pats, seed, cores_nhm)
         return(paste("Completed seed:", seed))
       })
@@ -71,15 +66,9 @@ if (n_pats == 500){
   for (scheme in 2:5) {
     future_lapply(1:100, function(seed) {
       data <- dataset_all_MM_10K[[seed]][[scheme]] 
-      n_pats <- length(unique(data$patient_id))
       wrapper_functions_MM(data, n_pats, seed, cores_nhm)
       return(paste("Completed seed:", seed))
     })
   }}
   
   
-for (seed in 1:100){
-  data <- dataset_all_MM_500[[seed]][[scheme]] 
-  n_pats <- length(unique(data$patient_id))
-  wrapper_functions_MM(data, n_pats, seed, cores_nhm)
-}
