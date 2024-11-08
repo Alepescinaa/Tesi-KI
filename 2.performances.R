@@ -45,11 +45,12 @@ source("./wrapper_MM/functions_performance/ic_comparison.R")
 source("./wrapper_MM/functions_performance/totlos.fs.mine .R")
 source("./wrapper_MM/functions_performance/is.flexsurvlist.R")
 source("./wrapper_MM/functions_performance/computing_life_expectancy.R")
+source("./wrapper_MM/functions_performance/mean_lfe_comparison.R")
 
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 5000
+n_pats <- 500
 cores <- 4
 #scheme <- 4
 
@@ -60,18 +61,23 @@ cores <- 4
 setwd(here())
 
 if (n_pats==500){
+  load("./Simulated_data_MM/simulation500_MM_all.RData")
+  data <- dataset_all_MM_500
   load("./wrapper_MM/saved_performance_500/bias_all.RData")
   load("./wrapper_MM/saved_performance_500/res_bias.RData")
-  load("./wrapper_MM/saved_performance_500/bias_all_rel.RData")
-  load("./wrapper_MM/saved_performance_500/res_bias_rel.RData")
+  #load("./wrapper_MM/saved_performance_500/bias_all_rel.RData")
+  #load("./wrapper_MM/saved_performance_500/res_bias_rel.RData")
   load("./wrapper_MM/saved_performance_500/mean_estimates.RData")
   load("./wrapper_MM/saved_performance_500/convergence.RData")
   load("./wrapper_MM/saved_performance_500/95%coverage.RData")
   load("./wrapper_MM/saved_performance_500/all_coverage.RData")
   load("./wrapper_MM/saved_performance_500/comp_time.RData")
 }else if (n_pats==2000){
-  
+  load("./Simulated_data_MM/simulation2K_MM_all.RData")
+  data <- dataset_all_MM_2K
 }else if (n_pats==5000){
+  load("./Simulated_data_MM/simulation5K_MM_all.RData")
+  data <- dataset_all_MM_5K
   load("./wrapper_MM/saved_performance_5K/bias_all.RData")
   load("./wrapper_MM/saved_performance_5K/res_bias.RData")
   load("./wrapper_MM/saved_performance_5K/bias_all_rel.RData")
@@ -82,8 +88,11 @@ if (n_pats==500){
   load("./wrapper_MM/saved_performance_5K/all_coverage.RData")
   load("./wrapper_MM/saved_performance_5K/comp_time.RData")
 }else if (n_pats==10000){
+  load("./Simulated_data_MM/simulation10K_MM_all.RData")
+  data <- dataset_all_MM_10K
   
 }
+
 
 
 #######################################################
@@ -277,11 +286,76 @@ save(res_cov, file = file.path(model_dir,"95%coverage.RData"))
 # life expectancy
 #####################
 
+lfe_bias <- vector(mode = "list", length = 4)
+lfe_estimates <- vector(mode = "list", length = 4)
+
+for (scheme in 2:5){
+  results <- data.frame(
+    lfe = numeric(0),
+    model = character(0),
+    seed = integer(0)
+  )
+  
+  plan(multisession, workers = cores) 
+  results_list <- future_lapply(1:100, function(seed) {
+    data <- data[[seed]][[scheme]]
+    t_start <- min(data$age)
+    data <- data %>%
+      group_by(patient_id) %>%
+      mutate(bsline = ifelse(row_number() == 1, 1, 0)) %>%
+      ungroup()
+    baseline_data <- data[data$bsline==1,]
+    baseline_data$state <- 1
+    temp_results <- computing_life_expectancy(n_pats, scheme, seed, combined_cov[[scheme-1]], t_start, baseline_data)
+    return(temp_results)
+  })
+  
+  temp_bias <- list()
+  temp_est <- list()
+  for (seed in 1:100){
+    temp_est[[seed]] <-results_list[[seed]][[1]]
+    temp_bias[[seed]] <-results_list[[seed]][[2]]
+  }
+  
+  results <- do.call(rbind, temp_bias)
+  lfe_bias[[scheme-1]] <- results
+  
+  results<- do.call(rbind, temp_est)
+  lfe_estimates[[scheme-1]] <- results
+}
+
+res_bias_lfe <- vector(mode = "list", length = 4)
+for (scheme in 2:5){
+  res_bias_lfe[[scheme-1]] <- mean_lfe_comparison(lfe_bias, scheme)
+}
+
+mean_estimates_lfe<- vector(mode = "list", length = 4)
+for (scheme in 2:5){
+  mean_estimates_lfe[[scheme-1]] <- mean_lfe_comparison(lfe_estimates, scheme)
+}
+
+save(mean_estimates_lfe, file = file.path(model_dir,"mean_estimates_lfe.RData"))
+save(res_bias_lfe, file = file.path(model_dir,"bias_lfe.RData"))
+
+
+
 #passare t_start a life expectancy in modo da non dover caricare dati ogni volta
 scheme <- 2
 seed <- 10
+
+data <- data[[seed]][[scheme]]
+t_start <- min(data$age)
+
+temp <- data
+temp <- temp %>%
+  group_by(patient_id) %>%
+  mutate(bsline = ifelse(row_number() == 1, 1, 0)) %>%
+  ungroup()
+
+baseline_data <- temp[temp$bsline==1,]
+baseline_data$state <- 1
 convergence <- combined_cov[[scheme]]
-temp <- computing_life_expectancy(n_pats, scheme, seed, convergence)
+temp <- computing_life_expectancy(n_pats, scheme, seed, convergence, t_start, baseline_data)
 
 #####################
 # computational time
@@ -350,13 +424,15 @@ plot_coverage(3, titles)
 plot_coverage(4, titles)
 plot_coverage(5, titles)
 
-titles <-c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
-plot_ct(2, titles, combined_cov[[1]])
-plot_ct(3, titles, combined_cov[[2]])
-plot_ct(4, titles, combined_cov[[3]])
-plot_ct(5, titles, combined_cov[[4]])
+titles <-c("PopulationBased Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
+plot1 <- plot_ct(2, titles, combined_cov[[1]])
+plot2 <- plot_ct(3, titles, combined_cov[[2]])
+plot3 <- plot_ct(4, titles, combined_cov[[3]])
+plot4 <- plot_ct(5, titles, combined_cov[[4]])
 
-
+dir <- here()
+dir <- paste0("wrapper_MM/Plots_500")
+ggsave("plot3.png", path=dir, width=5, height=8, bg = "transparent")
 
 # keep in mind that these estimates of the bias are accounted only for the models for which convergence at optimum
 # at least according to conv criteria and hessian existence is met
