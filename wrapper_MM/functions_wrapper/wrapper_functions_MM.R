@@ -248,42 +248,42 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   # Smoothhazard
   #########################
 
-  # temp <- prepare_SmoootHazard(data, n_pats)
-  # 
-  # error <- FALSE
-  # 
-  # time_smh <- system.time({
-  #   tryCatch({
-  #     model_smootHazard <- idm(
-  #       formula01 = Hist(time = list(l, r), event = onset, entry = age) ~ cov1+cov2+cov3,
-  #       formula02 = Hist(time = death_time, event = dead, entry = age) ~ cov1+cov2+cov3,
-  #       method = "Splines",
-  #       data = temp,
-  #       CV = TRUE,
-  #       maxiter = 500,
-  #       print.iter = TRUE
-  #     )
-  #   }, error = function(e) {
-  #     error <<- TRUE  # Set the error flag
-  #     message("An error occurred: ", e$message)  
-  #   })
-  # })[3]
-  # 
-  # 
-  # if (error) {
-  #   print("The model fitting encountered an error.")
-  # }
-  # 
-  # comp_time[7] <- as.numeric(round(time_smh,3))
-  # 
-  # if (!is.null(model_smootHazard)) {
-  #   save(model_smootHazard, file = file.path(model_dir, "model_smootHazard.RData"))
-  # } else {
-  #   print("Model is NULL; not saving.")
-  # }
-  # 
-  # 
-  #  save(comp_time, file = file.path(model_dir, "computational_time.RData"))
+  temp <- prepare_SmoootHazard(data, n_pats)
+
+  error <- FALSE
+
+  time_smh <- system.time({
+    tryCatch({
+      model_smootHazard <- idm(
+        formula01 = Hist(time = list(l, r), event = onset, entry = age) ~ cov1+cov2+cov3,
+        formula02 = Hist(time = death_time, event = dead, entry = age) ~ cov1+cov2+cov3,
+        method = "Splines",
+        data = temp,
+        CV = TRUE,
+        maxiter = 500,
+        print.iter = TRUE
+      )
+    }, error = function(e) {
+      error <<- TRUE  # Set the error flag
+      message("An error occurred: ", e$message)
+    })
+  })[3]
+
+
+  if (error) {
+    print("The model fitting encountered an error.")
+  }
+
+  comp_time[7] <- as.numeric(round(time_smh,3))
+
+  if (!is.null(model_smootHazard)) {
+    save(model_smootHazard, file = file.path(model_dir, "model_smootHazard.RData"))
+  } else {
+    print("Model is NULL; not saving.")
+  }
+
+
+   save(comp_time, file = file.path(model_dir, "computational_time.RData"))
   # 
   cat("models completed for seed:", seed, "\n")
   

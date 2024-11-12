@@ -159,7 +159,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
       cov3.3 = c(0, 0, cov_means[4]),
       strata = 1:3
     )
-    cox.zph(model_cox)
+  
     
     msfit_obj <- msfit(model_cox, newdata = newdata_cox, variance=T, trans=tmat)
     
@@ -242,22 +242,48 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # msm_age
   # ========
   
+  # elect doens't work as expected
+  # to prepare elect
+  # 
+  # temp$age <- temp$age-t_start
+  # temp$onset_age <- temp$onset_age-t_start
+  # temp$death_time <- temp$death_time-t_start
+  # temp <- temp %>%
+  #   group_by(patient_id) %>%
+  #   mutate(bsline = ifelse(row_number() == 1, 1, 0)) %>%
+  #   ungroup()
+  # baseline_data <- temp[temp$bsline==1,]
+  # baseline_data$state <- 1
+  
+  # if(convergence$msm_age[seed]==2){
+  # 
+  #   mean_age <- mean(model.msm_age$data$mm.cov[,5])
+  #   elect_model <- elect( x = model.msm_age, b.covariates = list( age = mean_age, cov1 = cov_means[2], cov2 = cov_means[3], cov3 = cov_means[4]),
+  #                         statedistdata = baseline_data, h = 0.1, age.max = 105-t_start) 
+  # 
+  #   msm_age_tls <- round(elect_model$pnt,3)
+  #   msm_age_tls <- msm_age_tls[1:2]
+  #   bias_msm_age_tls <- msm_age_tls-gt_tls
+  # 
+  # 
+  # }else{
+  #   msm_age_tls <- rep(NA,2)
+  #   bias_msm_age_tls <- rep(NA,2)
+  # }
+  
   if(convergence$msm_age[seed]==2){
-
     mean_age <- mean(model.msm_age$data$mm.cov[,5])
-    elect_model <- elect( x = model.msm_age, b.covariates = list( age = mean_age, cov1 = cov_means[2], cov2 = cov_means[3], cov3 = cov_means[4]),
-                          statedistdata = baseline_data, h = 0.1, age.max = 105-t_start) 
-
-    msm_age_tls <- round(elect_model$pnt,3)
-    msm_age_tls <- msm_age_tls[1:2]
+    msm_age_probabilities_cate <- p.matrix.age(model.msm_age, covariates =  list(cov1 = cov_means[2], cov2 = cov_means[3], cov3 = cov_means[4]), age1 = t_start,
+                                               age2 = 105, int=0.1, ci="none", cores=4)
+    msm_age_tls <- get_time(msm_age_probabilities_cate, ci= "none")
+    msm_age_tls <- msm_age_tls[1:2,2]
     bias_msm_age_tls <- msm_age_tls-gt_tls
-
-
   }else{
     msm_age_tls <- rep(NA,2)
     bias_msm_age_tls <- rep(NA,2)
   }
   
+  # treating it just as msm understimates
   # if(convergence$msm_age[seed]==2){
   #   time <- seq(t_start,105,by=0.1)
   #   time <- time-t_start

@@ -49,7 +49,10 @@ source_files <- c(
   "./wrapper_MM/functions_performance/is.flexsurvlist.R",
   "./wrapper_MM/functions_performance/computing_life_expectancy.R",
   "./wrapper_MM/functions_performance/mean_lfe_comparison.R",
-  "./wrapper_MM/functions_performance/plot_bias_lfe.R"
+  "./wrapper_MM/functions_performance/plot_bias_lfe.R",
+  "./wrapper_MM/functions_performance/p.matrix.age.R",
+  "./wrapper_MM/functions_performance/get_time.R"
+  
 )
 
 
@@ -298,16 +301,16 @@ for (scheme in 2:5){
   
   plan(multisession, workers = cores) 
   results_list <- future_lapply(1:100, function(seed) {
-    data <- data[[seed]][[scheme]]
-    t_start <- min(data$age)
-    data$age <- data$age-t_start
-    data$onset_age <- data$onset_age-t_start
-    data$death_time <- data$death_time-t_start
-    data <- data %>%
+    temp <- data[[seed]][[scheme]]
+    t_start <- min(temp$age)
+    temp$age <- temp$age-t_start
+    temp$onset_age <- temp$onset_age-t_start
+    temp$death_time <- temp$death_time-t_start
+    temp <- temp %>%
       group_by(patient_id) %>%
       mutate(bsline = ifelse(row_number() == 1, 1, 0)) %>%
       ungroup()
-    baseline_data <- data[data$bsline==1,]
+    baseline_data <- temp[temp$bsline==1,]
     baseline_data$state <- 1
     temp_results <- computing_life_expectancy(n_pats, scheme, seed, combined_cov[[scheme-1]], t_start, baseline_data)
     return(temp_results)
@@ -406,7 +409,8 @@ plot_coverage(3, titles)
 plot_coverage(4, titles)
 plot_coverage(5, titles)
 
-titles <-c("(1 year)", "(3 years)", "(3-6 years)", "EHR")plot_bias_lfe(res_bias_lfe, 2, titles)
+titles <-c("(1 year)", "(3 years)", "(3-6 years)", "EHR")
+plot_bias_lfe(res_bias_lfe, 2, titles) 
 plot_bias_lfe(res_bias_lfe, 3, titles)
 plot_bias_lfe(res_bias_lfe, 4, titles)
 plot_bias_lfe(res_bias_lfe, 5, titles)
