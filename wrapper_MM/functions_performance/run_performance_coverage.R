@@ -117,11 +117,14 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
   if (convergence$coxph[seed]==2){
     coverage_cox <- matrix(0, nrow = 3, ncol = 5)
     
-    ci_lower <- lapply(model_cox, function(model) confint(model)[, 1])
-    ci_upper <- lapply(model_cox, function(model) confint(model)[, 2])
+    ci_lower <- confint(model_cox)[,1]
+    ci_upper <- confint(model_cox)[,2]
     
-    ci_lower_cox <- do.call(cbind, ci_lower)
-    ci_upper_cox <- do.call(cbind, ci_upper)
+    ci_lower_cox <- matrix(ci_lower,3,3, byrow=F)
+    ci_upper_cox <- matrix(ci_upper,3,3, byrow=F)
+    
+    rownames(ci_lower_cox) <- c("cov1", "cov2", "cov3")
+    rownames(ci_upper_cox) <- c("cov1", "cov2", "cov3")
     
     coverage_cox <- compute_coverage(ci_lower_cox, ci_upper_cox, ground_truth_params)
     coverage_cox[,1:2] <- NA

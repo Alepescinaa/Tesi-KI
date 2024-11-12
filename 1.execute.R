@@ -17,11 +17,12 @@ library(SmoothHazard)
 
 # choose the sample size and upload accordingly the datset, either 500, 2K, 5K
 setwd(here())
-n_pats <- 5000 # CHANGE HERE
+n_pats <- 500 # CHANGE HERE
 
 source("./wrapper_MM/functions_wrapper/prepare_coxph_flex.R")
 source("./wrapper_MM/functions_wrapper/prepare_msm.R")
 source("./wrapper_MM/functions_wrapper/prepare_imputation.R")
+source("./wrapper_MM/functions_wrapper/prepare_SmootHazard.R")
 source("./wrapper_MM/functions_wrapper/fit_model.R")
 source("./wrapper_MM/functions_wrapper/averaging_params.R")
 source("./wrapper_MM/functions_wrapper/run_imputation.R")

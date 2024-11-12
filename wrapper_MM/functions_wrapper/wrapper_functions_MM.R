@@ -65,20 +65,14 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   
   temp <-  prepare_coxph_flex(data, n_pats)
   temp <- expand.covs(temp,c("cov1","cov2", "cov3"))
-  # model_cox <- vector(mode = "list", length = 3)
-  # 
-  # time_cox<- system.time({
-  #   for (i in 1:3) {
-  #     model_cox[[i]] <- coxph(Surv(Tstart,Tstop,status) ~ cov1 + cov2 + cov3, data = subset(temp, trans == i))}
-  # })[3]
-  
+
 
   time_cox<- system.time({
   model_cox <- coxph(Surv(Tstart,Tstop,status) ~ cov1.1 + cov2.1 + cov3.1 + cov1.2 + cov2.2 + cov3.2 + cov1.3 + cov2.3 + cov3.3 + strata(trans), data = temp, method="breslow")
   })[3]
-  
+
   comp_time[1] <- as.numeric(round(time_cox,3))
-  
+
   save(model_cox, file = file.path(model_dir,"cox_model.RData"))
   
   ######################
@@ -90,8 +84,8 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   # 
   # time_gomp<- system.time({
   #   for (i in 1:3) {
-  #     fits_gompertz[[i]] <- flexsurvreg(Surv(Tstart, Tstop, status) ~ cov1 + cov2 + cov3, 
-  #                                       data = subset(temp, trans == i), 
+  #     fits_gompertz[[i]] <- flexsurvreg(Surv(Tstart, Tstop, status) ~ cov1 + cov2 + cov3,
+  #                                       data = subset(temp, trans == i),
   #                                       dist = "gompertz")}
   # })[3]
   # 
@@ -100,7 +94,7 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   # save(fits_gompertz, file = file.path(model_dir, "flexsurv_model.RData"))
   # 
   # gc()
-  
+
   ######################
   # msm model
   ######################
@@ -129,11 +123,11 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   # msm_estimates <- model.msm$estimates.t
   # 
   # save(model.msm, file = file.path(model_dir, "msm_model.RData"))
-  # 
+
   #####################
   # msm + age model
   #####################
-  
+
   # temp <- prepare_msm(data)
   # 
   # min_age <- min(temp$age)
@@ -156,8 +150,8 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   # comp_time[4] <- as.numeric(round(time_msm_age,3))
   # 
   # save(model.msm_age, file = file.path(model_dir, "model_msm_age.RData"))
-  # 
-  # gc()
+
+  gc()
   
   ######################
   # nhm model
@@ -219,7 +213,7 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   # }
   # 
   # 
-  # comp_time[5] <- as.numeric(round(time_nhm,3))
+  # comp_time[5] <- as.numeric(round(time_smh,3))
   # 
   # if (!is.null(model_nhm)) {
   #   save(model_nhm, file = file.path(model_dir, "model_nhm.RData"))
@@ -248,13 +242,48 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   # 
   # save(results_imp, file = file.path(model_dir, "results_imp.RData"))
   
+  gc()
+  
   ########################
   # Smoothhazard
   #########################
-  
-  
-  
-  # save(comp_time, file = file.path(model_dir, "computational_time.RData"))
+
+  # temp <- prepare_SmoootHazard(data, n_pats)
+  # 
+  # error <- FALSE
+  # 
+  # time_smh <- system.time({
+  #   tryCatch({
+  #     model_smootHazard <- idm(
+  #       formula01 = Hist(time = list(l, r), event = onset, entry = age) ~ cov1+cov2+cov3,
+  #       formula02 = Hist(time = death_time, event = dead, entry = age) ~ cov1+cov2+cov3,
+  #       method = "Splines",
+  #       data = temp,
+  #       CV = TRUE,
+  #       maxiter = 500,
+  #       print.iter = TRUE
+  #     )
+  #   }, error = function(e) {
+  #     error <<- TRUE  # Set the error flag
+  #     message("An error occurred: ", e$message)  
+  #   })
+  # })[3]
+  # 
+  # 
+  # if (error) {
+  #   print("The model fitting encountered an error.")
+  # }
+  # 
+  # comp_time[7] <- as.numeric(round(time_smh,3))
+  # 
+  # if (!is.null(model_smootHazard)) {
+  #   save(model_smootHazard, file = file.path(model_dir, "model_smootHazard.RData"))
+  # } else {
+  #   print("Model is NULL; not saving.")
+  # }
+  # 
+  # 
+  #  save(comp_time, file = file.path(model_dir, "computational_time.RData"))
   # 
   cat("models completed for seed:", seed, "\n")
   

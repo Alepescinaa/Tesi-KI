@@ -116,17 +116,12 @@ run_performance_bias_rel <- function(n_pats, scheme, seed, convergence){
   # =========
   
   if (convergence$coxph[seed]==2) {
-    params_coxph <- matrix(0, nrow = 3, ncol = 3)
-    param_names <- names(model_cox[[1]]$coefficients)
+    param_names <- c("cov1","cov2", "cov3")
+    params_coxph <- matrix(model_cox$coefficients, 3, 3, byrow = T)
     colnames(params_coxph) <- param_names
-    
-    for (i in 1:3){
-      for (j in 1:3){
-        params_coxph[i,j] <- model_cox[[i]] $coefficients[j]
-      }
-    }
     params_coxph <- cbind(params_coxph, exp(params_coxph[,1]), exp(params_coxph[,2]), exp(params_coxph[,3]))
     colnames(params_coxph)[4:6] <- c("exp(cov1)", "exp(cov2)", "exp(cov3)")
+    
     
     bias_coxph <- compute_bias_rel(params_coxph, ground_truth_params)
     bias_coxph[,1:2] <- NA

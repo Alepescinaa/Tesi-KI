@@ -246,7 +246,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
 
     mean_age <- mean(model.msm_age$data$mm.cov[,5])
     elect_model <- elect( x = model.msm_age, b.covariates = list( age = mean_age, cov1 = cov_means[2], cov2 = cov_means[3], cov3 = cov_means[4]),
-                          statedistdata = baseline_data, h = 0.1, age.max = 105)
+                          statedistdata = baseline_data, h = 0.1, age.max = 105-t_start) 
 
     msm_age_tls <- round(elect_model$pnt,3)
     msm_age_tls <- msm_age_tls[1:2]
@@ -262,18 +262,18 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   #   time <- seq(t_start,105,by=0.1)
   #   time <- time-t_start
   #   msm_age_probabilities <- matrix(ncol = 3, nrow = 0)
-  #   
-  #   
+  # 
+  # 
   #   for (i in 1:length(time)) {
   #     temp <- pmatrix.msm(model.msm_age, t = time[i])[1,]
-  #     msm_age_probabilities <- rbind(msm_age_probabilities, temp)  
+  #     msm_age_probabilities <- rbind(msm_age_probabilities, temp)
   #   }
-  #   
+  # 
   #   msm_age_tls<- numeric(ncol(msm_age_probabilities))
-  #   
+  # 
   #   diff_time <- diff(time)
   #   msm_age_probabilities <- msm_age_probabilities[1:length(diff_time),]
-  #   
+  # 
   #   for (i in 1:ncol(msm_age_probabilities)) {
   #     msm_age_tls[i] <- sum(msm_age_probabilities[, i] * diff_time)
   #   }
@@ -281,7 +281,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # }else{
   #   msm_age_tls <- rep(NA,2)
   # }
-  # 
+
   # ======
   # nhm
   # ======

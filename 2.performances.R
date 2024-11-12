@@ -14,45 +14,53 @@ library(future)
 library(future.apply)
 library(mstate)
 library(flexsurv)
+library(deSolve)
 
 setwd(here())
 
 load("./wrapper_MM/ground_truthMM.RData")
-source("./wrapper_MM/functions_performance/compute_bias.R")
-source("./wrapper_MM/functions_performance/compute_bias_rel.R")
-source("./wrapper_MM/functions_performance/hazards_mine.R")
-source("./wrapper_MM/functions_performance/run_performance_bias.R")
-source("./wrapper_MM/functions_performance/run_performance_bias_rel.R")
-source("./wrapper_MM/functions_performance/run_performance_coverage.R")
-source("./wrapper_MM/functions_performance/compute_CI.R")
-source("./wrapper_MM/functions_performance/compute_coverage.R")
-source("./wrapper_MM/functions_performance/get_params_nhm.R")
-source("./wrapper_MM/functions_performance/mean_bias_comparison.R")
-source("./wrapper_MM/functions_performance/mean_coverage_comparison.R")
-source("./wrapper_MM/functions_performance/check_convergence.R")
-source("./wrapper_MM/functions_performance/level_convergence.R")
-source("./wrapper_MM/functions_performance/wrapper_convergence.R")
-source("./wrapper_MM/functions_performance/plot_convergence.R")
-source("./wrapper_MM/functions_performance/plot_bias.R")
-source("./wrapper_MM/functions_performance/plot_bias_rel.R")
-source("./wrapper_MM/functions_performance/plot_coverage.R")
-source("./wrapper_MM/functions_performance/extract_comp_time.R")
-source("./wrapper_MM/functions_performance/plot_boxplot.R")
-source("./wrapper_MM/functions_performance/plot_ct.R")
-source("./wrapper_MM/functions_performance/prepare_data_boxplot.R")
-source("./wrapper_MM/functions_performance/gt_flexsurv.R")
-source("./wrapper_MM/functions_performance/ic_comparison.R")
-source("./wrapper_MM/functions_performance/totlos.fs.mine .R")
-source("./wrapper_MM/functions_performance/is.flexsurvlist.R")
-source("./wrapper_MM/functions_performance/computing_life_expectancy.R")
-source("./wrapper_MM/functions_performance/mean_lfe_comparison.R")
+
+source_files <- c(
+  "./wrapper_MM/functions_performance/compute_bias.R",
+  "./wrapper_MM/functions_performance/compute_bias_rel.R",
+  "./wrapper_MM/functions_performance/hazards_mine.R",
+  "./wrapper_MM/functions_performance/run_performance_bias.R",
+  "./wrapper_MM/functions_performance/run_performance_bias_rel.R",
+  "./wrapper_MM/functions_performance/run_performance_coverage.R",
+  "./wrapper_MM/functions_performance/compute_CI.R",
+  "./wrapper_MM/functions_performance/compute_coverage.R",
+  "./wrapper_MM/functions_performance/get_params_nhm.R",
+  "./wrapper_MM/functions_performance/mean_bias_comparison.R",
+  "./wrapper_MM/functions_performance/mean_coverage_comparison.R",
+  "./wrapper_MM/functions_performance/check_convergence.R",
+  "./wrapper_MM/functions_performance/level_convergence.R",
+  "./wrapper_MM/functions_performance/wrapper_convergence.R",
+  "./wrapper_MM/functions_performance/plot_convergence.R",
+  "./wrapper_MM/functions_performance/plot_bias.R",
+  "./wrapper_MM/functions_performance/plot_bias_rel.R",
+  "./wrapper_MM/functions_performance/plot_coverage.R",
+  "./wrapper_MM/functions_performance/extract_comp_time.R",
+  "./wrapper_MM/functions_performance/plot_boxplot.R",
+  "./wrapper_MM/functions_performance/plot_ct.R",
+  "./wrapper_MM/functions_performance/prepare_data_boxplot.R",
+  "./wrapper_MM/functions_performance/gt_flexsurv.R",
+  "./wrapper_MM/functions_performance/ic_comparison.R",
+  "./wrapper_MM/functions_performance/totlos.fs.mine .R",
+  "./wrapper_MM/functions_performance/is.flexsurvlist.R",
+  "./wrapper_MM/functions_performance/computing_life_expectancy.R",
+  "./wrapper_MM/functions_performance/mean_lfe_comparison.R",
+  "./wrapper_MM/functions_performance/plot_bias_lfe.R"
+)
+
+
+lapply(source_files, source)
+
 
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
 n_pats <- 500
 cores <- 4
-#scheme <- 4
 
 
 ####################
@@ -63,37 +71,44 @@ setwd(here())
 if (n_pats==500){
   load("./Simulated_data_MM/simulation500_MM_all.RData")
   data <- dataset_all_MM_500
-  load("./wrapper_MM/saved_performance_500/bias_all.RData")
-  load("./wrapper_MM/saved_performance_500/res_bias.RData")
-  #load("./wrapper_MM/saved_performance_500/bias_all_rel.RData")
-  #load("./wrapper_MM/saved_performance_500/res_bias_rel.RData")
-  load("./wrapper_MM/saved_performance_500/mean_estimates.RData")
-  load("./wrapper_MM/saved_performance_500/convergence.RData")
-  load("./wrapper_MM/saved_performance_500/95%coverage.RData")
-  load("./wrapper_MM/saved_performance_500/all_coverage.RData")
-  load("./wrapper_MM/saved_performance_500/comp_time.RData")
+  path <- "./wrapper_MM/saved_performance_500/"
+  files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
+  lapply(files, load, .GlobalEnv)
 }else if (n_pats==2000){
   load("./Simulated_data_MM/simulation2K_MM_all.RData")
   data <- dataset_all_MM_2K
+  path <- "./wrapper_MM/saved_performance_2K/"
+  files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
+  lapply(files, load, .GlobalEnv)
 }else if (n_pats==5000){
   load("./Simulated_data_MM/simulation5K_MM_all.RData")
   data <- dataset_all_MM_5K
-  load("./wrapper_MM/saved_performance_5K/bias_all.RData")
-  load("./wrapper_MM/saved_performance_5K/res_bias.RData")
-  load("./wrapper_MM/saved_performance_5K/bias_all_rel.RData")
-  load("./wrapper_MM/saved_performance_5K/res_bias_rel.RData")
-  load("./wrapper_MM/saved_performance_5K/mean_estimates.RData")
-  load("./wrapper_MM/saved_performance_5K/convergence.RData")
-  load("./wrapper_MM/saved_performance_5K/95%coverage.RData")
-  load("./wrapper_MM/saved_performance_5K/all_coverage.RData")
-  load("./wrapper_MM/saved_performance_5K/comp_time.RData")
+  path <- "./wrapper_MM/saved_performance_5K/"
+  files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
+  lapply(files, load, .GlobalEnv)
 }else if (n_pats==10000){
   load("./Simulated_data_MM/simulation10K_MM_all.RData")
   data <- dataset_all_MM_10K
-  
+  path <- "./wrapper_MM/saved_performance_10K/"
+  files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
+  lapply(files, load, .GlobalEnv)
 }
 
-
+# directory to save things
+model_dir <- here()
+setwd(model_dir)
+if (n_pats==500){
+  model_dir <- paste0("wrapper_MM/saved_performance_500")
+  dir.create(model_dir, showWarnings = FALSE, recursive= T)
+} else if (n_pats==2000){
+  model_dir <- paste0("wrapper_MM/saved_performance_2K")
+  dir.create(model_dir, showWarnings = FALSE, recursive= T)
+} else if (n_pats==5000){
+  model_dir <- paste0("wrapper_MM/saved_performance_5K")
+  dir.create(model_dir, showWarnings = FALSE, recursive= T)  
+} else if (n_pats==10000){
+  model_dir <- paste0("wrapper_MM/saved_performance_10K")
+  dir.create(model_dir, showWarnings = FALSE, recursive= T)  }
 
 #######################################################
 # fitting parametric model over exactly observed data
@@ -127,21 +142,6 @@ combined_cov <- vector(mode = "list", length = 4)
 for (scheme in 2:5){
   combined_cov[[scheme-1]] <- level_convergence(scheme)
 }
-
-model_dir <- here()
-setwd(model_dir)
-if (n_pats==500){
-  model_dir <- paste0("wrapper_MM/saved_performance_500")
-  dir.create(model_dir, showWarnings = FALSE, recursive= T)
-} else if (n_pats==2000){
-  model_dir <- paste0("wrapper_MM/saved_performance_2K")
-  dir.create(model_dir, showWarnings = FALSE, recursive= T)
-} else if (n_pats==5000){
-  model_dir <- paste0("wrapper_MM/saved_performance_5K")
-  dir.create(model_dir, showWarnings = FALSE, recursive= T)  
-} else if (n_pats==10000){
-  model_dir <- paste0("wrapper_MM/saved_performance_10K")
-  dir.create(model_dir, showWarnings = FALSE, recursive= T)  }
 
 save(combined_cov, file = file.path(model_dir,"convergence.RData"))
 
@@ -280,7 +280,7 @@ for (scheme in 2:5){
 }
 
 save(coverage_all_schemes, file = file.path(model_dir,"all_coverage.RData"))
-save(res_cov, file = file.path(model_dir,"95%coverage.RData"))
+save(res_cov_ic, file = file.path(model_dir,"95%coverage.RData"))
 
 #####################
 # life expectancy
@@ -300,6 +300,9 @@ for (scheme in 2:5){
   results_list <- future_lapply(1:100, function(seed) {
     data <- data[[seed]][[scheme]]
     t_start <- min(data$age)
+    data$age <- data$age-t_start
+    data$onset_age <- data$onset_age-t_start
+    data$death_time <- data$death_time-t_start
     data <- data %>%
       group_by(patient_id) %>%
       mutate(bsline = ifelse(row_number() == 1, 1, 0)) %>%
@@ -338,25 +341,6 @@ save(mean_estimates_lfe, file = file.path(model_dir,"mean_estimates_lfe.RData"))
 save(res_bias_lfe, file = file.path(model_dir,"bias_lfe.RData"))
 
 
-
-#passare t_start a life expectancy in modo da non dover caricare dati ogni volta
-scheme <- 2
-seed <- 10
-
-data <- data[[seed]][[scheme]]
-t_start <- min(data$age)
-
-temp <- data
-temp <- temp %>%
-  group_by(patient_id) %>%
-  mutate(bsline = ifelse(row_number() == 1, 1, 0)) %>%
-  ungroup()
-
-baseline_data <- temp[temp$bsline==1,]
-baseline_data$state <- 1
-convergence <- combined_cov[[scheme]]
-temp <- computing_life_expectancy(n_pats, scheme, seed, convergence, t_start, baseline_data)
-
 #####################
 # computational time
 #####################
@@ -381,8 +365,6 @@ save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
 ##########
 # Plots
 ##########
-
-
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 plot1 <- plot_convergence(2, titles)
@@ -424,7 +406,12 @@ plot_coverage(3, titles)
 plot_coverage(4, titles)
 plot_coverage(5, titles)
 
-titles <-c("PopulationBased Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
+titles <-c("(1 year)", "(3 years)", "(3-6 years)", "EHR")plot_bias_lfe(res_bias_lfe, 2, titles)
+plot_bias_lfe(res_bias_lfe, 3, titles)
+plot_bias_lfe(res_bias_lfe, 4, titles)
+plot_bias_lfe(res_bias_lfe, 5, titles)
+
+titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 plot1 <- plot_ct(2, titles, combined_cov[[1]])
 plot2 <- plot_ct(3, titles, combined_cov[[2]])
 plot3 <- plot_ct(4, titles, combined_cov[[3]])
@@ -434,5 +421,4 @@ dir <- here()
 dir <- paste0("wrapper_MM/Plots_500")
 ggsave("plot3.png", path=dir, width=5, height=8, bg = "transparent")
 
-# keep in mind that these estimates of the bias are accounted only for the models for which convergence at optimum
-# at least according to conv criteria and hessian existence is met
+# keep in mind that these estimates of the bias are accounted only for the models for which convergence at optimum is met
