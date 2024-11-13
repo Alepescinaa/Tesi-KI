@@ -62,7 +62,7 @@ lapply(source_files, source)
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 500
+n_pats <- 2000
 cores <- 4
 
 
@@ -130,7 +130,7 @@ convergence_schemes <- vector(mode = "list", length = 4)
 hessian_schemes <- vector(mode = "list", length = 4)
 
 for (scheme in 2:5){
-  temp[[scheme-1]] <- wrapper_convergence(n_pats, scheme, seed )
+  temp[[scheme-1]] <- wrapper_convergence(n_pats, scheme, seed ) #fix cox inside
   convergence_schemes[[scheme-1]] <- temp[[scheme-1]][[1]]
   hessian_schemes[[scheme-1]] <- temp[[scheme-1]][[2]]
 }
@@ -168,6 +168,10 @@ for (scheme in 2:5){
     model = character(0),
     seed = integer(0)
   )
+  
+  for (seed in 1:100){
+    run_performance_bias(n_pats, scheme, seed, combined_cov[[scheme - 1]])
+  }
   
   plan(multisession, workers = cores) 
   results_list <- future_lapply(1:100, function(seed) {
@@ -300,25 +304,16 @@ for (scheme in 2:5){
   )
   
   plan(multisession, workers = cores) 
-  results_list <- future_lapply(1:100, function(seed) {
+  results_list <- future_lapply(1:10, function(seed) {
     temp <- data[[seed]][[scheme]]
     t_start <- min(temp$age)
-    temp$age <- temp$age-t_start
-    temp$onset_age <- temp$onset_age-t_start
-    temp$death_time <- temp$death_time-t_start
-    temp <- temp %>%
-      group_by(patient_id) %>%
-      mutate(bsline = ifelse(row_number() == 1, 1, 0)) %>%
-      ungroup()
-    baseline_data <- temp[temp$bsline==1,]
-    baseline_data$state <- 1
     temp_results <- computing_life_expectancy(n_pats, scheme, seed, combined_cov[[scheme-1]], t_start, baseline_data)
     return(temp_results)
   })
   
   temp_bias <- list()
   temp_est <- list()
-  for (seed in 1:100){
+  for (seed in 1:10){
     temp_est[[seed]] <-results_list[[seed]][[1]]
     temp_bias[[seed]] <-results_list[[seed]][[2]]
   }

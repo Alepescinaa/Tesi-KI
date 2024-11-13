@@ -277,6 +277,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
                                                age2 = 105, int=0.1, ci="none", cores=4)
     msm_age_tls <- get_time(msm_age_probabilities_cate, ci= "none")
     msm_age_tls <- msm_age_tls[1:2,2]
+    msm_age_tls <- as.numeric(unlist(msm_age_tls))
     bias_msm_age_tls <- msm_age_tls-gt_tls
   }else{
     msm_age_tls <- rep(NA,2)

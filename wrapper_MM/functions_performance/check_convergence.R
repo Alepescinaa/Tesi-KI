@@ -74,7 +74,7 @@ check_convergence <- function(n_pats, scheme, seed) {
     converged_imp = 1
   )
   
-  if (any(c(model_cox[[1]]$info[[4]], model_cox[[2]]$info[[4]], model_cox[[3]]$info[[4]]) != 0)) {
+  if (model_cox$info[[4]] != 0) {
     convergence_results$converged_coxph <- 0
   }
   
@@ -116,7 +116,7 @@ check_convergence <- function(n_pats, scheme, seed) {
   
 
 
-  if (any(c(det(model_cox[[1]]$var), det(model_cox[[2]]$var), det(model_cox[[3]]$var)) < 1e-7)) {
+  if (det(model_cox$var < 1e-7)) {
     hessian_results$hessian_coxph <- 0
   }
   
