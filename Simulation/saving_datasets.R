@@ -101,6 +101,26 @@ save(dataset_all_MM_10K, file="simulation10K_MM_all.Rdata")
 load("./Simulated_data_SM/simulation100K_SM_all.Rdata")
 
 #######################################################################
+
+dataset_all_SM_500 <- dataset_all_SM
+n_pats = 500
+
+for (i in 1:100){
+  for (j in 1:5){
+    data_tot <- dataset_all_SM_500[[i]]
+    data <- data_tot[[1]]
+    tiny_data <- data %>%
+      group_by(onset,dead) %>%
+      sample_n(size = round(n_pats * n()/nrow(data))) %>%
+      ungroup()
+    keep_id <- tiny_data$patient_id
+    temp <- dataset_all_SM_500[[i]][[j]]
+    dataset_all_SM_500[[i]][[j]] <- temp[temp$patient_id %in% keep_id, ]
+  }}
+save(dataset_all_SM_500, file="simulation500_SM_all.Rdata")
+
+#######################################################################
+
 dataset_all_SM_5K <- dataset_all_SM
 n_pats = 5000
 

@@ -13,8 +13,7 @@ run_imputation <- function(data, data_visits, m, type){
   
   temp$start<-temp$age
   temp$start <- ifelse(temp$onset==1,temp$midage, temp$start )
-  temp$time <- temp$death_time-temp$start
-  mod_death<- coxph(Surv(time,dead)~cov1+cov2+cov3+onset, data = temp)
+  mod_death<- coxph(Surv(start,death_time,dead)~cov1+cov2+cov3+onset, data = temp)
   deathhaz<-basehaz(mod_death,center=FALSE)
   deathpar<-mod_death$coefficients
   
@@ -33,8 +32,6 @@ run_imputation <- function(data, data_visits, m, type){
     for (i in 1:(nrow(deathhaz)-1))
       deathhaz$h[i]<-(deathhaz$hazard[i+1]-deathhaz$hazard[i])/(deathhaz$time[i+1]-deathhaz$time[i])
     remove(tzero)
-    end <- length(deathhaz)
-    deathhaz$time[2:end] <- deathhaz$time[2:end]+ (onsethaz$time)[2]
     
     
     combhaz<-merge(onsethaz,deathhaz,by.x="time", by.y="time",all.x=TRUE, all.y=TRUE, suffixes = c(".12",".13"))
