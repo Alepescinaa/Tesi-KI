@@ -2,7 +2,7 @@
 # Upload library and data
 ####################################
 
-library(mstate)
+library(mstate) 
 library(survival)
 library(dplyr)
 library(msm)
@@ -20,13 +20,15 @@ library(igraph)
 setwd(here())
 n_pats <- 500 # CHANGE HERE
 
-source("./wrapper_SM/functions_wrapper/prepare_coxph_flex.R")
+source("./wrapper_SM/functions_wrapper/prepare_flex.R")
+source("./wrapper_SM/functions_wrapper/prepare_coxph.R")
 source("./wrapper_SM/functions_wrapper/prepare_msm.R")
 source("./wrapper_SM/functions_wrapper/prepare_imputation.R")
 source("./wrapper_SM/functions_wrapper/fit_model.R")
 source("./wrapper_SM/functions_wrapper/averaging_params.R")
 source("./wrapper_SM/functions_wrapper/run_imputation.R")
 source("./wrapper_SM/functions_wrapper/wrapper_functions_SM.R")
+source("./wrapper_SM/functions_wrapper/smms_mine.R")
 
 
 cores <- 4

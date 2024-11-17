@@ -63,20 +63,11 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   # coxph model (ignores ic, accounts sm)
   #####################
   
-  temp <-  prepare_coxph_flex(data, n_pats)
-  #temp <- expand.covs(temp,c("cov1","cov2", "cov3"))
-  #model_cox<- coxph(Surv(time,status) ~ cov1.1 + cov2.1 + cov3.1 + cov1.2 + cov2.2 + cov3.2 + cov1.3 + cov2.3 + cov3.3 + strata(trans), data = temp, method="breslow")
-
-  model_cox <- vector(mode = "list", length = 3)
-  
+  temp <-  prepare_coxph(data, n_pats)
+ 
   time_cox<- system.time({
-    for (i in 1:2) {
-      model_cox[[i]] <- coxph(Surv(Tstart, Tstop, status) ~ cov1 + cov2 + cov3,
-                                        data = subset(temp, trans == i))
-      }
-    model_cox[[3]] <- coxph(Surv(time, status) ~ cov1 + cov2 + cov3,  
-                                      data = subset(temp, trans == 3))
-
+    model_cox<- coxph(Surv(Tstart, Tstop ,status) ~ cov1.1 + cov2.1 + cov3.1 + cov1.2 + cov2.2 + cov3.2 + cov1.3 + cov2.3 + cov3.3 + strata(trans), data = temp, method="breslow")
+  
   })[3]
 
   comp_time[1] <- as.numeric(round(time_cox,3))
@@ -87,7 +78,7 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   # flexsurv model (ignores ic, accounts sm)
   ######################
   
-  temp <- prepare_coxph_flex(data, n_pats)
+  temp <- prepare_flex(data, n_pats)
   fits_gompertz <- vector(mode = "list", length = 3)
 
   time_gomp<- system.time({
@@ -100,6 +91,12 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
                                  dist = "gompertz")
   })[3]
   
+  # for nhm parameters are in the following order rate1,rate2,rate3, shape1, shape2, shape3, covs...
+  initial_guess <- c( fits_gompertz[[1]]$coefficients[2], fits_gompertz[[2]]$coefficients[2],
+                      fits_gompertz[[3]]$coefficients[2], fits_gompertz[[1]]$coefficients[1],
+                      fits_gompertz[[2]]$coefficients[1], fits_gompertz[[3]]$coefficients[1],
+                      0,0,0,0,0,0,0,0,0)
+
   
   comp_time[2] <- as.numeric(round(time_gomp,3))
 
@@ -122,16 +119,16 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
 
   temp$patient_id <- as.factor(temp$patient_id)
   temp=as.data.frame(temp)
-
+ 
+  
   find_splits <- function(age) {
-    quantiles <- quantile(age, probs = seq(0, 1, 0.02))
+    quantiles <- quantile(age, probs = seq(0, 1, 0.005))
     return(quantiles[-c(1, length(quantiles))])
   }
 
   split_points <- find_splits(temp$age)
 
-  #initial_guess <-  append(msm_estimates, rep(0.5, 3), after = 3)
-  # we have estimates for rate and covs, so we add initial estimate to 0.5 of shape -> not helping
+ 
   error <- F
 
   time_nhm <- system.time({
@@ -151,10 +148,10 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
 
 
       model_nhm <- nhm(object_nhm,
-                       gen_inits = TRUE,
+                       gen_inits = T,
                        #initial = initial_guess,
                        score_test = FALSE,
-                       control = nhm.control(ncores = 1, obsinfo = FALSE, coarsen = T, coarsen.vars = c(1), coarsen.lv = 5, splits = split_points))
+                       control = nhm.control(ncores = cores_nhm, obsinfo = FALSE, coarsen = T, coarsen.vars = c(1), coarsen.lv = 5, splits = split_points, rtol=1e-4, atol=1e-4))
     },
     error = function(e) {
       print(paste("Error during model fitting:", e$message))
@@ -192,22 +189,6 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   # call: smms(startval, data, graph, covs, abs_exact = T, mc_cores = 4, hessian_matrix = T, cmethod= "" )
 
   temp <- data
-  # come censuro persone per cui non è noto stato?
-  # temp <- temp %>%
-  #   group_by(patient_id) %>%
-  #   do({
-  #     if (nrow(.) == 1) {
-  #       duplicated_row <- bind_rows(., .)
-  #       duplicated_row$age[2] <- duplicated_row$death_time[1]
-  #       duplicated_row$visits[2] <- 2
-  #       duplicated_row
-  #     } else {
-  #       .
-  #     }
-  #   }) %>%
-  #   ungroup()
-  
-  # I delete people withouth followup
 
   temp$state <- "dementia-free"
   temp <- temp %>%
@@ -241,6 +222,7 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   # on rate we must set covariates effect
   # since a must be strictly positve is better to work with exp(a) and then extract shape 
   
+  # true model
   f_01 = function(param, x, tt){dgompertz(tt,exp(param[1]), exp(param[2] + param[3]*x[1] + param[4]*x[2] + param[5]*x[3]))}
   f_02 = function(param, x, tt){dgompertz(tt,exp(param[6]), exp(param[7] + param[8]*x[1] + param[9]*x[2] + param[10]*x[3]))}
   f_12 = function(param, x, tt){dgompertz(tt,exp(param[11]), exp(param[12] + param[13]*x[1] + param[14]*x[2] + param[15]*x[3]))}
@@ -248,11 +230,49 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   S_01 = function(param, x, tt){1-pgompertz(tt,exp(param[1]), exp(param[2] + param[3]*x[1] + param[4]*x[2] + param[5]*x[3]))}
   S_02 = function(param, x, tt){1-pgompertz(tt,exp(param[6]), exp(param[7] + param[8]*x[1] + param[9]*x[2] + param[10]*x[3]))}
   S_12 = function(param, x, tt){1-pgompertz(tt,exp(param[11]), exp(param[12] + param[13]*x[1] + param[14]*x[2] + param[15]*x[3]))}
+ 
+  # exp + costrained covs
+  # S_01 = function(param, x, t){(1-pexp(t,exp(param[1]+param[2]*x[2]+param[3]*x[3])))}
+  # S_02 = function(param, x, t){(1-pexp(t,exp(param[4]+param[3]*x[1]+param[2]*x[2]+param[5]*x[3])))}
+  # S_12 = function(param, x, t){(1-pexp(t,exp(param[6]+param[3]*x[1]+param[3]*x[3])))}
+  # 
+  # f_01 = function(param, x, t){dexp(t,exp(param[1]+param[2]*x[2]+param[3]*x[3]))}
+  # f_02 = function(param, x, t){dexp(t,exp(param[4]+param[3]*x[1]+param[2]*x[2]+param[5]*x[3]))}
+  # f_12 = function(param, x, t){dexp(t,exp(param[6]+param[3]*x[1]+param[3]*x[3]))}
+ 
+  # 
+  f_01 = function(param, x, tt){dgompertz(tt, exp(param[1]), exp(param[2]))}
+  f_02 = function(param, x, tt){dgompertz(tt, exp(param[3]), exp(param[4]))}
+  f_12 = function(param, x, tt){dgompertz(tt, exp(param[5]), exp(param[6]))}
+
+  S_01 = function(param, x, tt){1-pgompertz(tt, exp(param[1]), exp(param[2]))}
+  S_02 = function(param, x, tt){1-pgompertz(tt, exp(param[3]), exp(param[4]))}
+  S_12 = function(param, x, tt){1-pgompertz(tt, exp(param[5]), exp(param[6]))}
+  
+  f_01 = function(param, x, tt){dgompertz(tt, param[1], param[2])}
+  f_02 = function(param, x, tt){dgompertz(tt, param[3], param[4])}
+  f_12 = function(param, x, tt){dgompertz(tt, param[5], param[6])}
+  
+  S_01 = function(param, x, tt){1-pgompertz(tt, param[1], param[2])}
+  S_02 = function(param, x, tt){1-pgompertz(tt, param[3], param[4])}
+  S_12 = function(param, x, tt){1-pgompertz(tt, param[5], param[6])}
+  
+  # just exp and one vcov 
+  # S_01 = function(param, x, t){(1-pexp(t,exp(param[1])))}
+  # S_02 = function(param, x, t){(1-pexp(t,exp(param[2])))}
+  # S_12 = function(param, x, t){(1-pexp(t,exp(param[3])))}
+  # 
+  # f_01 = function(param, x, t){dexp(t,exp(param[1]))}
+  # f_02 = function(param, x, t){dexp(t,exp(param[2]))}
+  # f_12 = function(param, x, t){dexp(t,exp(param[3]))}
+  
+  
+ 
   
   print(names_of_survival_density(gg))
-  
-  startval <- c(0.1, 0.2, 0, 0, 0, 0.1, 0.3, 0, 0, 0, 0.1, 0.2, 0, 0, 0)
-  model_smms <- smms(startval, temp, gg, X_data, abs_exact = T, mc_cores = 4, hessian_matrix = F)
+  #startval <- c(-2.5,0.21,0.5)
+  startval <- c(fits_gompertz[[1]]$coefficients[2], fits_gompertz[[1]]$coefficients[1], fits_gompertz[[2]]$coefficients[2], fits_gompertz[[2]]$coefficients[1], fits_gompertz[[3]]$coefficients[2], fits_gompertz[[3]]$coefficients[1])
+  model_smms <- smms_mine(startval, temp, gg, X_data, abs_exact = T, mc_cores = 4, hessian_matrix = FALSE)
 
   
   ####################
@@ -260,7 +280,7 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   ####################
   
   temp <- prepare_imputation(data, n_pats)
-  # initial onset age imputated in the middle
+
   
   m <- 30
   type <- "mix"
@@ -277,47 +297,9 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
 
   gc()
   
-  ########################
-  # Smoothhazard
-  #########################
 
-  # temp <- prepare_SmoootHazard(data, n_pats)
-  # 
-  # error <- FALSE
-  # 
-  # time_smh <- system.time({
-  #   tryCatch({
-  #     model_smootHazard <- idm(
-  #       formula01 = Hist(time = list(l, r), event = onset, entry = age) ~ cov1+cov2+cov3,
-  #       formula02 = Hist(time = death_time, event = dead, entry = age) ~ cov1+cov2+cov3,
-  #       method = "Splines",
-  #       data = temp,
-  #       CV = TRUE,
-  #       maxiter = 500,
-  #       print.iter = TRUE
-  #     )
-  #   }, error = function(e) {
-  #     error <<- TRUE  # Set the error flag
-  #     message("An error occurred: ", e$message)
-  #   })
-  # })[3]
-  # 
-  # 
-  # if (error) {
-  #   print("The model fitting encountered an error.")
-  # }
-  # 
-  # comp_time[7] <- as.numeric(round(time_smh,3))
-  # 
-  # if (!is.null(model_smootHazard)) {
-  #   save(model_smootHazard, file = file.path(model_dir, "model_smootHazard.RData"))
-  # } else {
-  #   print("Model is NULL; not saving.")
-  # }
-  # 
-  # 
-   save(comp_time, file = file.path(model_dir, "computational_time.RData"))
-  # 
+  save(comp_time, file = file.path(model_dir, "computational_time.RData"))
+  
   cat("models completed for seed:", seed, "\n")
   
   }

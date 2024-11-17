@@ -229,12 +229,27 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   temp <- prepare_imputation(data, n_pats)
   m <- 30
   type <- "forward"
-
+  
+  error <- F
+  
   time_imp <- system.time({
-    results_imp<- run_imputation(temp[[1]], temp[[2]], m, type)
-    avg_parameters <- results_imp[[1]]
-    all_fits <- results_imp[[2]]
+    tryCatch({
+      results_imp<- run_imputation(temp[[1]], temp[[2]], m, type)
+      avg_parameters <- results_imp[[1]]
+      all_fits <- results_imp[[2]]
+    },
+    error = function(e) {
+      print(paste("Error during model fitting:", e$message))
+      error <<- TRUE
+    })
   })[3]
+  
+  if (error) {
+    print(paste("No convergence for seed:", seed))
+    results_imp <- NULL
+  } else {
+    print("Model fitted successfully.")
+  }
 
   comp_time[6] <- as.numeric(round(time_imp,3))
 

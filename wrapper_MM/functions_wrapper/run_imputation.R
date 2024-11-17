@@ -13,8 +13,7 @@ run_imputation <- function(data, data_visits, m, type){
   
   temp$start<-temp$age
   temp$start <- ifelse(temp$onset==1,temp$midage, temp$start )
-  temp$time <- temp$death_time-temp$start
-  mod_death<- coxph(Surv(time,dead)~cov1+cov2+cov3+onset, data = temp)
+  mod_death<- coxph(Surv(start,death_time,dead)~cov1+cov2+cov3+onset, data = temp)
   deathhaz<-basehaz(mod_death,center=FALSE)
   deathpar<-mod_death$coefficients
   
@@ -33,8 +32,6 @@ run_imputation <- function(data, data_visits, m, type){
     for (i in 1:(nrow(deathhaz)-1))
       deathhaz$h[i]<-(deathhaz$hazard[i+1]-deathhaz$hazard[i])/(deathhaz$time[i+1]-deathhaz$time[i])
     remove(tzero)
-    end <- length(deathhaz)
-    deathhaz$time[2:end] <- deathhaz$time[2:end]+ (onsethaz$time)[2]
     
     
     combhaz<-merge(onsethaz,deathhaz,by.x="time", by.y="time",all.x=TRUE, all.y=TRUE, suffixes = c(".12",".13"))
@@ -126,7 +123,9 @@ run_imputation <- function(data, data_visits, m, type){
           maxt<-F$time[nF]
           S2t<-F$S2[nF] #surival prob of not dying at maximum timepoint in a,b
           S1t<-F$S1[nF] #surival prob of not developing dementia at maximum timepoint in a,b
-          S2h23P<-S2t*exp(lp.13[i]+d*delta)*(maxP-minP) #adjust survival probability (extra weight given to disease if patients die) 
+          S2h23P<-S2t*exp(lp.13[i]+d*delta)*(maxP-minP) 
+          # maxP-minP represent the cumulative prob of developing dementia in that interval
+          # we ajust this probability for survival function giving more weight to those who were dead
           # basically we are tring to give more probability of being extracted as ill patient to those that are dead since
           # dead people could have died because of unobserved dementia
           pD<-S2h23P/(S1t+S2h23P)    # probability of dementia onset during the interval, given survival without dementia up to the final time point  

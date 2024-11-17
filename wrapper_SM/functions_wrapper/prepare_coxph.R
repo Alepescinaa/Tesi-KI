@@ -1,4 +1,4 @@
-prepare_coxph_flex <- function(scheme_data, n_pats){
+prepare_coxph <- function(scheme_data, n_pats){
   
   original_index <- unique(scheme_data$patient_id)
   scheme_data$last_bfo <- numeric()
@@ -35,7 +35,13 @@ prepare_coxph_flex <- function(scheme_data, n_pats){
   
   data_long$Tstart[data_long$trans<3] <- data_long$Tstart[data_long$trans<3] +data_long$age[data_long$trans<3]
   data_long$time <- data_long$Tstop-data_long$Tstart
-  
+  data_long <- expand.covs(data_long,c("cov1","cov2", "cov3"))
+  data_long$Tstart2 <-  data_long$Tstart
+  data_long$Tstop2 <-  data_long$Tstop
+  data_long$Tstart2[data_long$trans==3] <- 0
+  data_long$Tstop2[data_long$trans==3] <- data_long$time[data_long$trans==3]
+  data_long <-data_long %>%
+    mutate(Tstart=Tstart2, Tstop=Tstop2, Tstart2=NULL, Tstop2=NULL)
   return(data_long)
   
 }
