@@ -15,6 +15,7 @@ library(future.apply)
 library(mstate)
 library(flexsurv)
 library(deSolve)
+library(kableExtra)
 
 setwd(here())
 
@@ -51,7 +52,10 @@ source_files <- c(
   "./wrapper_MM/functions_performance/mean_lfe_comparison.R",
   "./wrapper_MM/functions_performance/plot_bias_lfe.R",
   "./wrapper_MM/functions_performance/p.matrix.age.R",
-  "./wrapper_MM/functions_performance/get_time.R"
+  "./wrapper_MM/functions_performance/get_time.R",
+  "./wrapper_MM/functions_performance/compute_power.R",
+  "./wrapper_MM/functions_performance/mean_power.R",
+  "./wrapper_MM/functions_performance/table_power.R"
   
 )
 
@@ -62,7 +66,7 @@ lapply(source_files, source)
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 2000
+n_pats <- 500
 cores <- 4
 
 
@@ -142,7 +146,7 @@ for (scheme in 2:5){
 
 combined_cov <- vector(mode = "list", length = 4)
 
-for (scheme in 2:5){
+for (scheme in 2:3){
   combined_cov[[scheme-1]] <- level_convergence(scheme)
 }
 
@@ -168,10 +172,6 @@ for (scheme in 2:5){
     model = character(0),
     seed = integer(0)
   )
-  
-  for (seed in 1:100){
-    run_performance_bias(n_pats, scheme, seed, combined_cov[[scheme - 1]])
-  }
   
   plan(multisession, workers = cores) 
   results_list <- future_lapply(1:100, function(seed) {
@@ -338,6 +338,37 @@ for (scheme in 2:5){
 save(mean_estimates_lfe, file = file.path(model_dir,"mean_estimates_lfe.RData"))
 save(res_bias_lfe, file = file.path(model_dir,"bias_lfe.RData"))
 
+
+########################
+# Power of type 1 error
+########################
+
+# P(p_i<=alpha) i.e. percentage of times for which the covs effect is significant
+# accept H0 when it is true
+
+power <- vector(mode = "list", length = 4)
+alpha <- 0.05
+
+for (scheme in 2:5){
+  plan(multisession, workers = cores) 
+  results_list <- future_lapply(1:100, function(seed) {
+    temp_results <- compute_power(n_pats, scheme, seed, combined_cov[[scheme - 1]], alpha)
+    return(temp_results)
+  })
+  
+  results <- do.call(rbind, results_list)
+  power[[scheme-1]] <- mean_power(results, scheme)
+
+}
+
+save(power, file = file.path(model_dir,"power.RData"))
+
+significant_covs <- data.frame("cov1"= c(0,1,1), "cov2"= c(1,1,0), "cov3"=c(1,1,1), "transition"=c(1,2,3))
+
+table_power(significant_covs, power, scheme=2)
+table_power(significant_covs, power, scheme=3)
+table_power(significant_covs, power, scheme=4)
+table_power(significant_covs, power, scheme=5)
 
 #####################
 # computational time
