@@ -1,30 +1,30 @@
 
 run_performance_bias <- function(n_pats, scheme, seed, convergence){
   
-  # main_directory <- here()
-  # 
-  # if (n_pats == 500){
-  #   scheme_dir <- file.path(main_directory, "wrapper_SM/results_500/saved_models_scheme1")
-  #   seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
-  # } else if (n_pats == 2000){
-  #   scheme_dir <- file.path(main_directory, "wrapper_SM/results_2K/saved_models_scheme1")
-  #   seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
-  # }else if (n_pats == 5000){
-  #   scheme_dir <- file.path(main_directory, "wrapper_SM/results_5K/saved_models_scheme1")
-  #   seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
-  # }else if (n_pats == 10000){
-  #   scheme_dir <- file.path(main_directory, "wrapper_SM/results_10K/saved_models_scheme1")
-  #   seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
-  # }
-  # 
-  # setwd(seed_dir)
-  # file <- "fits_gompertz_EO.RData"
-  # if (file.exists(file)) {
-  #   load(file)
-  # } else {
-  #   warning(paste("File does not exist:", file))
-  # }
-  # 
+  main_directory <- here()
+
+  if (n_pats == 500){
+    scheme_dir <- file.path(main_directory, "wrapper_SM/results_500/saved_models_scheme1")
+    seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
+  } else if (n_pats == 2000){
+    scheme_dir <- file.path(main_directory, "wrapper_SM/results_2K/saved_models_scheme1")
+    seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
+  }else if (n_pats == 5000){
+    scheme_dir <- file.path(main_directory, "wrapper_SM/results_5K/saved_models_scheme1")
+    seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
+  }else if (n_pats == 10000){
+    scheme_dir <- file.path(main_directory, "wrapper_SM/results_10K/saved_models_scheme1")
+    seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
+  }
+
+  setwd(seed_dir)
+  file <- "fits_gompertz_EO.RData"
+  if (file.exists(file)) {
+    load(file)
+  } else {
+    warning(paste("File does not exist:", file))
+  }
+
   main_directory <- here()
 
   if (n_pats == 500){
@@ -75,8 +75,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     
     files_to_load <- c("cox_model.RData", 
                        "flexsurv_model.RData", 
-                       "model_smms.RData", 
-                       "model_nhm.RData", 
+                       #"model_smms.RData", 
                        "results_imp.RData", 
                        "computational_time.RData")
     for (file in files_to_load) {
@@ -86,34 +85,41 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
         print(file)
         print(seed)
         warning(paste("File does not exist:", file))
+      }
+      if (file.exists("model_nhm.RData")) {
+        load("model_nhm.RData")
+      } else {
         model_nhm <- NULL
+        print(seed)
+        warning(paste("nhm_model does not exist:", file))
       }
     }
   } else {
     warning(paste("Seed directory does not exist:", seed_dir))
   }
   
+  
   # ===========
   # EO dataset
   # ===========
   
- #  params_EO <- matrix(0, nrow = 3, ncol = 5)
- #  param_names <- names(fits_gompertz_EO[[1]]$coefficients)
- #  colnames(params_EO) <- param_names
- #  
- #  for (i in 1:3){
- #    for (j in 1:5){
- #      params_EO[i,j] <- fits_gompertz_EO[[i]] $coefficients[j]
- #    }
- #  }
- #  
- #  params_EO <- params_EO[, c(2, 1, 3, 4, 5)]
- #  params_EO <- cbind(params_EO, exp(params_EO[,3]), exp(params_EO[,4]), exp(params_EO[,4]))
- #  colnames(params_EO)[6:8] <- c("exp(cov1)", "exp(cov2)", "exp(cov3)")
- #  
- #  bias_EO <- compute_bias(params_EO, ground_truth_params)
- #  
- #  
+  params_EO <- matrix(0, nrow = 3, ncol = 5)
+  param_names <- names(fits_gompertz_EO[[1]]$coefficients)
+  colnames(params_EO) <- param_names
+
+  for (i in 1:3){
+    for (j in 1:5){
+      params_EO[i,j] <- fits_gompertz_EO[[i]] $coefficients[j]
+    }
+  }
+
+  params_EO <- params_EO[, c(2, 1, 3, 4, 5)]
+  params_EO <- cbind(params_EO, exp(params_EO[,3]), exp(params_EO[,4]), exp(params_EO[,4]))
+  colnames(params_EO)[6:8] <- c("exp(cov1)", "exp(cov2)", "exp(cov3)")
+
+  bias_EO <- compute_bias(params_EO, ground_truth_params)
+
+
  #  # =========
  #  # coxph
  #  # =========
@@ -222,30 +228,30 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
 
    }
  # 
- #  
- #  bias_tot <- rbind(
- #    cbind(bias_EO, model = "flexsurv_EO", seed=seed, transition = c(1,2,3)),
- #    cbind(bias_coxph, model = "coxph", seed = seed, transition = c(1,2,3)),
- #    cbind(bias_flexsurv, model = "flexsurv", seed = seed, transition = c(1,2,3)),
- #    cbind(bias_smms, model = "smms", seed = seed, transition = c(1,2,3)),
- #    cbind(bias_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
- #    cbind(bias_imputation, model = "imputation", seed = seed, transition = c(1,2,3))
- #  )
- #  
- #  rate <- c(NA,NA,NA)
- #  shape <- c(NA,NA,NA)
- #  if (convergence$coxph[seed]==2)
- #    params_coxph <- cbind(rate,shape,params_coxph)
- #  estimates <- rbind(
- #    cbind(params_EO, model = "flexsurv_EO", seed=seed, transition = c(1,2,3)),
- #    cbind(params_coxph, model = "coxph", seed = seed, transition = c(1,2,3)),
- #    cbind(params_flexsurv, model = "flexsurv", seed = seed, transition = c(1,2,3)),
- #    cbind(params_smms, model = "smms", seed = seed, transition = c(1,2,3)),
- #    cbind(params_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
- #    cbind(params_imp, model = "imputation", seed = seed, transition = c(1,2,3)) 
- #  )
- #  
- # 
- #  return (list(bias_tot, estimates))
+
+  bias_tot <- rbind(
+    cbind(bias_EO, model = "flexsurv_EO", seed=seed, transition = c(1,2,3)),
+    cbind(bias_coxph, model = "coxph", seed = seed, transition = c(1,2,3)),
+    cbind(bias_flexsurv, model = "flexsurv", seed = seed, transition = c(1,2,3)),
+    #cbind(bias_smms, model = "smms", seed = seed, transition = c(1,2,3)),
+    cbind(bias_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
+    cbind(bias_imputation, model = "imputation", seed = seed, transition = c(1,2,3))
+  )
+
+  rate <- c(NA,NA,NA)
+  shape <- c(NA,NA,NA)
+  if (convergence$coxph[seed]==2)
+    params_coxph <- cbind(rate,shape,params_coxph)
+  estimates <- rbind(
+    cbind(params_EO, model = "flexsurv_EO", seed=seed, transition = c(1,2,3)),
+    cbind(params_coxph, model = "coxph", seed = seed, transition = c(1,2,3)),
+    cbind(params_flexsurv, model = "flexsurv", seed = seed, transition = c(1,2,3)),
+    #cbind(params_smms, model = "smms", seed = seed, transition = c(1,2,3)),
+    cbind(params_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
+    cbind(params_imp, model = "imputation", seed = seed, transition = c(1,2,3))
+  )
+
+
+  return (list(bias_tot, estimates))
 }
 

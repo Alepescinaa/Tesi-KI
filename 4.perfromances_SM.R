@@ -29,19 +29,18 @@ source_files <- c(
   "./wrapper_SM/functions_performance/gt_flexsurv.R",
   "./wrapper_SM/functions_performance/compute_bias.R",
   "./wrapper_SM/functions_performance/run_performance_bias.R",
+  "./wrapper_SM/functions_performance/mean_bias_comparison.R",
   "./wrapper_SM/functions_performance/wrapper_convergence.R",
   "./wrapper_SM/functions_performance/check_convergence.R",
+  "./wrapper_SM/functions_performance/level_convergence.R",
+  "./wrapper_SM/functions_performance/compute_coverage.R",
+  "./wrapper_SM/functions_performance/compute_CI.R",
+  "./wrapper_SM/functions_performance/run_performance_coverage.R",
+  "./wrapper_SM/functions_performance/get_params_nhm.R",
+  "./wrapper_SM/functions_performance/mean_coverage_comparison.R",
   
   "./wrapper_SM/functions_performance/compute_bias_rel.R",
-  "./wrapper_SM/functions_performance/hazards_mine.R",
   "./wrapper_SM/functions_performance/run_performance_bias_rel.R",
-  "./wrapper_SM/functions_performance/run_performance_coverage.R",
-  "./wrapper_SM/functions_performance/compute_CI.R",
-  "./wrapper_SM/functions_performance/compute_coverage.R",
-  "./wrapper_SM/functions_performance/get_params_nhm.R",
-  "./wrapper_SM/functions_performance/mean_bias_comparison.R",
-  "./wrapper_SM/functions_performance/mean_coverage_comparison.R",
-  "./wrapper_SM/functions_performance/level_convergence.R",
   "./wrapper_SM/functions_performance/plot_convergence.R",
   "./wrapper_SM/functions_performance/plot_bias.R",
   "./wrapper_SM/functions_performance/plot_bias_rel.R",
@@ -175,10 +174,7 @@ for (scheme in 2:5){
     seed = integer(0)
   )
   
-  for (seed in 1:100){
-    run_performance_bias(n_pats, scheme, seed, combined_cov[[scheme - 1]])
-  }
-  
+
   plan(multisession, workers = cores) 
   results_list <- future_lapply(1:100, function(seed) {
     temp_results <- run_performance_bias(n_pats, scheme, seed, combined_cov[[scheme - 1]])
