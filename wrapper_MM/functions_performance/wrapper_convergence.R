@@ -5,6 +5,7 @@ wrapper_convergence <- function(n_pats, scheme, seed){
 
   for (seed in 1:100){
     temp[[seed]] <- check_convergence(n_pats, scheme, seed)
+    print(seed)
     res_checking[[seed]] <- temp[[seed]][[1]]
     res_hessian[[seed]] <- temp[[seed]][[2]]
   }
