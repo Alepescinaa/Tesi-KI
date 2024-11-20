@@ -101,6 +101,7 @@ if (n_pats==500){
   lapply(files, load, .GlobalEnv)
 }
 
+
 # directory to save things
 model_dir <- here()
 setwd(model_dir)
@@ -116,6 +117,7 @@ if (n_pats==500){
 } else if (n_pats==10000){
   model_dir <- paste0("wrapper_MM/saved_performance_10K")
   dir.create(model_dir, showWarnings = FALSE, recursive= T)  }
+
 
 #######################################################
 # fitting parametric model over exactly observed data
@@ -340,13 +342,17 @@ save(res_bias_lfe, file = file.path(model_dir,"bias_lfe.RData"))
 
 
 ########################
-# Power of type 1 error
+# Power and type 1 error
 ########################
 
-# P(p_i<=alpha) i.e. percentage of times for which the covs effect is significant
-# accept H0 when it is true
+# In the table I will represent P(p_i<=alpha) i.e. percentage of times for which the covs effect is significant
+# the yellow values represent when the covariate was significant in the ground truth 
 
-power <- vector(mode = "list", length = 4)
+# Type 1 error -> refuse H0|H0 true 
+# Type 2 error ->  accept H0| H0 false 
+# Power -> refuse H0|H0 false
+
+significancy <- vector(mode = "list", length = 4)
 alpha <- 0.05
 
 for (scheme in 2:5){
@@ -357,18 +363,21 @@ for (scheme in 2:5){
   })
   
   results <- do.call(rbind, results_list)
-  power[[scheme-1]] <- mean_power(results, scheme)
+  significancy[[scheme-1]] <- mean_power(results, scheme)
 
 }
 
-save(power, file = file.path(model_dir,"power.RData"))
+
+  
+save(significancy, file = file.path(model_dir,"significancy.RData"))
 
 significant_covs <- data.frame("cov1"= c(0,1,1), "cov2"= c(1,1,0), "cov3"=c(1,1,1), "transition"=c(1,2,3))
 
-table_power(significant_covs, power, scheme=2)
-table_power(significant_covs, power, scheme=3)
-table_power(significant_covs, power, scheme=4)
-table_power(significant_covs, power, scheme=5)
+
+table_power(significant_covs, significancy, scheme=2)
+table_power(significant_covs, significancy, scheme=3)
+table_power(significant_covs, significancy, scheme=4)
+table_power(significant_covs, significancy, scheme=5)
 
 #####################
 # computational time
