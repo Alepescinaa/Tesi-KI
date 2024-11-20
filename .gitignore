@@ -1,7 +1,8 @@
-wrapper_MM/results_500/
+wrapper_MM/results+_500/
+wrapper_MM/results_2000/
 wrapper_MM/results_5K/
 Simulated_data_MM/
-Simulated_data_SM
+Simulated_data_SM/
 # History files
 .Rhistory
 .Rapp.history
