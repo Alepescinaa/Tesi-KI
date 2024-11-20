@@ -55,7 +55,9 @@ source_files <- c(
   "./wrapper_MM/functions_performance/get_time.R",
   "./wrapper_MM/functions_performance/compute_power.R",
   "./wrapper_MM/functions_performance/mean_power.R",
-  "./wrapper_MM/functions_performance/table_power.R"
+  "./wrapper_MM/functions_performance/table_power.R",
+  "./wrapper_MM/functions_performance/width_ic.R",
+  "./wrapper_MM/functions_performance/mean_width.R"
   
 )
 
@@ -70,9 +72,10 @@ n_pats <- 500
 cores <- 4
 
 
-####################
-# load quantities
-####################
+###################
+# load quantities #
+###################
+
 setwd(here())
 
 if (n_pats==500){
@@ -120,16 +123,20 @@ if (n_pats==500){
 
 
 #######################################################
-# fitting parametric model over exactly observed data
+# fitting parametric model over exactly observed data #
 #######################################################
+
+# this is gonna be useful to understand the smaller bias we can reach in out estimates
+# since we have to account for the problematics introduced by the sample size
 
 # for (seed in 1:100){
 #   gt_flexsurv(n_pats, seed)
 # }
 
-######################
-# check of convergence
-######################
+
+########################
+# check of convergence #
+########################
 
 temp <- vector(mode = "list", length = 4)
 convergence_schemes <- vector(mode = "list", length = 4)
@@ -154,9 +161,10 @@ for (scheme in 2:3){
 
 save(combined_cov, file = file.path(model_dir,"convergence.RData"))
 
-#######################
-# bias comparison
-#######################
+
+###################
+# bias comparison #
+###################
 
 bias_all_schemes <- vector(mode = "list", length = 4)
 estimates <- vector(mode = "list", length = 4)
@@ -210,9 +218,9 @@ save(bias_all_schemes, file = file.path(model_dir,"bias_all.RData"))
 save(res_bias, file = file.path(model_dir,"res_bias.RData"))
 
 
-#######################
-# relative bias comparison
-#######################
+############################
+# relative bias comparison #
+############################
 
 rel_bias_all_schemes <- vector(mode = "list", length = 4)
 
@@ -249,9 +257,10 @@ for (scheme in 2:5){
 save(rel_bias_all_schemes, file = file.path(model_dir,"bias_all_rel.RData"))
 save(res_bias_rel, file = file.path(model_dir,"res_bias_rel.RData"))
 
-#######################
-# coverage comparison
-#######################
+
+############################
+# 95 % coverage comparison #
+############################
 
 coverage_all_schemes <- vector(mode = "list", length = 4)
 
@@ -291,9 +300,37 @@ for (scheme in 2:5){
 save(coverage_all_schemes, file = file.path(model_dir,"all_coverage.RData"))
 save(res_cov_ic, file = file.path(model_dir,"95%coverage.RData"))
 
-#####################
-# life expectancy
-#####################
+
+###############################
+#  width confidence intervals #
+###############################
+
+width_all_schemes <- vector(mode = "list", length = 4)
+
+for (scheme in 2:5){
+  plan(multisession, workers = cores) 
+  results_list <- future_lapply(1:100, function(seed) {
+    temp_results <- width_ic(n_pats, scheme, seed, combined_cov[[scheme-1]])
+    return(temp_results)
+  })
+  
+  results_width<- do.call(rbind, results_list)
+  
+  width_all_schemes[[scheme-1]] <- results_width
+  
+}
+
+mean_width <- vector(mode = "list", length = 4)
+for (scheme in 2:5){
+  mean_width[[scheme-1]] <- mean_coverage_comparison(width_all_schemes, scheme)
+}
+
+save(mean_width, file = file.path(model_dir,"width_ic.RData"))
+
+
+####################
+# life expectancy #
+####################
 
 lfe_bias <- vector(mode = "list", length = 4)
 lfe_estimates <- vector(mode = "list", length = 4)
@@ -341,9 +378,9 @@ save(mean_estimates_lfe, file = file.path(model_dir,"mean_estimates_lfe.RData"))
 save(res_bias_lfe, file = file.path(model_dir,"bias_lfe.RData"))
 
 
-########################
-# Power and type 1 error
-########################
+##########################
+# Power and type 1 error #
+##########################
 
 # In the table I will represent P(p_i<=alpha) i.e. percentage of times for which the covs effect is significant
 # the yellow values represent when the covariate was significant in the ground truth 
@@ -366,8 +403,6 @@ for (scheme in 2:5){
   significancy[[scheme-1]] <- mean_power(results, scheme)
 
 }
-
-
   
 save(significancy, file = file.path(model_dir,"significancy.RData"))
 
@@ -379,9 +414,10 @@ table_power(significant_covs, significancy, scheme=3)
 table_power(significant_covs, significancy, scheme=4)
 table_power(significant_covs, significancy, scheme=5)
 
-#####################
-# computational time
-#####################
+
+######################
+# computational time #
+######################
 
 ct_all_schemes <- vector(mode = "list", length = 4)
 
