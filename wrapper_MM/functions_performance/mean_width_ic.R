@@ -15,5 +15,5 @@ mean_width_ic <- function(data, scheme){
       .groups = 'drop'
     )
   
-  return (mean_bias)
+  return (mean_width)
 }

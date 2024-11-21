@@ -31,10 +31,10 @@ plot_convergence <- function(scheme, titles){
          fill = "Convergence status") +
     theme_minimal(base_size = 14) +
     theme(
-      axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
       legend.position = "top",  
       legend.title = element_text(size = 9), 
-      legend.text = element_text(size = 8),    
+      legend.text = element_text(size = 7),    
       panel.grid.major = element_line(color = "lightgrey", size = 0.3),  
       panel.grid.minor = element_blank()  # No minor grid lines
     )+

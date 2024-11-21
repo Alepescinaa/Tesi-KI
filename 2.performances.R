@@ -57,7 +57,10 @@ source_files <- c(
   "./wrapper_MM/functions_performance/mean_power.R",
   "./wrapper_MM/functions_performance/table_power.R",
   "./wrapper_MM/functions_performance/width_ic.R",
-  "./wrapper_MM/functions_performance/mean_width_ic.R"
+  "./wrapper_MM/functions_performance/mean_width_ic.R",
+  "./wrapper_MM/functions_performance/plot_width.R",
+  "./wrapper_MM/functions_performance/plot_lfe.R",
+  "./wrapper_MM/functions_performance/plot_lfe_bias.R"
   
 )
 
@@ -320,9 +323,10 @@ for (scheme in 2:5){
 
 mean_width <- vector(mode = "list", length = 4)
 for (scheme in 2:5){
-  mean_width[[scheme-1]] <- mean_coverage_comparison(width_all_schemes, scheme)
+  mean_width[[scheme-1]] <- mean_width_ic(width_all_schemes, scheme)
 }
 
+save(width_all_schemes, file = file.path(model_dir,"width_all_ic.RData"))
 save(mean_width, file = file.path(model_dir,"width_ic.RData"))
 
 
@@ -339,9 +343,9 @@ for (scheme in 2:5){
     model = character(0),
     seed = integer(0)
   )
-  
+  # I've been using msm age without accounting for age as time varying
   plan(multisession, workers = cores) 
-  results_list <- future_lapply(1:10, function(seed) {
+  results_list <- future_lapply(1:100, function(seed) {
     temp <- data[[seed]][[scheme]]
     t_start <- min(temp$age)
     temp_results <- computing_life_expectancy(n_pats, scheme, seed, combined_cov[[scheme-1]], t_start, baseline_data)
@@ -350,7 +354,7 @@ for (scheme in 2:5){
   
   temp_bias <- list()
   temp_est <- list()
-  for (seed in 1:10){
+  for (seed in 1:100){
     temp_est[[seed]] <-results_list[[seed]][[1]]
     temp_bias[[seed]] <-results_list[[seed]][[2]]
   }
@@ -372,8 +376,16 @@ for (scheme in 2:5){
   mean_estimates_lfe[[scheme-1]] <- mean_lfe_comparison(lfe_estimates, scheme)
 }
 
+save(lfe_estimates, file = file.path(model_dir,"all_estimates_lfe.RData")) #to be used if I wannna compute ic
 save(mean_estimates_lfe, file = file.path(model_dir,"mean_estimates_lfe.RData"))
 save(res_bias_lfe, file = file.path(model_dir,"bias_lfe.RData"))
+
+plot_lfe(0)
+plot_lfe(1) 
+
+#relative bias
+plot_lfe_bias(0)
+plot_lfe_bias(1)
 
 
 ##########################
@@ -382,10 +394,10 @@ save(res_bias_lfe, file = file.path(model_dir,"bias_lfe.RData"))
 
 # In the table I will represent P(p_i<=alpha) i.e. percentage of times for which the covs effect is significant
 # the yellow values represent when the covariate was significant in the ground truth 
-
-# Type 1 error -> refuse H0|H0 true 
-# Type 2 error ->  accept H0| H0 false 
-# Power -> refuse H0|H0 false
+# H0 is variable not significant
+# Type 1 error -> refuse H0|H0 true -> significant|no sign
+# Type 2 error ->  accept H0| H0 false -> no sign|sign
+# Power -> refuse H0|H0 false -> significant|sign
 
 significancy <- vector(mode = "list", length = 4)
 alpha <- 0.05
@@ -406,7 +418,8 @@ save(significancy, file = file.path(model_dir,"significancy.RData"))
 
 significant_covs <- data.frame("cov1"= c(0,1,1), "cov2"= c(1,1,0), "cov3"=c(1,1,1), "transition"=c(1,2,3))
 
-
+# green type one error
+# yellow power
 table_power(significant_covs, significancy, scheme=2)
 table_power(significant_covs, significancy, scheme=3)
 table_power(significant_covs, significancy, scheme=4)
@@ -446,7 +459,7 @@ plot4 <- plot_convergence(5, titles)
 
 plot1 + plot2 + plot3 + plot4 + 
   plot_layout(ncol = 2, nrow = 2, 
-              widths = c(0.6, 0.6), 
+              widths = c(0.5, 0.5), 
               heights = c(0.8, 0.8)) +
   theme(plot.margin = margin(10, 10, 10, 10))
 
@@ -456,21 +469,21 @@ plot_bias(3, titles)
 plot_bias(4, titles)
 plot_bias(5, titles)
 
-for (scheme in 2:5) {
-  for (transition in 1:3) {
-    print(plot_bias_rel(scheme, titles, transition))
-  }
-}
+# for (scheme in 2:5) {
+#   for (transition in 1:3) {
+#     print(plot_bias_rel(scheme, titles, transition))
+#   }
+# }
 
-scheme <- 4 #2:5
-list_data <- prepare_data_boxplot(scheme)
-
-parameters <- c("cov1", "cov2", "cov3", "rate", "shape")
-plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[1])
-plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[2])
-plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[3])
-plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[4])
-plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[5])
+# scheme <- 4 #2:5
+# list_data <- prepare_data_boxplot(scheme)
+# 
+# parameters <- c("cov1", "cov2", "cov3", "rate", "shape")
+# plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[1])
+# plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[2])
+# plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[3])
+# plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[4])
+# plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[5])
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 plot_coverage(2, titles)
@@ -478,17 +491,29 @@ plot_coverage(3, titles)
 plot_coverage(4, titles)
 plot_coverage(5, titles)
 
-titles <-c("(1 year)", "(3 years)", "(3-6 years)", "EHR")
-plot_bias_lfe(res_bias_lfe, 2, titles) 
-plot_bias_lfe(res_bias_lfe, 3, titles)
-plot_bias_lfe(res_bias_lfe, 4, titles)
-plot_bias_lfe(res_bias_lfe, 5, titles)
+titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
+plot_width(mean_width,2, titles)
+plot_width(mean_width,3, titles)
+plot_width(mean_width,4, titles)
+plot_width(mean_width,5, titles)
+
+# titles <-c("(1 year)", "(3 years)", "(3-6 years)", "EHR")
+# plot_bias_lfe(res_bias_lfe, 2, titles) 
+# plot_bias_lfe(res_bias_lfe, 3, titles)
+# plot_bias_lfe(res_bias_lfe, 4, titles)
+# plot_bias_lfe(res_bias_lfe, 5, titles)
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 plot1 <- plot_ct(2, titles, combined_cov[[1]])
 plot2 <- plot_ct(3, titles, combined_cov[[2]])
 plot3 <- plot_ct(4, titles, combined_cov[[3]])
 plot4 <- plot_ct(5, titles, combined_cov[[4]])
+
+plot1 + plot2 + plot3 + plot4 + 
+  plot_layout(ncol = 2, nrow = 2, 
+              widths = c(0.6, 0.6), 
+              heights = c(0.8, 0.8)) +
+  theme(plot.margin = margin(10, 10, 10, 10))
 
 dir <- here()
 dir <- paste0("wrapper_MM/Plots_500")

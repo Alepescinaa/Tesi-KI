@@ -1,21 +1,23 @@
 table_power <- function(significant_covs, data, scheme){
   data <- data[[scheme-1]]
-  data <- data %>%
-    mutate(
-      cov1 = (100 - cov1),
-      cov2 = (100 - cov2),
-      cov3 = (100 - cov3)
-    )
-  
-  minimum_error <-  data %>%
+  # data <- data %>%
+  #   mutate(
+  #     cov1 = (100 - cov1),
+  #     cov2 = (100 - cov2),
+  #     cov3 = (100 - cov3)
+  #   )
+  # 
+  max_power <-  data %>%
     pivot_longer(cols = starts_with("cov"), 
                  names_to = "covariate", 
                  values_to = "value") %>% 
     group_by(transition, covariate) %>%
-    slice_min(value, with_ties = FALSE) %>% 
+    slice_max(value, with_ties = FALSE) %>% 
     ungroup()
-  minimum_error$value[minimum_error$transition==1 & minimum_error$covariate=="cov1"] <- NA
-  minimum_error$value[minimum_error$transition==3 & minimum_error$covariate=="cov2"] <- NA
+  max_power$value[max_power$transition==1 & max_power$covariate=="cov1"] <- NA
+  max_power$value[max_power$transition==3 & max_power$covariate=="cov2"] <- NA
+  
+  print(max_power)
 
   
   df_merged <- data %>%
@@ -37,6 +39,6 @@ table_power <- function(significant_covs, data, scheme){
     column_spec(5, background = ifelse(df_merged$cov3_color != "", "yellow", "lightgreen")) %>%
     add_header_above(c(" "=2, "Power vs Error type I" = 3))
   
-return(minimum_error)
+
   
 }

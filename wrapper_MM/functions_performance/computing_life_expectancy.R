@@ -103,25 +103,9 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # life expectancy ground truth
   # ============================
   
-  generator_model <- fits_gompertz_EO
-  gt <- ground_truth_params[,c(2,1,3,4,5)]
-  generator_model[[1]]$coefficients <- gt[1,]
-  generator_model[[2]]$coefficients <- gt[2,]
-  generator_model[[3]]$coefficients <- gt[3,]
   
-  generator_model[[1]]$res.t[,1] <-  gt[1,]
-  generator_model[[2]]$res.t[,1] <-  gt[2,]
-  generator_model[[3]]$res.t[,1] <-  gt[3,]
   
-  generator_model[[1]]$res[,1] <-  gt[1,]
-  generator_model[[2]]$res[,1] <-  gt[2,]
-  generator_model[[3]]$res[,1] <-  gt[3,]
-  
-  generator_model[[1]]$res[2,1] <- exp(gt[1,2])
-  generator_model[[2]]$res[2,2] <- exp(gt[2,2])
-  generator_model[[3]]$res[2,3] <- exp(gt[3,2])
-  
-  cov_means <- colMeans(generator_model[[1]]$data$mml$rate)
+  cov_means <- colMeans(fits_gompertz_EO[[1]]$data$mml$rate)
   
   newdata <- data.frame(
     cov1 = cov_means[2], 
@@ -131,7 +115,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   
   tmat <- mstate::transMat(x = list(c(2, 3),c(3),c()), names = c("Dementia-free","Dementia", "Death")) 
  
-  gt_tls <-  totlos.fs.mine(generator_model, t_start= t_start,  trans=tmat, newdata = newdata, t=105)[1,][1:2]
+  gt_tls <-  totlos.fs.mine(fits_wei, t_start= t_start,  trans=tmat, newdata = newdata, t=105)[1,][1:2]
 
  
   # ===============
@@ -139,7 +123,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # ===============
   
   flexsurv_tls_EO <- totlos.fs.mine(fits_gompertz_EO, t_start=t_start,  trans=tmat, newdata = newdata, t=105)[1,][1:2]
-  bias_flexsurv_tls_EO <- flexsurv_tls_EO-gt_tls
+  bias_flexsurv_tls_EO <- (flexsurv_tls_EO-gt_tls)/gt_tls
   
   # ============
   # coxph
@@ -177,7 +161,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
       coxph_tls[i] <- sum(cox_trans_prob[, i] * diff(time))
     }
     coxph_tls <- coxph_tls[1:2]
-    bias_coxph_tls <- coxph_tls-gt_tls
+    bias_coxph_tls <- (coxph_tls-gt_tls)/gt_tls
   } else {
     coxph_tls <- rep(NA,2)
     bias_coxph_tls <- rep(NA,2)
@@ -191,7 +175,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   
   if (convergence$flexsurv[seed]==2){
   flexsurv_tls <-  totlos.fs.mine(fits_gompertz, t_start=t_start,  trans=tmat, newdata = newdata, t=105)[1,][1:2]
-  bias_flexsurv_tls <- flexsurv_tls-gt_tls
+  bias_flexsurv_tls <- (flexsurv_tls-gt_tls)/gt_tls
   } else {
     flexsurv_tls <- rep(NA,2)
     bias_flexsurv_tls <- rep(NA,2)
@@ -228,7 +212,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   
   if (convergence$msm[seed]==2){
     msm_tls <- totlos.msm(model.msm, fromt=0, tot=105-t_start) [1:2]
-    bias_msm_tls <- msm_tls-gt_tls
+    bias_msm_tls <- (msm_tls-gt_tls)/gt_tls
   } else{
     msm_tls <- rep(NA,2)
     bias_msm_tls <- rep(NA,2)
@@ -271,43 +255,45 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   #   bias_msm_age_tls <- rep(NA,2)
   # }
   
+  # if(convergence$msm_age[seed]==2){
+  #   mean_age <- mean(model.msm_age$data$mm.cov[,5])
+  #   msm_age_probabilities_cate <- p.matrix.age(model.msm_age, covariates =  list(cov1 = cov_means[2], cov2 = cov_means[3], cov3 = cov_means[4]), age1 = t_start,
+  #                                              age2 = 105, int=0.1, ci="none", cores=4)
+  #   msm_age_tls <- get_time(msm_age_probabilities_cate, ci= "none")
+  #   msm_age_tls <- msm_age_tls[1:2,2]
+  #   msm_age_tls <- as.numeric(unlist(msm_age_tls))
+  #   bias_msm_age_tls <- msm_age_tls-gt_tls
+  # }else{
+  #   msm_age_tls <- rep(NA,2)
+  #   bias_msm_age_tls <- rep(NA,2)
+  # }
+  # 
+  # treating it just as msm understimates
   if(convergence$msm_age[seed]==2){
-    mean_age <- mean(model.msm_age$data$mm.cov[,5])
-    msm_age_probabilities_cate <- p.matrix.age(model.msm_age, covariates =  list(cov1 = cov_means[2], cov2 = cov_means[3], cov3 = cov_means[4]), age1 = t_start,
-                                               age2 = 105, int=0.1, ci="none", cores=4)
-    msm_age_tls <- get_time(msm_age_probabilities_cate, ci= "none")
-    msm_age_tls <- msm_age_tls[1:2,2]
-    msm_age_tls <- as.numeric(unlist(msm_age_tls))
-    bias_msm_age_tls <- msm_age_tls-gt_tls
+    time <- seq(t_start,105,by=0.1)
+    time <- time-t_start
+    msm_age_probabilities <- matrix(ncol = 3, nrow = 0)
+
+
+    for (i in 1:length(time)) {
+      temp <- pmatrix.msm(model.msm_age, t = time[i])[1,]
+      msm_age_probabilities <- rbind(msm_age_probabilities, temp)
+    }
+
+    msm_age_tls<- numeric(ncol(msm_age_probabilities))
+
+    diff_time <- diff(time)
+    msm_age_probabilities <- msm_age_probabilities[1:length(diff_time),]
+
+    for (i in 1:ncol(msm_age_probabilities)) {
+      msm_age_tls[i] <- sum(msm_age_probabilities[, i] * diff_time)
+    }
+    msm_age_tls <- msm_age_tls[1:2]
+    bias_msm_age_tls <- (msm_age_tls-gt_tls)/gt_tls
   }else{
     msm_age_tls <- rep(NA,2)
     bias_msm_age_tls <- rep(NA,2)
   }
-  
-  # treating it just as msm understimates
-  # if(convergence$msm_age[seed]==2){
-  #   time <- seq(t_start,105,by=0.1)
-  #   time <- time-t_start
-  #   msm_age_probabilities <- matrix(ncol = 3, nrow = 0)
-  # 
-  # 
-  #   for (i in 1:length(time)) {
-  #     temp <- pmatrix.msm(model.msm_age, t = time[i])[1,]
-  #     msm_age_probabilities <- rbind(msm_age_probabilities, temp)
-  #   }
-  # 
-  #   msm_age_tls<- numeric(ncol(msm_age_probabilities))
-  # 
-  #   diff_time <- diff(time)
-  #   msm_age_probabilities <- msm_age_probabilities[1:length(diff_time),]
-  # 
-  #   for (i in 1:ncol(msm_age_probabilities)) {
-  #     msm_age_tls[i] <- sum(msm_age_probabilities[, i] * diff_time)
-  #   }
-  #   msm_age_tls <- msm_age_tls[1:2]
-  # }else{
-  #   msm_age_tls <- rep(NA,2)
-  # }
 
   # ======
   # nhm
@@ -328,7 +314,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
       nhm_tls[i] <- sum(nhm_probabilities[, i] * diff_time)
     }
     nhm_tls <- nhm_tls[1:2]
-    bias_nhm_tls <- nhm_tls-gt_tls
+    bias_nhm_tls <- (nhm_tls-gt_tls)/gt_tls
   }else{
     nhm_tls <- rep(NA,2)
     bias_nhm_tls <- rep(NA,2)
@@ -351,7 +337,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
     }
     imputation_tls <- imputation_tls/m
     imputation_tls <- imputation_tls[1,][1:2]
-    bias_imputation_tls <- imputation_tls-gt_tls
+    bias_imputation_tls <- (imputation_tls-gt_tls)/gt_tls
   }else{
     imputation_tls <- rep(NA,2)
     bias_imputation_tls <- rep(NA,2)
@@ -383,6 +369,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
     cbind(lfe = bias_imputation_tls, model = "imputation", seed = seed) 
   )
   
+  print(seed)
   return(list(lfe_estimates, lfe_bias))
   
 }
