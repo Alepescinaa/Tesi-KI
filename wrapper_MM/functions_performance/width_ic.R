@@ -111,6 +111,10 @@ width_ic <- function(n_pats, scheme, seed, convergence) {
   rownames(width_EO) <- c("cov1","cov2","cov3")
   colnames(width_EO) <- c("1","2", "3")
   
+  rownames(ci_upper_EO) <- c("cov1","cov2","cov3")
+  colnames(ci_upper_EO) <- c("1","2", "3")
+  rownames(ci_lower_EO) <- c("cov1","cov2","cov3")
+  colnames(ci_lower_EO) <- c("1","2", "3")
   
   # =========
   # coxph
@@ -127,11 +131,25 @@ width_ic <- function(n_pats, scheme, seed, convergence) {
     
     width_cox <- round(ci_upper_cox-ci_lower_cox,3)
     rownames(width_cox) <- c("cov1", "cov2", "cov3")
-    colnames(width_cox) <- c("1", "2", "3")  
+    colnames(width_cox) <- c("1", "2", "3")
+    
+    rownames(ci_upper_cox) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_cox) <- c("1", "2", "3")
+    rownames(ci_lower_cox) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_cox) <- c("1", "2", "3")
+    
   } else{
     width_cox <- matrix(NA, nrow = 3, ncol = 3)
     rownames(width_cox) <- c("cov1", "cov2", "cov3")
     colnames(width_cox) <- c("1", "2", "3")  
+    
+    ci_upper_cox <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_upper_cox) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_cox) <- c("1", "2", "3")  
+    
+    ci_lower_cox <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_lower_cox) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_cox) <- c("1", "2", "3")  
     }
   
   
@@ -154,10 +172,23 @@ width_ic <- function(n_pats, scheme, seed, convergence) {
     rownames(width_flexsurv) <- c("cov1", "cov2", "cov3")
     colnames(width_flexsurv) <- c("1", "2", "3")  
     
+    rownames(ci_upper_flex) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_flex) <- c("1", "2", "3")
+    rownames(ci_lower_flex) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_flex) <- c("1", "2", "3")
+    
   } else{
     width_flexsurv <- matrix(NA, nrow = 3, ncol = 3)
     rownames(width_flexsurv) <- c("cov1", "cov2", "cov3")
-    colnames(width_flexsurv) <- c("1", "2", "3")  
+    colnames(width_flexsurv) <- c("1", "2", "3")
+    
+    ci_upper_flex <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_upper_flex) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_flex) <- c("1", "2", "3")
+    
+    ci_lower_flex <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_lower_flex) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_flex) <- c("1", "2", "3")
   }
   
   
@@ -177,10 +208,24 @@ width_ic <- function(n_pats, scheme, seed, convergence) {
     width_msm <- round(ci_upper_msm-ci_lower_msm,3)
     rownames(width_msm) <- c("cov1", "cov2", "cov3")
     colnames(width_msm) <- c("1", "2", "3")  
+    
+    rownames(ci_upper_msm) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_msm) <- c("1", "2", "3") 
+    rownames(ci_lower_msm) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_msm) <- c("1", "2", "3") 
+    
   } else{
     width_msm <- matrix(NA, nrow = 3, ncol = 3)
     rownames(width_msm) <- c("cov1", "cov2", "cov3")
     colnames(width_msm) <- c("1", "2", "3")  
+    
+    ci_upper_msm <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_upper_msm) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_msm) <- c("1", "2", "3")  
+    
+    ci_lower_msm <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_lower_msm) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_msm) <- c("1", "2", "3")  
   }
   
   
@@ -200,10 +245,24 @@ width_ic <- function(n_pats, scheme, seed, convergence) {
     width_msm_age <- round(ci_upper_msm_age-ci_lower_msm_age,3)
     rownames(width_msm_age) <- c("cov1", "cov2", "cov3")
     colnames(width_msm_age) <- c("1", "2", "3")  
+    
+    rownames(ci_upper_msm_age) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_msm_age) <- c("1", "2", "3") 
+    rownames(ci_lower_msm_age) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_msm_age) <- c("1", "2", "3") 
+    
   } else{
     width_msm_age <- matrix(NA, nrow = 3, ncol = 3)
     rownames(width_msm_age) <- c("cov1", "cov2", "cov3")
-    colnames(width_msm_age) <- c("1", "2", "3")  
+    colnames(width_msm_age) <- c("1", "2", "3") 
+    
+    ci_upper_msm_age <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_upper_msm_age) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_msm_age) <- c("1", "2", "3") 
+    
+    ci_lower_msm_age <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_lower_msm_age) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_msm_age) <- c("1", "2", "3") 
   }
   
   
@@ -215,15 +274,35 @@ width_ic <- function(n_pats, scheme, seed, convergence) {
     ci_nhm <- get_params_nhm(model_nhm, ci = TRUE)
     
     ci_lower_nhm <- ci_nhm[,2]
-    ci_lower_nhm <- matrix(ci_lower_nhm, 5, 3, byrow = T)
+    ci_lower_nhm <- matrix(ci_lower_nhm, 5, 3, byrow = T)[3:5,]
     ci_upper_nhm <- ci_nhm[,3]
-    ci_upper_nhm <- matrix(ci_upper_nhm, 5, 3, byrow = T)
+    ci_upper_nhm <- matrix(ci_upper_nhm, 5, 3, byrow = T)[3:5,]
     
-    width_nhm <- round(ci_upper_nhm[3:5,]-ci_lower_nhm[3:5,],3)
+    width_nhm <- round(ci_upper_nhm-ci_lower_nhm,3)
+    rownames(width_nhm) <- c("cov1", "cov2", "cov3")
+    colnames(width_nhm) <- c("1", "2", "3")  
+    
+    rownames(ci_upper_nhm) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_nhm) <- c("1", "2", "3")  
+    rownames(ci_lower_nhm) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_nhm) <- c("1", "2", "3")  
+    
   } else {
     width_nhm<- matrix(NA, nrow = 3, ncol = 3)
     rownames(width_nhm) <- c("cov1", "cov2", "cov3")
     colnames(width_nhm) <- c("1", "2", "3")  
+    
+    width_nhm<- matrix(NA, nrow = 3, ncol = 3)
+    rownames(width_nhm) <- c("cov1", "cov2", "cov3")
+    colnames(width_nhm) <- c("1", "2", "3") 
+    
+    ci_upper_nhm<- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_upper_nhm) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_nhm) <- c("1", "2", "3")  
+    
+    ci_lower_nhm<- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_lower_nhm) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_nhm) <- c("1", "2", "3")  
   }
   
   # ============ 
@@ -306,10 +385,24 @@ width_ic <- function(n_pats, scheme, seed, convergence) {
     width_imputation <- round(ci_upper_imp-ci_lower_imp,3)
     rownames(width_imputation) <- c("cov1", "cov2", "cov3")
     colnames(width_imputation) <- c("1", "2", "3")  
+    
+    rownames(ci_upper_imp) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_imp) <- c("1", "2", "3")  
+    rownames(ci_lower_imp) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_imp) <- c("1", "2", "3")  
+    
   } else {
     width_imputation <- matrix(NA, nrow = 3, ncol = 3)
     rownames(width_imputation) <- c("cov1", "cov2", "cov3")
     colnames(width_imputation) <- c("1", "2", "3")  
+    
+    ci_upper_imp <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_upper_imp) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_imp) <- c("1", "2", "3")  
+    
+    ci_lower_imp <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_lower_imp) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_imp) <- c("1", "2", "3")  
   }
   
   width_tot <- rbind(
@@ -321,7 +414,33 @@ width_ic <- function(n_pats, scheme, seed, convergence) {
     cbind(width_nhm, model = "nhm", seed = seed, covariate=c("cov1","cov2","cov3")),
     cbind(width_imputation, model = "imputation", seed = seed, covariate=c("cov1","cov2","cov3"))
   )
-
-
-  return(width_tot)
+  
+  lower_tot <- rbind(
+    cbind(ci_lower_EO, model = "flexsurv_EO", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_lower_cox, model = "coxph", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_lower_flex, model = "flexsurv", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_lower_msm, model = "msm", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_lower_msm_age, model = "msm_age", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_lower_nhm, model = "nhm", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_lower_imp, model = "imputation", seed = seed, covariate=c("cov1","cov2","cov3"))
+  )
+  
+  upper_tot <- rbind(
+    cbind(ci_upper_EO, model = "flexsurv_EO", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_upper_cox, model = "coxph", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_upper_flex, model = "flexsurv", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_upper_msm, model = "msm", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_upper_msm_age, model = "msm_age", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_upper_nhm, model = "nhm", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_upper_imp, model = "imputation", seed = seed, covariate=c("cov1","cov2","cov3"))
+  )
+  
+  lower_tot <- as.data.frame(lower_tot)
+  upper_tot <- as.data.frame(upper_tot)
+  lower_tot <- lower_tot %>% mutate(ic = "lower")
+  upper_tot <- upper_tot %>% mutate(ic = "upper")
+  ic <- full_join(lower_tot,upper_tot)
+  
+  return(ic)
 }
+

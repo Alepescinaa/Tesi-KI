@@ -38,6 +38,9 @@ source_files <- c(
   "./wrapper_SM/functions_performance/run_performance_coverage.R",
   "./wrapper_SM/functions_performance/get_params_nhm.R",
   "./wrapper_SM/functions_performance/mean_coverage_comparison.R",
+  "./wrapper_SM/functions_performance/computing_life_expectancy.R",
+  "./wrapper_SM/functions_performance/mean_lfe_comparison.R",
+  "./wrapper_SM/functions_performance/extract_comp_time.R",
   
   "./wrapper_SM/functions_performance/compute_bias_rel.R",
   "./wrapper_SM/functions_performance/run_performance_bias_rel.R",
@@ -45,15 +48,12 @@ source_files <- c(
   "./wrapper_SM/functions_performance/plot_bias.R",
   "./wrapper_SM/functions_performance/plot_bias_rel.R",
   "./wrapper_SM/functions_performance/plot_coverage.R",
-  "./wrapper_SM/functions_performance/extract_comp_time.R",
   "./wrapper_SM/functions_performance/plot_boxplot.R",
   "./wrapper_SM/functions_performance/plot_ct.R",
   "./wrapper_SM/functions_performance/prepare_data_boxplot.R",
   "./wrapper_SM/functions_performance/ic_comparison.R",
   "./wrapper_SM/functions_performance/totlos.fs.mine .R",
   "./wrapper_SM/functions_performance/is.flexsurvlist.R",
-  "./wrapper_SM/functions_performance/computing_life_expectancy.R",
-  "./wrapper_SM/functions_performance/mean_lfe_comparison.R",
   "./wrapper_SM/functions_performance/plot_bias_lfe.R",
   "./wrapper_SM/functions_performance/p.matrix.age.R",
   "./wrapper_SM/functions_performance/get_time.R"
@@ -339,6 +339,44 @@ for (scheme in 2:5){
 
 save(mean_estimates_lfe, file = file.path(model_dir,"mean_estimates_lfe.RData"))
 save(res_bias_lfe, file = file.path(model_dir,"bias_lfe.RData"))
+
+##########################
+# Power and type 1 error #
+##########################
+
+# In the table I will represent P(p_i<=alpha) i.e. percentage of times for which the covs effect is significant
+# the yellow values represent when the covariate was significant in the ground truth 
+# H0 is variable not significant
+# Type 1 error -> refuse H0|H0 true -> significant|no sign
+# Type 2 error ->  accept H0| H0 false -> no sign|sign
+# Power -> refuse H0|H0 false -> significant|sign
+
+significancy <- vector(mode = "list", length = 4)
+alpha <- 0.05
+
+for (scheme in 2:5){
+  plan(multisession, workers = cores) 
+  results_list <- future_lapply(1:100, function(seed) {
+    temp_results <- compute_power(n_pats, scheme, seed, combined_cov[[scheme - 1]], alpha)
+    return(temp_results)
+  })
+  
+  results <- do.call(rbind, results_list)
+  significancy[[scheme-1]] <- mean_power(results, scheme)
+  
+}
+
+save(significancy, file = file.path(model_dir,"significancy.RData"))
+
+significant_covs <- data.frame("cov1"= c(0,1,1), "cov2"= c(1,1,0), "cov3"=c(1,1,1), "transition"=c(1,2,3))
+
+# green type one error
+# yellow power
+table_power(significant_covs, significancy, scheme=2)
+table_power(significant_covs, significancy, scheme=3)
+table_power(significant_covs, significancy, scheme=4)
+table_power(significant_covs, significancy, scheme=5)
+
 
 
 #####################

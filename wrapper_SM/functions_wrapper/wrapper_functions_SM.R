@@ -64,15 +64,38 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   #####################
   
   temp <-  prepare_coxph(data, n_pats)
- 
-  time_cox<- system.time({
-    model_cox<- coxph(Surv(Tstart, Tstop ,status) ~ cov1.1 + cov2.1 + cov3.1 + cov1.2 + cov2.2 + cov3.2 + cov1.3 + cov2.3 + cov3.3 + strata(trans), data = temp, method="breslow")
   
+  error <- F
+  
+  time_coxph <- system.time({
+    tryCatch({
+      model_cox<- coxph(Surv(Tstart, Tstop ,status) ~ cov1.1 + cov2.1 + cov3.1 + cov1.2 + cov2.2 + cov3.2 + cov1.3 + cov2.3 + cov3.3 + strata(trans), data = temp, method="breslow")
+    },
+    error = function(e) {
+      print(paste("Error during model fitting:", e$message))
+      error <<- TRUE
+    })
   })[3]
-
-  comp_time[1] <- as.numeric(round(time_cox,3))
-
-  save(model_cox, file = file.path(model_dir,"cox_model.RData"))
+  
+  if (error) {
+    print(paste("No cox convergence for seed:", seed))
+    model_cox <- NULL
+  } else {
+    print("Model fitted successfully.")
+  }
+  
+  
+  comp_time[3] <- as.numeric(round(time_coxph,3))
+  
+  if (!is.null(model_cox)) {
+    save(model_cox, file = file.path(model_dir, "cox_model.RData"))
+  } else {
+    print("Model is NULL; not saving.")
+  }
+  
+  gc()
+  
+ 
   
   ######################
   # flexsurv model (ignores ic, accounts sm)
