@@ -85,12 +85,12 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   }
   
   
-  comp_time[3] <- as.numeric(round(time_coxph,3))
+  comp_time[1] <- as.numeric(round(time_coxph,3))
   
   if (!is.null(model_cox)) {
     save(model_cox, file = file.path(model_dir, "cox_model.RData"))
   } else {
-    print("Model is NULL; not saving.")
+    print("Model Cox is NULL; not saving.")
   }
   
   gc()
@@ -115,10 +115,10 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   })[3]
   
   # for nhm parameters are in the following order rate1,rate2,rate3, shape1, shape2, shape3, covs...
-  initial_guess <- c( fits_gompertz[[1]]$coefficients[2], fits_gompertz[[2]]$coefficients[2],
-                      fits_gompertz[[3]]$coefficients[2], fits_gompertz[[1]]$coefficients[1],
-                      fits_gompertz[[2]]$coefficients[1], fits_gompertz[[3]]$coefficients[1],
-                      0,0,0,0,0,0,0,0,0)
+  # initial_guess <- c( fits_gompertz[[1]]$coefficients[2], fits_gompertz[[2]]$coefficients[2],
+  #                     fits_gompertz[[3]]$coefficients[2], fits_gompertz[[1]]$coefficients[1],
+  #                     fits_gompertz[[2]]$coefficients[1], fits_gompertz[[3]]$coefficients[1],
+  #                     0,0,0,0,0,0,0,0,0)
 
   
   comp_time[2] <- as.numeric(round(time_gomp,3))
@@ -145,7 +145,7 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
  
   
   find_splits <- function(age) {
-    quantiles <- quantile(age, probs = seq(0, 1, 0.005))
+    quantiles <- quantile(age, probs = seq(0, 1, 0.01))
     return(quantiles[-c(1, length(quantiles))])
   }
 
@@ -183,7 +183,7 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   })[3]
 
   if (error) {
-    print(paste("No convergence for seed:", seed))
+    print(paste("No nhm convergence for seed:", seed))
     model_nhm <- NULL
   } else {
     print("Model fitted successfully.")
@@ -195,7 +195,7 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   if (!is.null(model_nhm)) {
     save(model_nhm, file = file.path(model_dir, "model_nhm.RData"))
   } else {
-    print("Model is NULL; not saving.")
+    print("Model nhm is NULL; not saving.")
   }
 
   gc()
@@ -304,18 +304,40 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   
   m <- 30
   type <- "mix"
-
+  
+  error <- F
+  
   time_imp <- system.time({
-    results_imp<- run_imputation(temp[[1]], temp[[2]], m, type)
-    avg_parameters <- results_imp[[1]]
-    all_fits <- results_imp[[2]]
+    tryCatch({
+      results_imp<- run_imputation(temp[[1]], temp[[2]], m, type)
+      avg_parameters <- results_imp[[1]]
+      all_fits <- results_imp[[2]]
+      
+    },
+    error = function(e) {
+      print(paste("Error during model fitting:", e$message))
+      error <<- TRUE
+    })
   })[3]
-
-  comp_time[6] <- as.numeric(round(time_imp,3))
-
-  save(results_imp, file = file.path(model_dir, "results_imp.RData"))
-
+  
+  if (error) {
+    print(paste("No imp convergence for seed:", seed))
+    results_imp <- NULL
+  } else {
+    print("Model fitted successfully.")
+  }
+  
+  
+  comp_time[4] <- as.numeric(round(time_imp,3))
+  
+  if (!is.null(results_imp)) {
+    save(results_imp, file = file.path(model_dir, "results_imp.RData"))
+  } else {
+    print("Model imp is NULL; not saving.")
+  }
+  
   gc()
+
   
 
   save(comp_time, file = file.path(model_dir, "computational_time.RData"))
