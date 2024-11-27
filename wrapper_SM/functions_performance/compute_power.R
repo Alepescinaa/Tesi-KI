@@ -81,10 +81,10 @@ compute_power <- function(n_pats, scheme, seed, convergence, alpha){
       if (file.exists(file)) {
         load(file)
       } else {
-        print(file)
-        print(seed)
         warning(paste("File does not exist:", file))
-        model_nhm <- NULL
+        file <- sub("\\.Rdata$", "", file, ignore.case = T) 
+        file<- NULL
+        print(seed)
       }
     }
   } else {

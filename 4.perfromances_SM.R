@@ -41,24 +41,26 @@ source_files <- c(
   "./wrapper_SM/functions_performance/computing_life_expectancy.R",
   "./wrapper_SM/functions_performance/mean_lfe_comparison.R",
   "./wrapper_SM/functions_performance/extract_comp_time.R",
+  "./wrapper_MM/functions_performance/width_ic.R",
+  "./wrapper_MM/functions_performance/mean_width_ic.R",
+  "./wrapper_MM/functions_performance/compute_power.R",
+  "./wrapper_MM/functions_performance/mean_power.R",
+  "./wrapper_MM/functions_performance/table_power.R")
   
-  "./wrapper_SM/functions_performance/compute_bias_rel.R",
-  "./wrapper_SM/functions_performance/run_performance_bias_rel.R",
-  "./wrapper_SM/functions_performance/plot_convergence.R",
-  "./wrapper_SM/functions_performance/plot_bias.R",
-  "./wrapper_SM/functions_performance/plot_bias_rel.R",
-  "./wrapper_SM/functions_performance/plot_coverage.R",
-  "./wrapper_SM/functions_performance/plot_boxplot.R",
-  "./wrapper_SM/functions_performance/plot_ct.R",
-  "./wrapper_SM/functions_performance/prepare_data_boxplot.R",
-  "./wrapper_SM/functions_performance/ic_comparison.R",
-  "./wrapper_SM/functions_performance/totlos.fs.mine .R",
-  "./wrapper_SM/functions_performance/is.flexsurvlist.R",
-  "./wrapper_SM/functions_performance/plot_bias_lfe.R",
-  "./wrapper_SM/functions_performance/p.matrix.age.R",
-  "./wrapper_SM/functions_performance/get_time.R"
-  
-)
+  # "./wrapper_SM/functions_performance/compute_bias_rel.R",
+  # "./wrapper_SM/functions_performance/run_performance_bias_rel.R",
+  # "./wrapper_SM/functions_performance/plot_convergence.R",
+  # "./wrapper_SM/functions_performance/plot_bias.R",
+  # "./wrapper_SM/functions_performance/plot_bias_rel.R",
+  # "./wrapper_SM/functions_performance/plot_coverage.R",
+  # "./wrapper_SM/functions_performance/plot_boxplot.R",
+  # "./wrapper_SM/functions_performance/plot_ct.R",
+  # "./wrapper_SM/functions_performance/prepare_data_boxplot.R",
+  # "./wrapper_SM/functions_performance/ic_comparison.R",
+  # "./wrapper_SM/functions_performance/is.flexsurvlist.R",
+  # "./wrapper_SM/functions_performance/plot_bias_lfe.R",
+  # 
+
 
 
 lapply(source_files, source)
@@ -71,9 +73,10 @@ n_pats <- 500
 cores <- 4
 
 
-####################
-# load quantities
-####################
+###################
+# load quantities #
+###################
+
 setwd(here())
 
 if (n_pats==500){
@@ -119,16 +122,15 @@ if (n_pats==500){
   dir.create(model_dir, showWarnings = FALSE, recursive= T)  }
 
 #######################################################
-# fitting parametric model over exactly observed data
+# fitting parametric model over exactly observed data #
 #######################################################
 
-# for (seed in 1:100){
-#   gt_flexsurv(n_pats, seed)
-# }
+# plan(multisession, workers = cores) 
+# future_lapply(1:100, function(seed) {gt_flexsurv(n_pats, seed)})
 
-######################
-# check of convergence
-######################
+########################
+# check of convergence #
+########################
 
 temp <- vector(mode = "list", length = 4)
 convergence_schemes <- vector(mode = "list", length = 4)
@@ -153,9 +155,9 @@ for (scheme in 2:5){
 
 save(combined_cov, file = file.path(model_dir,"convergence.RData"))
 
-#######################
-# bias comparison
-#######################
+###################
+# bias comparison #
+###################
 
 bias_all_schemes <- vector(mode = "list", length = 4)
 estimates <- vector(mode = "list", length = 4)
@@ -210,9 +212,9 @@ save(bias_all_schemes, file = file.path(model_dir,"bias_all.RData"))
 save(res_bias, file = file.path(model_dir,"res_bias.RData"))
 
 
-#######################
-# relative bias comparison
-#######################
+############################
+# relative bias comparison #
+############################
 
 rel_bias_all_schemes <- vector(mode = "list", length = 4)
 
@@ -249,9 +251,9 @@ for (scheme in 2:5){
 save(rel_bias_all_schemes, file = file.path(model_dir,"bias_all_rel.RData"))
 save(res_bias_rel, file = file.path(model_dir,"res_bias_rel.RData"))
 
-#######################
-# coverage comparison
-#######################
+###########################
+# 95% coverage comparison #
+###########################
 
 coverage_all_schemes <- vector(mode = "list", length = 4)
 
@@ -291,10 +293,38 @@ for (scheme in 2:5){
 save(coverage_all_schemes, file = file.path(model_dir,"all_coverage.RData"))
 save(res_cov_ic, file = file.path(model_dir,"95%coverage.RData"))
 
-#####################
-# life expectancy
-#####################
+###############################
+#  width confidence intervals #
+###############################
 
+width_all_schemes <- vector(mode = "list", length = 4)
+
+for (scheme in 2:5){
+  plan(multisession, workers = cores) 
+  results_list <- future_lapply(1:100, function(seed) {
+    temp_results <- width_ic(n_pats, scheme, seed, combined_cov[[scheme-1]])
+    return(temp_results)
+  })
+  
+  results_width<- do.call(rbind, results_list)
+  
+  width_all_schemes[[scheme-1]] <- results_width
+  
+}
+
+mean_width <- vector(mode = "list", length = 4)
+for (scheme in 2:5){
+  mean_width[[scheme-1]] <- mean_width_ic(width_all_schemes, scheme)
+}
+
+save(width_all_schemes, file = file.path(model_dir,"width_all_ic.RData"))
+save(mean_width, file = file.path(model_dir,"width_ic.RData"))
+
+###################
+# life expectancy #
+###################
+
+cores_lfe=4
 lfe_bias <- vector(mode = "list", length = 4)
 lfe_estimates <- vector(mode = "list", length = 4)
 
@@ -379,9 +409,9 @@ table_power(significant_covs, significancy, scheme=5)
 
 
 
-#####################
-# computational time
-#####################
+######################
+# computational time #
+######################
 
 ct_all_schemes <- vector(mode = "list", length = 4)
 
@@ -400,9 +430,9 @@ for (scheme in 2:5){
 save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
 
 
-##########
-# Plots
-##########
+#########
+# Plots #
+#########
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 plot1 <- plot_convergence(2, titles)

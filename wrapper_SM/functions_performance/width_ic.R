@@ -1,6 +1,5 @@
-run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
+width_ic <- function(n_pats, scheme, seed, convergence) {
 
-  ground_truth_params <- ground_truth_params[, 1:5]
   
   main_directory <- here()
   
@@ -26,7 +25,6 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
     warning(paste("File does not exist:", file))
   }
   
-  main_directory <- here()
   
   if (n_pats == 500){
     if (scheme == 2){
@@ -71,14 +69,16 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
   }
   seed_dir <- file.path(scheme_dir, paste0("seed_", seed))
   
+  
   if (dir.exists(seed_dir)) {
     setwd(seed_dir)
     
-    files_to_load <- c("cox_model.RData", 
-                       "flexsurv_model.RData", 
-                       #"model_smms.RData", 
-                       "results_imp.RData", 
+    files_to_load <- c("cox_model.RData",
+                       "flexsurv_model.RData",
+                       "model_nhm.RData",
+                       "results_imp.RData",
                        "computational_time.RData")
+    
     for (file in files_to_load) {
       if (file.exists(file)) {
         load(file)
@@ -86,36 +86,41 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
         warning(paste("File does not exist:", file))
         file <- sub("\\.Rdata$", "", file, ignore.case = T) 
         file<- NULL
-        print(seed)
       }
     }
-    } else {
+  } else {
     warning(paste("Seed directory does not exist:", seed_dir))
   }
-  
   
   # ============
   # EO dataset
   # ============
   
-  coverage_EO <- matrix(0, nrow = 3, ncol = 5)
+  width_EO <- matrix(0, nrow = 3, ncol = 3)
   
   ci_lower <- lapply(fits_gompertz_EO, function(model) confint(model)[, 1])
   ci_upper <- lapply(fits_gompertz_EO, function(model) confint(model)[, 2])
   
   ci_lower_EO <- do.call(cbind, ci_lower)
   ci_upper_EO <- do.call(cbind, ci_upper)
-  ci_lower_EO <- ci_lower_EO[c(2, 1, 3, 4, 5), ]
-  ci_upper_EO <- ci_upper_EO[c(2, 1, 3, 4, 5), ]
+  ci_lower_EO <- ci_lower_EO[c(3, 4, 5), ]
+  ci_upper_EO <- ci_upper_EO[c(3, 4, 5), ]
   
-  coverage_EO <- compute_coverage(ci_lower_EO, ci_upper_EO, ground_truth_params)
+  width_EO <- round(ci_upper_EO-ci_lower_EO,3)
+  rownames(width_EO) <- c("cov1","cov2","cov3")
+  colnames(width_EO) <- c("1","2", "3")
+  
+  rownames(ci_upper_EO) <- c("cov1","cov2","cov3")
+  colnames(ci_upper_EO) <- c("1","2", "3")
+  rownames(ci_lower_EO) <- c("cov1","cov2","cov3")
+  colnames(ci_lower_EO) <- c("1","2", "3")
   
   # =========
   # coxph
   # =========
   
   if (convergence$coxph[seed]==2){
-    coverage_cox <- matrix(0, nrow = 3, ncol = 5)
+    width_cox <- matrix(0, nrow = 3, ncol = 3)
     
     ci_lower <- confint(model_cox)[,1]
     ci_upper <- confint(model_cox)[,2]
@@ -123,16 +128,28 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
     ci_lower_cox <- matrix(ci_lower,3,3, byrow=F)
     ci_upper_cox <- matrix(ci_upper,3,3, byrow=F)
     
-    rownames(ci_lower_cox) <- c("cov1", "cov2", "cov3")
-    rownames(ci_upper_cox) <- c("cov1", "cov2", "cov3")
+    width_cox <- round(ci_upper_cox-ci_lower_cox,3)
+    rownames(width_cox) <- c("cov1", "cov2", "cov3")
+    colnames(width_cox) <- c("1", "2", "3")
     
-    coverage_cox <- compute_coverage(ci_lower_cox, ci_upper_cox, ground_truth_params)
-    coverage_cox[,1:2] <- NA
+    rownames(ci_upper_cox) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_cox) <- c("1", "2", "3")
+    rownames(ci_lower_cox) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_cox) <- c("1", "2", "3")
+    
   } else{
-    coverage_cox <- matrix(NA, nrow = nrow(ground_truth_params), ncol = ncol(ground_truth_params))
-    colnames(coverage_cox) <- colnames(ground_truth_params)
-    rownames(coverage_cox) <- rownames(ground_truth_params)
-  }
+    width_cox <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(width_cox) <- c("cov1", "cov2", "cov3")
+    colnames(width_cox) <- c("1", "2", "3")  
+    
+    ci_upper_cox <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_upper_cox) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_cox) <- c("1", "2", "3")  
+    
+    ci_lower_cox <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_lower_cox) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_cox) <- c("1", "2", "3")  
+    }
   
   
   # ============ 
@@ -140,47 +157,38 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
   # ============
   
   if(convergence$flexsurv[seed]==2){
-    coverage_flexsurv <- matrix(0, nrow = 3, ncol = 5)
+    width_flexsurv <- matrix(0, nrow = 3, ncol = 3)
     
     ci_lower <- lapply(fits_gompertz, function(model) confint(model)[, 1])
     ci_upper <- lapply(fits_gompertz, function(model) confint(model)[, 2])
     
     ci_lower_flex <- do.call(cbind, ci_lower)
     ci_upper_flex <- do.call(cbind, ci_upper)
-    ci_lower_flex <- ci_lower_flex[c(2, 1, 3, 4, 5), ]
-    ci_upper_flex <- ci_upper_flex[c(2, 1, 3, 4, 5), ]
+    ci_lower_flex <- ci_lower_flex[c(3, 4, 5), ]
+    ci_upper_flex <- ci_upper_flex[c(3, 4, 5), ]
     
-    coverage_flexsurv <- compute_coverage(ci_lower_flex, ci_upper_flex, ground_truth_params)
+    width_flexsurv <- round(ci_upper_flex-ci_lower_flex,3)
+    rownames(width_flexsurv) <- c("cov1", "cov2", "cov3")
+    colnames(width_flexsurv) <- c("1", "2", "3")  
+    
+    rownames(ci_upper_flex) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_flex) <- c("1", "2", "3")
+    rownames(ci_lower_flex) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_flex) <- c("1", "2", "3")
+    
   } else{
-    coverage_flexsurv <- matrix(NA, nrow = nrow(ground_truth_params), ncol = ncol(ground_truth_params))
-    colnames(coverage_flexsurv) <- colnames(ground_truth_params)
-    rownames(coverage_flexsurv) <- rownames(ground_truth_params)
+    width_flexsurv <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(width_flexsurv) <- c("cov1", "cov2", "cov3")
+    colnames(width_flexsurv) <- c("1", "2", "3")
+    
+    ci_upper_flex <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_upper_flex) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_flex) <- c("1", "2", "3")
+    
+    ci_lower_flex <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_lower_flex) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_flex) <- c("1", "2", "3")
   }
-  
-  
-  # ============
-  # smms
-  # ============
-  
-  # if (convergence$msm[seed]==2){
-  #   coverage_msm <- matrix(0, nrow = 3, ncol = 5)
-  #   
-  #   ci_lower_msm <- model.msm$ci[4:12, 1] # are ordered by transition ex 1.cov1,2.cov1,3.cov1,1.cov2,2.cov2..
-  #   ci_upper_msm <- model.msm$ci[4:12, 2]
-  #   
-  #   ci_lower_msm <- matrix(ci_lower_msm, nrow = 3, ncol = 3, byrow= T)
-  #   ci_upper_msm <- matrix(ci_upper_msm, nrow = 3, ncol = 3, byrow= T)
-  #   rownames(ci_lower_msm) <- c("cov1", "cov2", "cov3")
-  #   rownames(ci_upper_msm) <- c("cov1", "cov2", "cov3")
-  #   
-  #   coverage_msm <- compute_coverage(ci_lower_msm, ci_upper_msm, ground_truth_params)
-  #   coverage_msm[,1:2] <- NA
-  # } else{
-  #   coverage_msm <- matrix(NA, nrow = nrow(ground_truth_params), ncol = ncol(ground_truth_params))
-  #   colnames(coverage_msm) <- colnames(ground_truth_params)
-  #   rownames(coverage_msm) <- rownames(ground_truth_params)
-  # }
-  
   
   # ========
   # nhm
@@ -190,25 +198,43 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
     ci_nhm <- get_params_nhm(model_nhm, ci = TRUE)
     
     ci_lower_nhm <- ci_nhm[,2]
-    ci_lower_nhm <- matrix(ci_lower_nhm, 5, 3, byrow = T)
+    ci_lower_nhm <- matrix(ci_lower_nhm, 5, 3, byrow = T)[3:5,]
     ci_upper_nhm <- ci_nhm[,3]
-    ci_upper_nhm <- matrix(ci_upper_nhm, 5, 3, byrow = T)
-    rownames(ci_lower_nhm) <- c("rate", "shape", "cov1", "cov2", "cov3")
-    rownames(ci_upper_nhm) <- c("rate", "shape", "cov1", "cov2", "cov3")
+    ci_upper_nhm <- matrix(ci_upper_nhm, 5, 3, byrow = T)[3:5,]
     
-    coverage_nhm <- compute_coverage(ci_lower_nhm, ci_upper_nhm, ground_truth_params)
+    width_nhm <- round(ci_upper_nhm-ci_lower_nhm,3)
+    rownames(width_nhm) <- c("cov1", "cov2", "cov3")
+    colnames(width_nhm) <- c("1", "2", "3")  
+    
+    rownames(ci_upper_nhm) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_nhm) <- c("1", "2", "3")  
+    rownames(ci_lower_nhm) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_nhm) <- c("1", "2", "3")  
+    
   } else {
-    coverage_nhm <- matrix(NA, nrow = nrow(ground_truth_params), ncol = ncol(ground_truth_params))
-    colnames(coverage_nhm) <- colnames(ground_truth_params)
-    rownames(coverage_nhm) <- rownames(ground_truth_params)
-    }
+    width_nhm<- matrix(NA, nrow = 3, ncol = 3)
+    rownames(width_nhm) <- c("cov1", "cov2", "cov3")
+    colnames(width_nhm) <- c("1", "2", "3")  
+    
+    width_nhm<- matrix(NA, nrow = 3, ncol = 3)
+    rownames(width_nhm) <- c("cov1", "cov2", "cov3")
+    colnames(width_nhm) <- c("1", "2", "3") 
+    
+    ci_upper_nhm<- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_upper_nhm) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_nhm) <- c("1", "2", "3")  
+    
+    ci_lower_nhm<- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_lower_nhm) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_nhm) <- c("1", "2", "3")  
+  }
   
   # ============ 
   # imputation 
   # ============ 
   
   if(convergence$imputation[seed]==2){
-    coverage_imputation <- matrix(0, nrow = 3, ncol = 5)
+    width_imputation <- matrix(0, nrow = 3, ncol = 3)
     avg_parameters <- results_imp[[1]]
     all_fits <- results_imp[[2]]
     m <- length(all_fits)
@@ -273,28 +299,66 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
     CI_mod2 <- compute_CI(T2, U_bar[[2]], B2, m, avg_parameters[2, ])
     CI_mod3 <- compute_CI(T3, U_bar[[3]], B3, m, avg_parameters[3, ])
     
-    CI_mod1 <- CI_mod1[c(2, 1, 3, 4, 5), ]
-    CI_mod2 <- CI_mod2[c(2, 1, 3, 4, 5), ]
-    CI_mod3 <- CI_mod3[c(2, 1, 3, 4, 5), ]
+    CI_mod1 <- CI_mod1[c( 3, 4, 5), ]
+    CI_mod2 <- CI_mod2[c( 3, 4, 5), ]
+    CI_mod3 <- CI_mod3[c( 3, 4, 5), ]
     
     ci_lower_imp <- cbind(CI_mod1[, 1], CI_mod2[, 1], CI_mod3[, 1])
     ci_upper_imp <- cbind(CI_mod1[, 2], CI_mod2[, 2], CI_mod3[, 2])
     
-    coverage_imputation <- compute_coverage(ci_lower_imp, ci_upper_imp, ground_truth_params)
+    width_imputation <- round(ci_upper_imp-ci_lower_imp,3)
+    rownames(width_imputation) <- c("cov1", "cov2", "cov3")
+    colnames(width_imputation) <- c("1", "2", "3")  
+    
+    rownames(ci_upper_imp) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_imp) <- c("1", "2", "3")  
+    rownames(ci_lower_imp) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_imp) <- c("1", "2", "3")  
+    
   } else {
-    coverage_imputation <- matrix(NA, nrow = nrow(ground_truth_params), ncol = ncol(ground_truth_params))
-    colnames(coverage_imputation) <- colnames(ground_truth_params)
-    rownames(coverage_imputation) <- rownames(ground_truth_params)
+    width_imputation <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(width_imputation) <- c("cov1", "cov2", "cov3")
+    colnames(width_imputation) <- c("1", "2", "3")  
+    
+    ci_upper_imp <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_upper_imp) <- c("cov1", "cov2", "cov3")
+    colnames(ci_upper_imp) <- c("1", "2", "3")  
+    
+    ci_lower_imp <- matrix(NA, nrow = 3, ncol = 3)
+    rownames(ci_lower_imp) <- c("cov1", "cov2", "cov3")
+    colnames(ci_lower_imp) <- c("1", "2", "3")  
   }
   
-  coverage_tot <- rbind(
-    cbind(coverage_EO, model = "flexsurv_EO", seed = seed, transition = c(1, 2, 3)),
-    cbind(coverage_cox, model = "coxph", seed = seed, transition = c(1, 2, 3)),
-    cbind(coverage_flexsurv, model = "flexsurv", seed = seed, transition = c(1, 2, 3)),
-    #cbind(coverage_smms, model = "smms", seed = seed, transition = c(1, 2, 3)),
-    cbind(coverage_nhm, model = "nhm", seed = seed, transition = c(1, 2, 3)),
-    cbind(coverage_imputation, model = "imputation", seed = seed, transition = c(1, 2, 3))
+  width_tot <- rbind(
+    cbind(width_EO, model = "flexsurv_EO", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(width_cox, model = "coxph", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(width_flexsurv, model = "flexsurv", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(width_nhm, model = "nhm", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(width_imputation, model = "imputation", seed = seed, covariate=c("cov1","cov2","cov3"))
   )
-  print(seed)
-  return(coverage_tot)
+  
+  lower_tot <- rbind(
+    cbind(ci_lower_EO, model = "flexsurv_EO", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_lower_cox, model = "coxph", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_lower_flex, model = "flexsurv", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_lower_nhm, model = "nhm", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_lower_imp, model = "imputation", seed = seed, covariate=c("cov1","cov2","cov3"))
+  )
+  
+  upper_tot <- rbind(
+    cbind(ci_upper_EO, model = "flexsurv_EO", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_upper_cox, model = "coxph", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_upper_flex, model = "flexsurv", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_upper_nhm, model = "nhm", seed = seed, covariate=c("cov1","cov2","cov3")),
+    cbind(ci_upper_imp, model = "imputation", seed = seed, covariate=c("cov1","cov2","cov3"))
+  )
+  
+  lower_tot <- as.data.frame(lower_tot)
+  upper_tot <- as.data.frame(upper_tot)
+  lower_tot <- lower_tot %>% mutate(ic = "lower")
+  upper_tot <- upper_tot %>% mutate(ic = "upper")
+  ic <- full_join(lower_tot,upper_tot)
+  
+  return(ic)
 }
+

@@ -81,7 +81,9 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
         load(file)
       } else {
         warning(paste("File does not exist:", file))
-        model_nhm <- NULL
+        file <- sub("\\.Rdata$", "", file, ignore.case = T) 
+        file<- NULL
+        print(seed)
       }
     }
   } else {
@@ -154,9 +156,9 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
       strata = 1:3
     )
   
-    
-    msfit_obj <- msfit(model_cox, newdata = newdata_cox, variance=T, trans=tmat)
-    
+    #basehaz(model_cox,center=FALSE) I get different estimates
+    msfit_obj <- msfit(model_cox, newdata = newdata_cox, variance=T, trans=tmat) 
+    # confused about times 
     cox_trans_prob <- probtrans(msfit_obj, predt=min(msfit_obj$Haz$time))[[1]]
     check_neg <- apply(cox_trans_prob, 1, function(row) any(row < 0))
     cox_trans_prob <- cox_trans_prob[!check_neg,]

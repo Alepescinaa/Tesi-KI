@@ -82,16 +82,10 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
       if (file.exists(file)) {
         load(file)
       } else {
-        print(file)
-        print(seed)
         warning(paste("File does not exist:", file))
-      }
-      if (file.exists("model_nhm.RData")) {
-        load("model_nhm.RData")
-      } else {
-        model_nhm <- NULL
+        file <- sub("\\.Rdata$", "", file, ignore.case = T) 
+        file<- NULL
         print(seed)
-        warning(paste("nhm_model does not exist:", file))
       }
     }
   } else {

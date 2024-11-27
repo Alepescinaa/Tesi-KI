@@ -10,7 +10,7 @@ level_convergence <- function(scheme){
         combined_cov[j,i] <- 2
     }
   }
-  colnames(combined_cov) <- c("coxph", "flexsurv", "nhm", "msm", "msm_age", "imputation")
+  colnames(combined_cov) <- c("coxph", "flexsurv", "nhm", "imputation")
   return(combined_cov)
   
 }

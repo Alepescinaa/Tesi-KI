@@ -47,21 +47,26 @@ check_convergence <- function(n_pats, scheme, seed) {
   
   if (dir.exists(seed_dir)) {
     setwd(seed_dir)
-    files_to_check <- c("model_nhm.RData")
-    files_to_load <- c("cox_model.RData", "flexsurv_model.RData", "results_imp.RData") #"model_smms.RData"
-      
-    if (!file.exists(files_to_check)) {
-      model_nhm <- NULL
-      warning(paste("File does not exist:", files_to_check))
+    
+    files_to_load <- c("cox_model.RData", 
+                       "flexsurv_model.RData", 
+                       "model_nhm.RData", 
+                       "results_imp.RData", 
+                       "computational_time.RData")
+    for (file in files_to_load) {
+      if (file.exists(file)) {
+        load(file)
       } else {
-        load(files_to_check)
+        warning(paste("File does not exist:", file))
+        file <- sub("\\.Rdata$", "", file, ignore.case = T) 
+        file<- NULL
+        print(seed)
       }
-    for (i in files_to_load ){
-      model <- load(i)
     }
   } else {
     warning(paste("Seed directory does not exist:", seed_dir))
   }
+  
   
   models_imp <- results_imp[[2]]
   
