@@ -104,15 +104,43 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   temp <- prepare_flex(data, n_pats)
   fits_gompertz <- vector(mode = "list", length = 3)
 
-  time_gomp<- system.time({
-    for (i in 1:2) {
-      fits_gompertz[[i]] <- flexsurvreg(Surv(Tstart, Tstop, status) ~ cov1 + cov2 + cov3,
+  error <- F
+  
+  time_gomp <- system.time({
+    tryCatch({
+      for (i in 1:2){
+        fits_gompertz[[i]] <- flexsurvreg(Surv(Tstart, Tstop, status) ~ cov1 + cov2 + cov3,
                                         data = subset(temp, trans == i),
-                                        dist = "gompertz")}
-    fits_gompertz[[3]] <- flexsurvreg(Surv(time, status) ~ cov1 + cov2 + cov3,  
-                                 data = subset(temp, trans == 3),
-                                 dist = "gompertz")
+                                        dist = "gompertz")
+        }
+      fits_gompertz[[3]] <- flexsurvreg(Surv(time, status) ~ cov1 + cov2 + cov3,  
+                                        data = subset(temp, trans == 3),
+                                        dist = "gompertz")
+    },
+    error = function(e) {
+      print(paste("Error during model fitting:", e$message))
+      error <<- TRUE
+    })
   })[3]
+  
+  if (error) {
+    print(paste("No gomp convergence for seed:", seed))
+    fits_gompertz <- NULL
+  } else {
+    print("Model fitted successfully.")
+  }
+  
+  
+  comp_time[2] <- as.numeric(round(time_gomp,3))
+  
+  if (!is.null(fits_gompertz)) {
+    save(fits_gompertz, file = file.path(model_dir, "flexsurv_model.RData"))
+  } else {
+    print("Model gomp is NULL; not saving.")
+  }
+  
+  gc()
+  
   
   # for nhm parameters are in the following order rate1,rate2,rate3, shape1, shape2, shape3, covs...
   # initial_guess <- c( fits_gompertz[[1]]$coefficients[2], fits_gompertz[[2]]$coefficients[2],
@@ -121,12 +149,6 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   #                     0,0,0,0,0,0,0,0,0)
 
   
-  comp_time[2] <- as.numeric(round(time_gomp,3))
-
-  save(fits_gompertz, file = file.path(model_dir, "flexsurv_model.RData"))
-
-  gc()
-
 
   ######################
   # nhm model (accounts ic, ignores sm)

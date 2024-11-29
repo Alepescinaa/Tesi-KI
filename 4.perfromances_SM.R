@@ -45,11 +45,12 @@ source_files <- c(
   "./wrapper_MM/functions_performance/mean_width_ic.R",
   "./wrapper_MM/functions_performance/compute_power.R",
   "./wrapper_MM/functions_performance/mean_power.R",
-  "./wrapper_MM/functions_performance/table_power.R")
+  "./wrapper_MM/functions_performance/table_power.R",
+ "./wrapper_SM/functions_performance/plot_convergence.R")
   
   # "./wrapper_SM/functions_performance/compute_bias_rel.R",
   # "./wrapper_SM/functions_performance/run_performance_bias_rel.R",
-  # "./wrapper_SM/functions_performance/plot_convergence.R",
+  
   # "./wrapper_SM/functions_performance/plot_bias.R",
   # "./wrapper_SM/functions_performance/plot_bias_rel.R",
   # "./wrapper_SM/functions_performance/plot_coverage.R",
@@ -136,7 +137,7 @@ temp <- vector(mode = "list", length = 4)
 convergence_schemes <- vector(mode = "list", length = 4)
 hessian_schemes <- vector(mode = "list", length = 4)
 
-for (scheme in 2:5){
+for (scheme in 2:3){
   temp[[scheme-1]] <- wrapper_convergence(n_pats, scheme, seed ) 
   convergence_schemes[[scheme-1]] <- temp[[scheme-1]][[1]]
   hessian_schemes[[scheme-1]] <- temp[[scheme-1]][[2]]
@@ -162,7 +163,7 @@ save(combined_cov, file = file.path(model_dir,"convergence.RData"))
 bias_all_schemes <- vector(mode = "list", length = 4)
 estimates <- vector(mode = "list", length = 4)
 
-for (scheme in 2:5){
+for (scheme in 2:3){
   results <- data.frame(
     rate = numeric(0),
     shape = numeric(0),

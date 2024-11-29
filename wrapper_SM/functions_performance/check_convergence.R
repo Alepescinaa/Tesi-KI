@@ -59,89 +59,98 @@ check_convergence <- function(n_pats, scheme, seed) {
       } else {
         warning(paste("File does not exist:", file))
         file <- sub("\\.Rdata$", "", file, ignore.case = T) 
-        file<- NULL
-        print(seed)
-      }
+        assign(file,NULL)
+        #print(seed)
+        if(file == "cox_model")
+          model_cox <- NULL
+        if(file == "flexsurv_model")
+          fits_gompertz <- NULL
+        }
     }
+
   } else {
     warning(paste("Seed directory does not exist:", seed_dir))
   }
   
   
-  models_imp <- results_imp[[2]]
-  
   convergence_results <- tibble( # value to zero no convergence of the algorithm 
     converged_coxph = 1,
     converged_flexsurv = 1,
     converged_nhm = 1,
-    converged_smms = 1,
+    #converged_smms = 1,
     converged_imp = 1
   )
-  
-  if (model_cox$info[[4]] != 0) {
-    convergence_results$converged_coxph <- 0
-  }
-  
-  if (any(c(fits_gompertz[[1]]$opt$convergence, 
-            fits_gompertz[[2]]$opt$convergence, 
-            fits_gompertz[[3]]$opt$convergence) != 0)) {
-    convergence_results$converged_flexsurv <- 0
-  }
-  
-  # if (model_smms$opt$convergence != 0) {
-  #   convergence_results$converged_msm <- 0
-  # }
-
-  
-  if (is.null(model_nhm)) {
-    convergence_results$converged_nhm <- 0
-  }
-  
-  for (i in 1:length(models_imp)) {
-    if (any(c(models_imp[[i]][[1]]$opt$convergence, 
-              models_imp[[i]][[2]]$opt$convergence,
-              models_imp[[i]][[3]]$opt$convergence) != 0)) {
-      convergence_results$converged_imp <- 0
-    }
-  }
-  
-  
   hessian_results <- tibble( # value to zero no definite positive hessian -> no convergence to optimum
     hessian_coxph = 1,
     hessian_flexsurv = 1,
-    hessian_nhm = 0,
-    hessian_smms = 1,
+    hessian_nhm = 1,
+    #hessian_smms = 1,
     hessian_imp = 1
   )
   
-
-
-  if (det(model_cox$var < 1e-7)) {
-    hessian_results$hessian_coxph <- 0
+  
+  
+  
+  if(is.null(model_cox)){
+    convergence_results$converged_coxph <- 0
+    essian_results$hessian_coxph <- 0
   }
-  
-  if (any(c(eigen(fits_gompertz[[1]]$opt$hessian)$values, 
-            eigen(fits_gompertz[[2]]$opt$hessian)$values, 
-            eigen(fits_gompertz[[3]]$opt$hessian)$values) < 0)) {
-    hessian_results$hessian_flexsurv <- 0
-  }
-  
-  # if (any(eigen(model_smms$opt$hessian)$values < 0)) {
-  #   hessian_results$hessian_msm <- 0
-  # }
-  
- 
-  if (!is.null(model_nhm) && model_nhm$singular==FALSE) {
-    hessian_results$hessian_nhm <- 1
-  }
-  
-  for (i in 1:length(models_imp)) {
-    if (any(c(eigen(models_imp[[i]][[1]]$opt$hessian)$values, 
-              eigen(models_imp[[i]][[2]]$opt$hessian)$values, 
-              eigen(models_imp[[i]][[3]]$opt$hessian)$values) < 0)) {
-      hessian_results$converged_imp <- 0
+  else {
+    if (model_cox$info[[4]] != 0) {
+      convergence_results$converged_coxph <- 0
+    }
+    if (det(model_cox$var < 1e-7)) {
+      hessian_results$hessian_coxph <- 0
     }
   }
+  
+  if(is.null(fits_gompertz)){
+    convergence_results$converged_flexsurv <- 0
+    hessian_results$hessian_flexsurv <- 0
+  }else{
+    if (any(c(fits_gompertz[[1]]$opt$convergence, 
+              fits_gompertz[[2]]$opt$convergence, 
+              fits_gompertz[[3]]$opt$convergence) != 0)) {
+      convergence_results$converged_flexsurv <- 0
+    }
+    if (any(c(eigen(fits_gompertz[[1]]$opt$hessian)$values, 
+              eigen(fits_gompertz[[2]]$opt$hessian)$values, 
+              eigen(fits_gompertz[[3]]$opt$hessian)$values) < 0)) {
+      hessian_results$hessian_flexsurv <- 0
+    }
+  }
+  
+  if (is.null(model_nhm)) {
+    convergence_results$converged_nhm <- 0
+    hessian_results$hessian_nhm <- 0
+  } else{
+    if (model_nhm$singular==TRUE) {
+      hessian_results$hessian_nhm <- 0
+    }
+  }
+  
+  if(is.null(results_imp)){
+    convergence_results$converged_imp <- 0
+    hessian_results$converged_imp <- 0
+  } else{
+    models_imp <- results_imp[[2]]
+    for (i in 1:length(models_imp)) {
+      if (any(c(models_imp[[i]][[1]]$opt$convergence, 
+                models_imp[[i]][[2]]$opt$convergence,
+                models_imp[[i]][[3]]$opt$convergence) != 0)) {
+        convergence_results$converged_imp <- 0
+      }
+    }
+    for (i in 1:length(models_imp)) {
+      if (any(c(eigen(models_imp[[i]][[1]]$opt$hessian)$values, 
+                eigen(models_imp[[i]][[2]]$opt$hessian)$values, 
+                eigen(models_imp[[i]][[3]]$opt$hessian)$values) < 0)) {
+        hessian_results$converged_imp <- 0
+      }
+    }
+  }
+    
+
     
   return(list(convergence_results = convergence_results, hessian_results = hessian_results))
   

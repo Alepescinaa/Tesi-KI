@@ -75,7 +75,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     
     files_to_load <- c("cox_model.RData", 
                        "flexsurv_model.RData", 
-                       #"model_smms.RData", 
+                       "model_nhm.RData", 
                        "results_imp.RData", 
                        "computational_time.RData")
     for (file in files_to_load) {
@@ -84,7 +84,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
       } else {
         warning(paste("File does not exist:", file))
         file <- sub("\\.Rdata$", "", file, ignore.case = T) 
-        file<- NULL
+        assign(file,NULL)
         print(seed)
       }
     }

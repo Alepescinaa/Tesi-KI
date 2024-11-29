@@ -304,7 +304,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   if(convergence$nhm[seed]==2){
     tcrit <- model_nhm$tcrit
     time <- seq(t_start,tcrit-1,by=0.1)
-    nhm_probabilities <- predict(model_nhm, times= time)$probabilities 
+    nhm_probabilities <- predict(model_nhm, time0= t_start, times= time)$probabilities
     nhm_tls<- numeric(ncol(nhm_probabilities))
     
     diff_time <- diff(time)

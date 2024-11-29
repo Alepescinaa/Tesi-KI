@@ -1,6 +1,6 @@
 level_convergence <- function(scheme){
   combined_cov <- data.frame()
-  for (i in 1:6) {
+  for (i in 1:4) {
     for (j in 1:100){
       if(convergence_schemes[[scheme-1]][j,i]==0)
         combined_cov[j,i] <- 0
