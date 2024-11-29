@@ -189,8 +189,10 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
 
     min_age <- min(model.msm_age$data[[1]]$age)
     max_age <- max(model.msm_age$data[[1]]$age)
-    haz <- hazards_mine(model.msm_age, b.covariates = list(age = 0, cov1 = 0, cov2 = 0, cov3 = 0), no.years = 40)
-
+    mean_age <- mean(model.msm_age$data[[1]]$age)
+    covs <- colMeans(model.msm_age$data[[1]][,1:3])
+    haz <- hazards_mine(model.msm_age, b.covariates = list(age = mean_age , cov1 = covs[1], cov2 = covs[2], cov3 = covs[3]), no.years = max_age+1, CI = F)
+    
     # Assuming this hazards come from fitting a gompertz model I wanna retrieve for each transition
     # shape and rate value, parameters of the distribution
     # h(t)=rate*exp(shape*t)

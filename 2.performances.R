@@ -336,6 +336,11 @@ save(mean_width, file = file.path(model_dir,"width_ic.RData"))
 
 lfe_bias <- vector(mode = "list", length = 4)
 lfe_estimates <- vector(mode = "list", length = 4)
+covs <-  data.frame(
+  cov1 = 0.35, 
+  cov2 = 0.15,
+  cov3 = 0.30
+)
 
 for (scheme in 2:5){
   results <- data.frame(
@@ -348,7 +353,7 @@ for (scheme in 2:5){
   results_list <- future_lapply(1:100, function(seed) {
     temp <- data[[seed]][[scheme]]
     t_start <- min(temp$age)
-    temp_results <- computing_life_expectancy(n_pats, scheme, seed, combined_cov[[scheme-1]], t_start, baseline_data)
+    temp_results <- computing_life_expectancy(n_pats, scheme, seed, combined_cov[[scheme-1]], t_start, covs)
     return(temp_results)
   })
   

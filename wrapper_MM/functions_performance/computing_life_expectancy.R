@@ -1,4 +1,4 @@
-computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start, baseline_data){
+computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start, covs){
   
   main_directory <- here()
   
@@ -102,27 +102,17 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # ============================
   # life expectancy ground truth
   # ============================
-  
-  
-  
-  cov_means <- colMeans(fits_gompertz_EO[[1]]$data$mml$rate)
-  
-  newdata <- data.frame(
-    cov1 = cov_means[2], 
-    cov2 = cov_means[3],
-    cov3 = cov_means[4]
-  )
-  
+
   tmat <- mstate::transMat(x = list(c(2, 3),c(3),c()), names = c("Dementia-free","Dementia", "Death")) 
  
-  gt_tls <-  totlos.fs.mine(fits_wei, t_start= t_start,  trans=tmat, newdata = newdata, t=105)[1,][1:2]
+  gt_tls <-  totlos.fs.mine(fits_wei, t_start= t_start,  trans=tmat, newdata = covs, t=105)[1,][1:2]
 
  
   # ===============
   # EO dataset
   # ===============
   
-  flexsurv_tls_EO <- totlos.fs.mine(fits_gompertz_EO, t_start=t_start,  trans=tmat, newdata = newdata, t=105)[1,][1:2]
+  flexsurv_tls_EO <- totlos.fs.mine(fits_gompertz_EO, t_start=t_start,  trans=tmat, newdata = covs, t=105)[1,][1:2]
   bias_flexsurv_tls_EO <- (flexsurv_tls_EO-gt_tls)/gt_tls
   
   # ============
@@ -130,17 +120,18 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # ============
   
   if (convergence$coxph[seed]==2) {
+    covs_cox <- as.numeric(covs)
     newdata_cox <- data.frame(
       trans = 1:3,
-      cov1.1 = c(cov_means[2], 0, 0),
-      cov2.1 = c(cov_means[3], 0, 0),
-      cov3.1 = c(cov_means[4], 0, 0),
-      cov1.2 = c(0, cov_means[2], 0),
-      cov2.2 = c(0, cov_means[3], 0),
-      cov3.2 = c(0, cov_means[4], 0),
-      cov1.3 = c(0, 0, cov_means[2]),
-      cov2.3 = c(0, 0, cov_means[3]),
-      cov3.3 = c(0, 0, cov_means[4]),
+      cov1.1 = c(covs_cox[1], 0, 0),
+      cov2.1 = c(covs_cox[2], 0, 0),
+      cov3.1 = c(covs_cox[3], 0, 0),
+      cov1.2 = c(0, covs_cox[1], 0),
+      cov2.2 = c(0, covs_cox[2], 0),
+      cov3.2 = c(0, covs_cox[3], 0),
+      cov1.3 = c(0, 0, covs_cox[1]),
+      cov2.3 = c(0, 0, covs_cox[2]),
+      cov3.3 = c(0, 0, covs_cox[3]),
       strata = 1:3
     )
   
@@ -174,7 +165,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # ==============
   
   if (convergence$flexsurv[seed]==2){
-  flexsurv_tls <-  totlos.fs.mine(fits_gompertz, t_start=t_start,  trans=tmat, newdata = newdata, t=105)[1,][1:2]
+  flexsurv_tls <-  totlos.fs.mine(fits_gompertz, t_start=t_start,  trans=tmat, newdata = covs, t=105)[1,][1:2]
   bias_flexsurv_tls <- (flexsurv_tls-gt_tls)/gt_tls
   } else {
     flexsurv_tls <- rep(NA,2)
@@ -211,7 +202,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   
   
   if (convergence$msm[seed]==2){
-    msm_tls <- totlos.msm(model.msm, fromt=0, tot=105-t_start) [1:2]
+    msm_tls <- totlos.msm(model.msm, fromt=0, tot=105-t_start, covariates = list(covs[1],covs[2],covs[3])) [1:2]
     bias_msm_tls <- (msm_tls-gt_tls)/gt_tls
   } else{
     msm_tls <- rep(NA,2)
@@ -219,8 +210,6 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   }
 
 
-
- 
 
   # ========
   # msm_age
@@ -257,7 +246,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   
   # if(convergence$msm_age[seed]==2){
   #   mean_age <- mean(model.msm_age$data$mm.cov[,5])
-  #   msm_age_probabilities_cate <- p.matrix.age(model.msm_age, covariates =  list(cov1 = cov_means[2], cov2 = cov_means[3], cov3 = cov_means[4]), age1 = t_start,
+  #   msm_age_probabilities_cate <- p.matrix.age(model.msm_age, covariates =  list(cov1 = covs[1], cov2 = covs[2], cov3 = covs[3]), age1 = t_start,
   #                                              age2 = 105, int=0.1, ci="none", cores=4)
   #   msm_age_tls <- get_time(msm_age_probabilities_cate, ci= "none")
   #   msm_age_tls <- msm_age_tls[1:2,2]
@@ -267,24 +256,25 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   #   msm_age_tls <- rep(NA,2)
   #   bias_msm_age_tls <- rep(NA,2)
   # }
-  # 
-  # treating it just as msm understimates
+
+ # treating it just as msm understimates
+  
   if(convergence$msm_age[seed]==2){
     time <- seq(t_start,105,by=0.1)
     time <- time-t_start
     msm_age_probabilities <- matrix(ncol = 3, nrow = 0)
-
-
+    
+    
     for (i in 1:length(time)) {
       temp <- pmatrix.msm(model.msm_age, t = time[i])[1,]
       msm_age_probabilities <- rbind(msm_age_probabilities, temp)
     }
-
+    
     msm_age_tls<- numeric(ncol(msm_age_probabilities))
-
+    
     diff_time <- diff(time)
     msm_age_probabilities <- msm_age_probabilities[1:length(diff_time),]
-
+    
     for (i in 1:ncol(msm_age_probabilities)) {
       msm_age_tls[i] <- sum(msm_age_probabilities[, i] * diff_time)
     }
@@ -304,7 +294,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   if(convergence$nhm[seed]==2){
     tcrit <- model_nhm$tcrit
     time <- seq(t_start,tcrit-1,by=0.1)
-    nhm_probabilities <- predict(model_nhm, time0= t_start, times= time)$probabilities
+    nhm_probabilities <- predict(model_nhm, time0= t_start, times= time, covvalue = c(as.numeric(covs[1]),as.numeric(covs[2]),as.numeric(covs[3])))$probabilities
     nhm_tls<- numeric(ncol(nhm_probabilities))
     
     diff_time <- diff(time)
@@ -320,6 +310,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
     bias_nhm_tls <- rep(NA,2)
   }
   
+  
 
 
   # ==========
@@ -332,7 +323,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
     m <- length(models_imp)
     
     for (i in 1:m){
-      temp <-  totlos.fs.mine(models_imp[[i]], t_start=t_start,  trans=tmat, newdata = newdata, t=105)
+      temp <-  totlos.fs.mine(models_imp[[i]], t_start=t_start,  trans=tmat, newdata = covs, t=105)
       imputation_tls <- imputation_tls + temp
     }
     imputation_tls <- imputation_tls/m
