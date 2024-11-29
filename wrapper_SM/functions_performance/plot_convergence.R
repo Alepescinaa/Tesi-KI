@@ -38,7 +38,7 @@ plot_convergence <- function(scheme, titles){
       panel.grid.major = element_line(color = "lightgrey", size = 0.3),  
       panel.grid.minor = element_blank()  # No minor grid lines
     )+
-    scale_y_continuous(limits = c(0, 0.2)) 
+    scale_y_continuous(limits = c(0, 1)) 
     
   
 }

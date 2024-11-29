@@ -46,7 +46,8 @@ source_files <- c(
   "./wrapper_MM/functions_performance/compute_power.R",
   "./wrapper_MM/functions_performance/mean_power.R",
   "./wrapper_MM/functions_performance/table_power.R",
- "./wrapper_SM/functions_performance/plot_convergence.R")
+ "./wrapper_SM/functions_performance/plot_convergence.R",
+ "./wrapper_SM/functions_performance/plot_bias.R")
   
   # "./wrapper_SM/functions_performance/compute_bias_rel.R",
   # "./wrapper_SM/functions_performance/run_performance_bias_rel.R",
@@ -150,7 +151,7 @@ for (scheme in 2:3){
 
 combined_cov <- vector(mode = "list", length = 4)
 
-for (scheme in 2:5){
+for (scheme in 2:3){
   combined_cov[[scheme-1]] <- level_convergence(scheme)
 }
 
@@ -199,12 +200,12 @@ for (scheme in 2:3){
 }
 
 res_bias <- vector(mode = "list", length = 4)
-for (scheme in 2:5){
+for (scheme in 2:3){
   res_bias[[scheme-1]] <- mean_bias_comparison(bias_all_schemes, scheme)
 }
 
 mean_estimates <- vector(mode = "list", length = 4)
-for (scheme in 2:5){
+for (scheme in 2:3){
   mean_estimates[[scheme-1]] <- mean_bias_comparison(estimates, scheme)
 }
 
@@ -217,40 +218,40 @@ save(res_bias, file = file.path(model_dir,"res_bias.RData"))
 # relative bias comparison #
 ############################
 
-rel_bias_all_schemes <- vector(mode = "list", length = 4)
-
-for (scheme in 2:5){
-  results_bias_rel <- data.frame(
-    rate = numeric(0),
-    shape = numeric(0),
-    cov1 = numeric(0),
-    cov2 = numeric(0),
-    cov3 = numeric(0),
-    `exp(cov1)` = numeric(0),
-    `exp(cov2)` = numeric(0),
-    `exp(cov3)` = numeric(0),
-    model = character(0),
-    seed = integer(0)
-  )
-  
-  plan(multisession, workers = cores) 
-  results_list <- future_lapply(1:100, function(seed) {
-    temp_results <- run_performance_bias_rel(n_pats, scheme, seed, combined_cov[[scheme - 1]])
-    return(temp_results)
-  })
-  
-  results_bias_rel <- do.call(rbind, results_list)
-  
-  rel_bias_all_schemes[[scheme-1]] <- results_bias_rel
-}
-
-res_bias_rel <- vector(mode = "list", length = 4)
-for (scheme in 2:5){
-  res_bias_rel[[scheme-1]] <- mean_bias_comparison(rel_bias_all_schemes, scheme)
-}
-
-save(rel_bias_all_schemes, file = file.path(model_dir,"bias_all_rel.RData"))
-save(res_bias_rel, file = file.path(model_dir,"res_bias_rel.RData"))
+# rel_bias_all_schemes <- vector(mode = "list", length = 4)
+# 
+# for (scheme in 2:5){
+#   results_bias_rel <- data.frame(
+#     rate = numeric(0),
+#     shape = numeric(0),
+#     cov1 = numeric(0),
+#     cov2 = numeric(0),
+#     cov3 = numeric(0),
+#     `exp(cov1)` = numeric(0),
+#     `exp(cov2)` = numeric(0),
+#     `exp(cov3)` = numeric(0),
+#     model = character(0),
+#     seed = integer(0)
+#   )
+#   
+#   plan(multisession, workers = cores) 
+#   results_list <- future_lapply(1:100, function(seed) {
+#     temp_results <- run_performance_bias_rel(n_pats, scheme, seed, combined_cov[[scheme - 1]])
+#     return(temp_results)
+#   })
+#   
+#   results_bias_rel <- do.call(rbind, results_list)
+#   
+#   rel_bias_all_schemes[[scheme-1]] <- results_bias_rel
+# }
+# 
+# res_bias_rel <- vector(mode = "list", length = 4)
+# for (scheme in 2:5){
+#   res_bias_rel[[scheme-1]] <- mean_bias_comparison(rel_bias_all_schemes, scheme)
+# }
+# 
+# save(rel_bias_all_schemes, file = file.path(model_dir,"bias_all_rel.RData"))
+# save(res_bias_rel, file = file.path(model_dir,"res_bias_rel.RData"))
 
 ###########################
 # 95% coverage comparison #
@@ -258,7 +259,7 @@ save(res_bias_rel, file = file.path(model_dir,"res_bias_rel.RData"))
 
 coverage_all_schemes <- vector(mode = "list", length = 4)
 
-for (scheme in 2:5){
+for (scheme in 2:3){
   results_coverage <- data.frame(
     rate = numeric(0),
     shape = numeric(0),

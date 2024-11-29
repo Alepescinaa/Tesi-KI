@@ -84,10 +84,17 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
       } else {
         warning(paste("File does not exist:", file))
         file <- sub("\\.Rdata$", "", file, ignore.case = T) 
+        if(file == "cox_model")
+          model_cox <- NULL
+        if(file == "flexsurv_model")
+          fits_gompertz <- NULL
         assign(file,NULL)
         print(seed)
+        print(file)
+        
       }
     }
+    
   } else {
     warning(paste("Seed directory does not exist:", seed_dir))
   }

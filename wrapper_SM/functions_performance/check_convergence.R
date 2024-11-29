@@ -59,12 +59,13 @@ check_convergence <- function(n_pats, scheme, seed) {
       } else {
         warning(paste("File does not exist:", file))
         file <- sub("\\.Rdata$", "", file, ignore.case = T) 
-        assign(file,NULL)
-        #print(seed)
         if(file == "cox_model")
           model_cox <- NULL
         if(file == "flexsurv_model")
           fits_gompertz <- NULL
+        assign(file,NULL)
+        #print(seed)
+       
         }
     }
 
@@ -89,11 +90,9 @@ check_convergence <- function(n_pats, scheme, seed) {
   )
   
   
-  
-  
   if(is.null(model_cox)){
     convergence_results$converged_coxph <- 0
-    essian_results$hessian_coxph <- 0
+    hessian_results$hessian_coxph <- 0
   }
   else {
     if (model_cox$info[[4]] != 0) {
