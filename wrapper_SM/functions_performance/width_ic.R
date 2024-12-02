@@ -75,7 +75,6 @@ width_ic <- function(n_pats, scheme, seed, convergence) {
     
     files_to_load <- c("cox_model.RData",
                        "flexsurv_model.RData",
-                       "model_nhm.RData",
                        "results_imp.RData",
                        "computational_time.RData")
     
@@ -190,44 +189,6 @@ width_ic <- function(n_pats, scheme, seed, convergence) {
     colnames(ci_lower_flex) <- c("1", "2", "3")
   }
   
-  # ========
-  # nhm
-  # ========
-  
-  if (convergence$nhm[seed]==2){
-    ci_nhm <- get_params_nhm(model_nhm, ci = TRUE)
-    
-    ci_lower_nhm <- ci_nhm[,2]
-    ci_lower_nhm <- matrix(ci_lower_nhm, 5, 3, byrow = T)[3:5,]
-    ci_upper_nhm <- ci_nhm[,3]
-    ci_upper_nhm <- matrix(ci_upper_nhm, 5, 3, byrow = T)[3:5,]
-    
-    width_nhm <- round(ci_upper_nhm-ci_lower_nhm,3)
-    rownames(width_nhm) <- c("cov1", "cov2", "cov3")
-    colnames(width_nhm) <- c("1", "2", "3")  
-    
-    rownames(ci_upper_nhm) <- c("cov1", "cov2", "cov3")
-    colnames(ci_upper_nhm) <- c("1", "2", "3")  
-    rownames(ci_lower_nhm) <- c("cov1", "cov2", "cov3")
-    colnames(ci_lower_nhm) <- c("1", "2", "3")  
-    
-  } else {
-    width_nhm<- matrix(NA, nrow = 3, ncol = 3)
-    rownames(width_nhm) <- c("cov1", "cov2", "cov3")
-    colnames(width_nhm) <- c("1", "2", "3")  
-    
-    width_nhm<- matrix(NA, nrow = 3, ncol = 3)
-    rownames(width_nhm) <- c("cov1", "cov2", "cov3")
-    colnames(width_nhm) <- c("1", "2", "3") 
-    
-    ci_upper_nhm<- matrix(NA, nrow = 3, ncol = 3)
-    rownames(ci_upper_nhm) <- c("cov1", "cov2", "cov3")
-    colnames(ci_upper_nhm) <- c("1", "2", "3")  
-    
-    ci_lower_nhm<- matrix(NA, nrow = 3, ncol = 3)
-    rownames(ci_lower_nhm) <- c("cov1", "cov2", "cov3")
-    colnames(ci_lower_nhm) <- c("1", "2", "3")  
-  }
   
   # ============ 
   # imputation 
@@ -333,7 +294,7 @@ width_ic <- function(n_pats, scheme, seed, convergence) {
     cbind(width_EO, model = "flexsurv_EO", seed = seed, covariate=c("cov1","cov2","cov3")),
     cbind(width_cox, model = "coxph", seed = seed, covariate=c("cov1","cov2","cov3")),
     cbind(width_flexsurv, model = "flexsurv", seed = seed, covariate=c("cov1","cov2","cov3")),
-    cbind(width_nhm, model = "nhm", seed = seed, covariate=c("cov1","cov2","cov3")),
+    #cbind(width_nhm, model = "nhm", seed = seed, covariate=c("cov1","cov2","cov3")),
     cbind(width_imputation, model = "imputation", seed = seed, covariate=c("cov1","cov2","cov3"))
   )
   
@@ -341,7 +302,7 @@ width_ic <- function(n_pats, scheme, seed, convergence) {
     cbind(ci_lower_EO, model = "flexsurv_EO", seed = seed, covariate=c("cov1","cov2","cov3")),
     cbind(ci_lower_cox, model = "coxph", seed = seed, covariate=c("cov1","cov2","cov3")),
     cbind(ci_lower_flex, model = "flexsurv", seed = seed, covariate=c("cov1","cov2","cov3")),
-    cbind(ci_lower_nhm, model = "nhm", seed = seed, covariate=c("cov1","cov2","cov3")),
+    #cbind(ci_lower_nhm, model = "nhm", seed = seed, covariate=c("cov1","cov2","cov3")),
     cbind(ci_lower_imp, model = "imputation", seed = seed, covariate=c("cov1","cov2","cov3"))
   )
   
@@ -349,7 +310,7 @@ width_ic <- function(n_pats, scheme, seed, convergence) {
     cbind(ci_upper_EO, model = "flexsurv_EO", seed = seed, covariate=c("cov1","cov2","cov3")),
     cbind(ci_upper_cox, model = "coxph", seed = seed, covariate=c("cov1","cov2","cov3")),
     cbind(ci_upper_flex, model = "flexsurv", seed = seed, covariate=c("cov1","cov2","cov3")),
-    cbind(ci_upper_nhm, model = "nhm", seed = seed, covariate=c("cov1","cov2","cov3")),
+   # cbind(ci_upper_nhm, model = "nhm", seed = seed, covariate=c("cov1","cov2","cov3")),
     cbind(ci_upper_imp, model = "imputation", seed = seed, covariate=c("cov1","cov2","cov3"))
   )
   

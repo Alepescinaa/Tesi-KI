@@ -74,7 +74,7 @@ compute_power <- function(n_pats, scheme, seed, convergence, alpha){
     
     files_to_load <- c("cox_model.RData", 
                        "flexsurv_model.RData", 
-                       "model_nhm.RData", 
+                       #"model_nhm.RData", 
                        "results_imp.RData", 
                        "computational_time.RData")
     for (file in files_to_load) {
@@ -144,34 +144,13 @@ compute_power <- function(n_pats, scheme, seed, convergence, alpha){
     colnames(power_flex) <- c("cov1","cov2", "cov3")
   }
   gc()
-
- #  # ============
- #  # nhm
- #  # ============
-
-  if (convergence$nhm[seed]==2){
-    est <- model_nhm$par[7:15]
-    cov_matrix <- diag(solve(model_nhm$hess))[7:15]
-    z_values <- est/cov_matrix
-    p_values <- 2 * (1 - pnorm(abs(z_values)))
-    power_nhm<- matrix(p_values<=alpha, 3, 3, byrow = F)  #cov1.1,cov1.2,cov1.3... so by col
-    power_nhm <- ifelse(power_nhm, 1, 0)
-    rownames(power_nhm) <- c("1->2", "1->3", "2->3")
-    colnames(power_nhm) <- c("cov1","cov2", "cov3")
-    
-  } else{
-    power_nhm<- matrix(NA, 3, 3)  
-    rownames(power_nhm) <- c("1->2", "1->3", "2->3")
-    colnames(power_nhm) <- c("cov1","cov2", "cov3")
-  }
-
-  gc()
+  
   #
  #  # ============
  #  # imputation
  #  # ============
 
-  ## correggere p-value 
+
   if (convergence$imputation[seed]==2){
     power_imp<- matrix(0, 3, 3)  
     rownames(power_imp) <- c("1->2", "1->3", "2->3")
@@ -254,7 +233,7 @@ compute_power <- function(n_pats, scheme, seed, convergence, alpha){
     cbind(power_EO, model = "flexsurv_EO", seed=seed, transition = c(1,2,3)),
     cbind(power_coxph, model = "coxph", seed = seed , transition = c(1,2,3)),
     cbind(power_flex, model = "flexsurv", seed = seed, transition = c(1,2,3)),
-    cbind(power_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
+    #cbind(power_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
     cbind(power_imp, model = "imputation", seed = seed, transition = c(1,2,3))
   )
 

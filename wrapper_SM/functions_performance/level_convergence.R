@@ -1,6 +1,6 @@
 level_convergence <- function(scheme){
   combined_cov <- data.frame()
-  for (i in 1:4) {
+  for (i in 1:3) {
     for (j in 1:100){
       if(convergence_schemes[[scheme-1]][j,i]==0)
         combined_cov[j,i] <- 0
@@ -10,7 +10,7 @@ level_convergence <- function(scheme){
         combined_cov[j,i] <- 2
     }
   }
-  colnames(combined_cov) <- c("coxph", "flexsurv", "nhm", "imputation")
+  colnames(combined_cov) <- c("coxph", "flexsurv", "imputation")
   return(combined_cov)
   
 }

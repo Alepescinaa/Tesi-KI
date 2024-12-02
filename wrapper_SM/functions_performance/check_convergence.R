@@ -50,7 +50,7 @@ check_convergence <- function(n_pats, scheme, seed) {
     
     files_to_load <- c("cox_model.RData", 
                        "flexsurv_model.RData", 
-                       "model_nhm.RData", 
+                       #"model_nhm.RData", 
                        "results_imp.RData", 
                        "computational_time.RData")
     for (file in files_to_load) {
@@ -77,14 +77,14 @@ check_convergence <- function(n_pats, scheme, seed) {
   convergence_results <- tibble( # value to zero no convergence of the algorithm 
     converged_coxph = 1,
     converged_flexsurv = 1,
-    converged_nhm = 1,
+    #converged_nhm = 1,
     #converged_smms = 1,
     converged_imp = 1
   )
   hessian_results <- tibble( # value to zero no definite positive hessian -> no convergence to optimum
     hessian_coxph = 1,
     hessian_flexsurv = 1,
-    hessian_nhm = 1,
+    #hessian_nhm = 1,
     #hessian_smms = 1,
     hessian_imp = 1
   )
@@ -119,18 +119,11 @@ check_convergence <- function(n_pats, scheme, seed) {
     }
   }
   
-  if (is.null(model_nhm)) {
-    convergence_results$converged_nhm <- 0
-    hessian_results$hessian_nhm <- 0
-  } else{
-    if (model_nhm$singular==TRUE) {
-      hessian_results$hessian_nhm <- 0
-    }
-  }
+
   
   if(is.null(results_imp)){
     convergence_results$converged_imp <- 0
-    hessian_results$converged_imp <- 0
+    hessian_results$hessian_imp <- 0
   } else{
     models_imp <- results_imp[[2]]
     for (i in 1:length(models_imp)) {
@@ -144,7 +137,7 @@ check_convergence <- function(n_pats, scheme, seed) {
       if (any(c(eigen(models_imp[[i]][[1]]$opt$hessian)$values, 
                 eigen(models_imp[[i]][[2]]$opt$hessian)$values, 
                 eigen(models_imp[[i]][[3]]$opt$hessian)$values) < 0)) {
-        hessian_results$converged_imp <- 0
+        hessian_results$hessian_imp <- 0
       }
     }
   }

@@ -76,7 +76,7 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
     
     files_to_load <- c("cox_model.RData", 
                        "flexsurv_model.RData", 
-                       "model_nhm.RData", 
+                      # "model_nhm.RData", 
                        "results_imp.RData", 
                        "computational_time.RData")
     for (file in files_to_load) {
@@ -192,22 +192,22 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
   # nhm
   # ========
   
-  if (convergence$nhm[seed]==2){
-    ci_nhm <- get_params_nhm(model_nhm, ci = TRUE)
-    
-    ci_lower_nhm <- ci_nhm[,2]
-    ci_lower_nhm <- matrix(ci_lower_nhm, 5, 3, byrow = T)
-    ci_upper_nhm <- ci_nhm[,3]
-    ci_upper_nhm <- matrix(ci_upper_nhm, 5, 3, byrow = T)
-    rownames(ci_lower_nhm) <- c("rate", "shape", "cov1", "cov2", "cov3")
-    rownames(ci_upper_nhm) <- c("rate", "shape", "cov1", "cov2", "cov3")
-    
-    coverage_nhm <- compute_coverage(ci_lower_nhm, ci_upper_nhm, ground_truth_params)
-  } else {
-    coverage_nhm <- matrix(NA, nrow = nrow(ground_truth_params), ncol = ncol(ground_truth_params))
-    colnames(coverage_nhm) <- colnames(ground_truth_params)
-    rownames(coverage_nhm) <- rownames(ground_truth_params)
-    }
+  # if (convergence$nhm[seed]==2){
+  #   ci_nhm <- get_params_nhm(model_nhm, ci = TRUE)
+  #   
+  #   ci_lower_nhm <- ci_nhm[,2]
+  #   ci_lower_nhm <- matrix(ci_lower_nhm, 5, 3, byrow = T)
+  #   ci_upper_nhm <- ci_nhm[,3]
+  #   ci_upper_nhm <- matrix(ci_upper_nhm, 5, 3, byrow = T)
+  #   rownames(ci_lower_nhm) <- c("rate", "shape", "cov1", "cov2", "cov3")
+  #   rownames(ci_upper_nhm) <- c("rate", "shape", "cov1", "cov2", "cov3")
+  #   
+  #   coverage_nhm <- compute_coverage(ci_lower_nhm, ci_upper_nhm, ground_truth_params)
+  # } else {
+  #   coverage_nhm <- matrix(NA, nrow = nrow(ground_truth_params), ncol = ncol(ground_truth_params))
+  #   colnames(coverage_nhm) <- colnames(ground_truth_params)
+  #   rownames(coverage_nhm) <- rownames(ground_truth_params)
+  #   }
   
   # ============ 
   # imputation 
@@ -298,7 +298,7 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
     cbind(coverage_cox, model = "coxph", seed = seed, transition = c(1, 2, 3)),
     cbind(coverage_flexsurv, model = "flexsurv", seed = seed, transition = c(1, 2, 3)),
     #cbind(coverage_smms, model = "smms", seed = seed, transition = c(1, 2, 3)),
-    cbind(coverage_nhm, model = "nhm", seed = seed, transition = c(1, 2, 3)),
+    #cbind(coverage_nhm, model = "nhm", seed = seed, transition = c(1, 2, 3)),
     cbind(coverage_imputation, model = "imputation", seed = seed, transition = c(1, 2, 3))
   )
   print(seed)

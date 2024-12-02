@@ -3,7 +3,7 @@ mean_coverage_comparison <- function(coverage_all_schemes, scheme){
   temp <- coverage_all_schemes[[scheme-1]]
   temp <- as.data.frame(temp)
   temp <- temp %>%
-    mutate(across(1:5, as.numeric))
+    mutate(across(1:4, as.numeric))
   
   mean_coverage <- temp %>%
     group_by(model, transition) %>%

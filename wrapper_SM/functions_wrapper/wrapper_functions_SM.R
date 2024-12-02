@@ -53,7 +53,7 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
       model_dir <- paste0("wrapper_SM/results_10K/saved_models_scheme4/seed_", seed)
       dir.create(model_dir, showWarnings = FALSE, recursive= T)  
     } else if (scheme==5){
-      model_dir < paste0("wrapper_SM/results_10K/saved_models_scheme5/seed_", seed)
+      model_dir <- paste0("wrapper_SM/results_10K/saved_models_scheme5/seed_", seed)
       dir.create(model_dir, showWarnings = FALSE, recursive= T)  }
   }
 
@@ -350,7 +350,7 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   }
   
   
-  comp_time[4] <- as.numeric(round(time_imp,3))
+  comp_time[3] <- as.numeric(round(time_imp,3))
   
   if (!is.null(results_imp)) {
     save(results_imp, file = file.path(model_dir, "results_imp.RData"))

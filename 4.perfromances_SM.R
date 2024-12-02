@@ -47,14 +47,19 @@ source_files <- c(
   "./wrapper_MM/functions_performance/mean_power.R",
   "./wrapper_MM/functions_performance/table_power.R",
  "./wrapper_SM/functions_performance/plot_convergence.R",
- "./wrapper_SM/functions_performance/plot_bias.R")
+ "./wrapper_SM/functions_performance/plot_bias.R",
+"./wrapper_SM/functions_performance/ic_comparison.R",
+"./wrapper_SM/functions_performance/plot_coverage.R",
+"./wrapper_SM/functions_performance/plot_width.R",
+"./wrapper_SM/functions_performance/plot_ct.R"
+)
   
   # "./wrapper_SM/functions_performance/compute_bias_rel.R",
   # "./wrapper_SM/functions_performance/run_performance_bias_rel.R",
   
   # "./wrapper_SM/functions_performance/plot_bias.R",
   # "./wrapper_SM/functions_performance/plot_bias_rel.R",
-  # "./wrapper_SM/functions_performance/plot_coverage.R",
+  # 
   # "./wrapper_SM/functions_performance/plot_boxplot.R",
   # "./wrapper_SM/functions_performance/plot_ct.R",
   # "./wrapper_SM/functions_performance/prepare_data_boxplot.R",
@@ -127,8 +132,12 @@ if (n_pats==500){
 # fitting parametric model over exactly observed data #
 #######################################################
 
-# plan(multisession, workers = cores) 
+# plan(multisession, workers = cores)
 # future_lapply(1:100, function(seed) {gt_flexsurv(n_pats, seed)})
+# for (seed in 1:100){
+#   gt_flexsurv(n_pats, seed)
+#   print(seed)
+# }
 
 ########################
 # check of convergence #
@@ -138,7 +147,7 @@ temp <- vector(mode = "list", length = 4)
 convergence_schemes <- vector(mode = "list", length = 4)
 hessian_schemes <- vector(mode = "list", length = 4)
 
-for (scheme in 2:3){
+for (scheme in 2:5){
   temp[[scheme-1]] <- wrapper_convergence(n_pats, scheme, seed ) 
   convergence_schemes[[scheme-1]] <- temp[[scheme-1]][[1]]
   hessian_schemes[[scheme-1]] <- temp[[scheme-1]][[2]]
@@ -151,7 +160,7 @@ for (scheme in 2:3){
 
 combined_cov <- vector(mode = "list", length = 4)
 
-for (scheme in 2:3){
+for (scheme in 2:5){
   combined_cov[[scheme-1]] <- level_convergence(scheme)
 }
 
@@ -164,7 +173,7 @@ save(combined_cov, file = file.path(model_dir,"convergence.RData"))
 bias_all_schemes <- vector(mode = "list", length = 4)
 estimates <- vector(mode = "list", length = 4)
 
-for (scheme in 2:3){
+for (scheme in 2:5){
   results <- data.frame(
     rate = numeric(0),
     shape = numeric(0),
@@ -200,12 +209,12 @@ for (scheme in 2:3){
 }
 
 res_bias <- vector(mode = "list", length = 4)
-for (scheme in 2:3){
+for (scheme in 2:5){
   res_bias[[scheme-1]] <- mean_bias_comparison(bias_all_schemes, scheme)
 }
 
 mean_estimates <- vector(mode = "list", length = 4)
-for (scheme in 2:3){
+for (scheme in 2:5){
   mean_estimates[[scheme-1]] <- mean_bias_comparison(estimates, scheme)
 }
 
@@ -259,7 +268,7 @@ save(res_bias, file = file.path(model_dir,"res_bias.RData"))
 
 coverage_all_schemes <- vector(mode = "list", length = 4)
 
-for (scheme in 2:3){
+for (scheme in 2:5){
   results_coverage <- data.frame(
     rate = numeric(0),
     shape = numeric(0),
@@ -383,6 +392,7 @@ save(res_bias_lfe, file = file.path(model_dir,"bias_lfe.RData"))
 # Type 2 error ->  accept H0| H0 false -> no sign|sign
 # Power -> refuse H0|H0 false -> significant|sign
 
+significancy_all <- vector(mode = "list", length = 4)
 significancy <- vector(mode = "list", length = 4)
 alpha <- 0.05
 
@@ -393,12 +403,14 @@ for (scheme in 2:5){
     return(temp_results)
   })
   
-  results <- do.call(rbind, results_list)
+  results<- do.call(rbind, results_list)
+  significancy_all[[scheme-1]] <- results
   significancy[[scheme-1]] <- mean_power(results, scheme)
   
 }
 
 save(significancy, file = file.path(model_dir,"significancy.RData"))
+save(significancy_all, file = file.path(model_dir,"significancy_all.RData"))
 
 significant_covs <- data.frame("cov1"= c(0,1,1), "cov2"= c(1,1,0), "cov3"=c(1,1,1), "transition"=c(1,2,3))
 
@@ -476,6 +488,12 @@ plot_coverage(3, titles)
 plot_coverage(4, titles)
 plot_coverage(5, titles)
 
+titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
+plot_width(mean_width,2, titles)
+plot_width(mean_width,3, titles)
+plot_width(mean_width,4, titles)
+plot_width(mean_width,5, titles)
+
 titles <-c("(1 year)", "(3 years)", "(3-6 years)", "EHR")
 plot_bias_lfe(res_bias_lfe, 2, titles) 
 plot_bias_lfe(res_bias_lfe, 3, titles)
@@ -487,6 +505,7 @@ plot1 <- plot_ct(2, titles, combined_cov[[1]])
 plot2 <- plot_ct(3, titles, combined_cov[[2]])
 plot3 <- plot_ct(4, titles, combined_cov[[3]])
 plot4 <- plot_ct(5, titles, combined_cov[[4]])
+plot1+plot2+plot3+plot4
 
 dir <- here()
 dir <- paste0("wrapper_SM/Plots_500")

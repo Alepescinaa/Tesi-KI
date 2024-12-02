@@ -38,7 +38,7 @@ cores_nhm <- 4
 if (n_pats == 500){
   load("./Simulated_data_SM/simulation500_SM_all.RData")
   plan(multisession, workers = cores)  
-  for (scheme in 2:5) {
+  for (scheme in 4:5) {
     future_lapply(1:100, function(seed) {
       data <- dataset_all_SM_500[[seed]][[scheme]] 
       wrapper_functions_SM(data, n_pats, seed, cores_nhm)

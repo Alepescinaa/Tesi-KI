@@ -75,7 +75,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     
     files_to_load <- c("cox_model.RData", 
                        "flexsurv_model.RData", 
-                       "model_nhm.RData", 
+                       #"model_nhm.RData", 
                        "results_imp.RData", 
                        "computational_time.RData")
     for (file in files_to_load) {
@@ -195,21 +195,21 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
  #  # nhm
  #  # ============
  #  
-  if (convergence$nhm[seed]==2){
-    params_nhm <- matrix(model_nhm$par, nrow = 3, ncol = 5)
-    params_nhm <- cbind(params_nhm, exp(params_nhm[,3]), exp(params_nhm[,4]), exp(params_nhm[,5]))
-    colnames(params_nhm) <- colnames(ground_truth_params)
-
-    bias_nhm <- compute_bias(params_nhm, ground_truth_params)
-  } else{
-    params_nhm <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
-    bias_nhm <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
-    colnames(bias_nhm) <- colnames(ground_truth_params)
-    rownames(bias_nhm) <- rownames(ground_truth_params)
-
-  }
-
-  gc()
+  # if (convergence$nhm[seed]==2){
+  #   params_nhm <- matrix(model_nhm$par, nrow = 3, ncol = 5)
+  #   params_nhm <- cbind(params_nhm, exp(params_nhm[,3]), exp(params_nhm[,4]), exp(params_nhm[,5]))
+  #   colnames(params_nhm) <- colnames(ground_truth_params)
+  # 
+  #   bias_nhm <- compute_bias(params_nhm, ground_truth_params)
+  # } else{
+  #   params_nhm <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
+  #   bias_nhm <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
+  #   colnames(bias_nhm) <- colnames(ground_truth_params)
+  #   rownames(bias_nhm) <- rownames(ground_truth_params)
+  # 
+  # }
+  # 
+  # gc()
   #
  #  # ============
  #  # imputation
@@ -223,6 +223,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
 
     bias_imputation <- compute_bias(params_imp, ground_truth_params)
   } else{
+    params_imp <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
     bias_imputation <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
     colnames(bias_imputation) <- colnames(ground_truth_params)
     rownames(bias_imputation) <- rownames(ground_truth_params)
@@ -235,7 +236,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     cbind(bias_coxph, model = "coxph", seed = seed, transition = c(1,2,3)),
     cbind(bias_flexsurv, model = "flexsurv", seed = seed, transition = c(1,2,3)),
     #cbind(bias_smms, model = "smms", seed = seed, transition = c(1,2,3)),
-    cbind(bias_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
+    #cbind(bias_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
     cbind(bias_imputation, model = "imputation", seed = seed, transition = c(1,2,3))
   )
 
@@ -248,7 +249,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     cbind(params_coxph, model = "coxph", seed = seed, transition = c(1,2,3)),
     cbind(params_flexsurv, model = "flexsurv", seed = seed, transition = c(1,2,3)),
     #cbind(params_smms, model = "smms", seed = seed, transition = c(1,2,3)),
-    cbind(params_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
+    #cbind(params_nhm, model = "nhm", seed = seed, transition = c(1,2,3)),
     cbind(params_imp, model = "imputation", seed = seed, transition = c(1,2,3))
   )
 
