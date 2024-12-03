@@ -152,7 +152,7 @@ compute_power <- function(n_pats, scheme, seed, convergence, alpha){
  #  # ============
 
   if (convergence$msm[seed]==2){
-    z_values <- model.msm$estimates[4:12]/diag(model.msm$covmat)[4:12] #cov1.1,cov1.2,cov1.3... so by col
+    z_values <- model.msm$estimates[4:12]/sqrt(diag(model.msm$covmat)[4:12]) #cov1.1,cov1.2,cov1.3... so by col
     p_values <- 2 * (1 - pnorm(abs(z_values)))
     power_msm <- matrix(p_values<=alpha, 3, 3, byrow = F)
     rownames(power_msm) <- c("1->2", "1->3", "2->3")
@@ -170,7 +170,7 @@ compute_power <- function(n_pats, scheme, seed, convergence, alpha){
  #  # ============
 
   if (convergence$msm_age[seed]==2){
-    z_values <- model.msm_age$estimates[4:12]/diag(model.msm_age$covmat)[4:12] #cov1.1,cov1.2,cov1.3... so by col
+    z_values <- model.msm_age$estimates[4:12]/sqrt(diag(model.msm_age$covmat)[4:12]) #cov1.1,cov1.2,cov1.3... so by col
     p_values <- 2 * (1 - pnorm(abs(z_values)))
     power_msm_age <- matrix(p_values<=alpha, 3, 3, byrow = F)
     rownames(power_msm_age) <- c("1->2", "1->3", "2->3")
@@ -191,7 +191,7 @@ compute_power <- function(n_pats, scheme, seed, convergence, alpha){
   if (convergence$nhm[seed]==2){
     est <- model_nhm$par[7:15]
     cov_matrix <- diag(solve(model_nhm$hess))[7:15]
-    z_values <- est/cov_matrix
+    z_values <- est/sqrt(cov_matrix)
     p_values <- 2 * (1 - pnorm(abs(z_values)))
     power_nhm<- matrix(p_values<=alpha, 3, 3, byrow = F)  #cov1.1,cov1.2,cov1.3... so by col
     power_nhm <- ifelse(power_nhm, 1, 0)
@@ -277,7 +277,7 @@ compute_power <- function(n_pats, scheme, seed, convergence, alpha){
     est <- list(avg_parameters[1,3:5],avg_parameters[2,3:5],avg_parameters[3,3:5])
   
     for( i in 1:3){
-      z_values <- est[[i]]/cov_matrices[[i]]
+      z_values <- est[[i]]/sqrt(cov_matrices[[i]])
       p_values <- 2 * (1 - pnorm(abs(z_values)))
       power_imp[i,] <- p_values<=alpha
     }

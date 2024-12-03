@@ -1,4 +1,4 @@
-computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start, baseline_data){
+computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start, covs){
   
   main_directory <- here()
   
@@ -73,7 +73,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
     
     files_to_load <- c("cox_model.RData", 
                        "flexsurv_model.RData", 
-                       "model_nhm.RData", 
+                       #"model_nhm.RData", 
                        "results_imp.RData", 
                        "computational_time.RData")
     for (file in files_to_load) {
@@ -107,26 +107,33 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # from the fitted model
   # (sim.fmsm relies on the presence of a function to sample random numbers from the parametric 
   # survival distribution used in the fitted model x)
-
-
+  
+  #####################
+  # trying with hesim
+  #####################
+  
+  #passare meanlog e sdlog da esterno come per covs
+  meanlog <- mean(log(fits_wei[[1]]$data$mml$rate[,2]))
+  sdlog <- sd(log(fits_wei[[1]]$data$mml$rate[,2]))
+  
+  #for each model i should pass different fits Idk about cox
+  #what about censoring?
+  sim_data <- simulation(n_pats, fits, meanlog, sdlog, covs)
+  
+  temp <- dismod$sim_disease(max_t=120, max_age=120)
+  # I get prob of being in each state in each age how to compute lfe??
+  t <- seq(60,105,0.1)
+  probs <- dismod$sim_stateprobs(t)
+  probs[, c("sample", "strategy_id", "grp_id") := NULL]
   
   # ============================
   # life expectancy ground truth
   # ============================
   
   
-  
-  cov_means <- colMeans(fits_gompertz_EO[[1]]$data$mml$rate)
-  
-  newdata <- data.frame(
-    cov1 = cov_means[2], 
-    cov2 = cov_means[3],
-    cov3 = cov_means[4]
-  )
-  
   tmat <- mstate::transMat(x = list(c(2, 3),c(3),c()), names = c("Dementia-free","Dementia", "Death")) 
  
-  gt_tls <-  (totlos.simfs(fits_wei, trans=tmat, newdata = newdata, t=105, cores = cores_lfe) - totlos.simfs(fits_wei, trans=tmat, newdata = newdata, t=t_start, cores = cores_lfe))[1:2]
+  gt_tls <-  (totlos.simfs(fits_wei, trans=tmat, newdata = covs, t=105, cores = cores_lfe) - totlos.simfs(fits_wei, trans=tmat, newdata = newdata, t=t_start, cores = cores_lfe))[1:2]
 
   #totlos.simfs.mine(fits_wei, tstart= t_start, trans=tmat, newdata = newdata, t=105, cores = cores_lfe)
  
@@ -134,7 +141,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # EO dataset
   # ===============
   
-  flexsurv_tls_EO <- (totlos.simfs(fits_gompertz_EO, trans=tmat, newdata = newdata, t=105, cores = cores_lfe) - totlos.simfs(fits_gompertz_EO, trans=tmat, newdata = newdata, t=t_start, cores = cores_lfe))[1:2]
+  flexsurv_tls_EO <- (totlos.simfs(fits_gompertz_EO, trans=tmat, newdata = covs, t=105, cores = cores_lfe) - totlos.simfs(fits_gompertz_EO, trans=tmat, newdata = newdata, t=t_start, cores = cores_lfe))[1:2]
   bias_flexsurv_tls_EO <- (flexsurv_tls_EO-gt_tls)/gt_tls
   
   # ============
@@ -142,23 +149,27 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # ============
   
   if (convergence$coxph[seed]==2) {
+    covs_cox <- as.numeric(covs)
     newdata_cox <- data.frame(
       trans = 1:3,
-      cov1.1 = c(cov_means[2], 0, 0),
-      cov2.1 = c(cov_means[3], 0, 0),
-      cov3.1 = c(cov_means[4], 0, 0),
-      cov1.2 = c(0, cov_means[2], 0),
-      cov2.2 = c(0, cov_means[3], 0),
-      cov3.2 = c(0, cov_means[4], 0),
-      cov1.3 = c(0, 0, cov_means[2]),
-      cov2.3 = c(0, 0, cov_means[3]),
-      cov3.3 = c(0, 0, cov_means[4]),
+      cov1.1 = c(covs_cox[1], 0, 0),
+      cov2.1 = c(covs_cox[2], 0, 0),
+      cov3.1 = c(covs_cox[3], 0, 0),
+      cov1.2 = c(0, covs_cox[1], 0),
+      cov2.2 = c(0, covs_cox[2], 0),
+      cov3.2 = c(0, covs_cox[3], 0),
+      cov1.3 = c(0, 0, covs_cox[1]),
+      cov2.3 = c(0, 0, covs_cox[2]),
+      cov3.3 = c(0, 0, covs_cox[3]),
       strata = 1:3
     )
   
     #basehaz(model_cox,center=FALSE) I get different estimates
     msfit_obj <- msfit(model_cox, newdata = newdata_cox, variance=T, trans=tmat) 
-    # confused about times 
+    # confused about times
+    tv <- unique(fit$Haz$time)
+    #forse non devo usare reset per come ho preparato i dati
+    cox_trans_prob <- mssample(msfit_obj$Haz, tmat, history = list(state = 1, time = min(msfit_obj$time)), )
     cox_trans_prob <- probtrans(msfit_obj, predt=min(msfit_obj$Haz$time))[[1]]
     check_neg <- apply(cox_trans_prob, 1, function(row) any(row < 0))
     cox_trans_prob <- cox_trans_prob[!check_neg,]
@@ -186,39 +197,11 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # ==============
   
   if (convergence$flexsurv[seed]==2){
-  flexsurv_tls <-   (totlos.simfs(fits_gompertz, trans=tmat, newdata = newdata, t=105, cores = cores_lfe) - totlos.simfs(fits_gompertz, trans=tmat, newdata = newdata, t=t_start, cores = cores_lfe))[1:2]
+  flexsurv_tls <-   (totlos.simfs(fits_gompertz, trans=tmat, newdata = covs, t=105, cores = cores_lfe) - totlos.simfs(fits_gompertz, trans=tmat, newdata = newdata, t=t_start, cores = cores_lfe))[1:2]
   bias_flexsurv_tls <- (flexsurv_tls-gt_tls)/gt_tls
   } else {
     flexsurv_tls <- rep(NA,2)
     bias_flexsurv_tls <- rep(NA,2)
-  }
-  
-
-  # ======
-  # nhm
-  # ======
-  
-  # here we ignore that data comes from a semi-markovian generation process and measure how biased 
-  # lfe estimations are once we fit nhm model assuming markovianity 
-  
-  
-  if(convergence$nhm[seed]==2){
-    tcrit <- model_nhm$tcrit
-    time <- seq(t_start,tcrit-1,by=0.1)
-    nhm_probabilities <- predict(model_nhm, times= time)$probabilities 
-    nhm_tls<- numeric(ncol(nhm_probabilities))
-    
-    diff_time <- diff(time)
-    nhm_probabilities <- nhm_probabilities[1:length(diff_time),]
-    
-    for (i in 1:ncol(nhm_probabilities)) {
-      nhm_tls[i] <- sum(nhm_probabilities[, i] * diff_time)
-    }
-    nhm_tls <- nhm_tls[1:2]
-    bias_nhm_tls <- (nhm_tls-gt_tls)/gt_tls
-  }else{
-    nhm_tls <- rep(NA,2)
-    bias_nhm_tls <- rep(NA,2)
   }
   
 
@@ -233,7 +216,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
     m <- length(models_imp)
     
     for (i in 1:m){
-      temp <-  (totlos.simfs(models_imp[[i]], trans=tmat, newdata = newdata, t=105, cores = cores_lfe) - totlos.simfs(models_imp[[i]], trans=tmat, newdata = newdata, t=t_start, cores = cores_lfe))[1:2]
+      temp <-  (totlos.simfs(models_imp[[i]], trans=tmat, newdata = covs, t=105, cores = cores_lfe) - totlos.simfs(models_imp[[i]], trans=tmat, newdata = newdata, t=t_start, cores = cores_lfe))[1:2]
       imputation_tls <- imputation_tls + temp
     }
     imputation_tls <- imputation_tls/m

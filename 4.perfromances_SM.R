@@ -76,7 +76,7 @@ lapply(source_files, source)
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 500
+n_pats <- 5000
 cores <- 4
 
 
@@ -147,7 +147,7 @@ temp <- vector(mode = "list", length = 4)
 convergence_schemes <- vector(mode = "list", length = 4)
 hessian_schemes <- vector(mode = "list", length = 4)
 
-for (scheme in 2:5){
+for (scheme in 2:3){
   temp[[scheme-1]] <- wrapper_convergence(n_pats, scheme, seed ) 
   convergence_schemes[[scheme-1]] <- temp[[scheme-1]][[1]]
   hessian_schemes[[scheme-1]] <- temp[[scheme-1]][[2]]
@@ -160,10 +160,11 @@ for (scheme in 2:5){
 
 combined_cov <- vector(mode = "list", length = 4)
 
-for (scheme in 2:5){
+for (scheme in 2:3){
   combined_cov[[scheme-1]] <- level_convergence(scheme)
 }
 
+ 
 save(combined_cov, file = file.path(model_dir,"convergence.RData"))
 
 ###################
@@ -173,7 +174,7 @@ save(combined_cov, file = file.path(model_dir,"convergence.RData"))
 bias_all_schemes <- vector(mode = "list", length = 4)
 estimates <- vector(mode = "list", length = 4)
 
-for (scheme in 2:5){
+for (scheme in 2:3){
   results <- data.frame(
     rate = numeric(0),
     shape = numeric(0),
@@ -209,12 +210,12 @@ for (scheme in 2:5){
 }
 
 res_bias <- vector(mode = "list", length = 4)
-for (scheme in 2:5){
+for (scheme in 2:3){
   res_bias[[scheme-1]] <- mean_bias_comparison(bias_all_schemes, scheme)
 }
 
 mean_estimates <- vector(mode = "list", length = 4)
-for (scheme in 2:5){
+for (scheme in 2:3){
   mean_estimates[[scheme-1]] <- mean_bias_comparison(estimates, scheme)
 }
 
@@ -338,6 +339,11 @@ save(mean_width, file = file.path(model_dir,"width_ic.RData"))
 cores_lfe=4
 lfe_bias <- vector(mode = "list", length = 4)
 lfe_estimates <- vector(mode = "list", length = 4)
+covs <-  data.frame(
+  cov1 = 0.35, 
+  cov2 = 0.15,
+  cov3 = 0.30
+)
 
 for (scheme in 2:5){
   results <- data.frame(
@@ -350,7 +356,7 @@ for (scheme in 2:5){
   results_list <- future_lapply(1:10, function(seed) {
     temp <- data[[seed]][[scheme]]
     t_start <- min(temp$age)
-    temp_results <- computing_life_expectancy(n_pats, scheme, seed, combined_cov[[scheme-1]], t_start, baseline_data)
+    temp_results <- computing_life_expectancy(n_pats, scheme, seed, combined_cov[[scheme-1]], t_start, covs)
     return(temp_results)
   })
   

@@ -217,7 +217,7 @@ compute_power <- function(n_pats, scheme, seed, convergence, alpha){
     est <- list(avg_parameters[1,3:5],avg_parameters[2,3:5],avg_parameters[3,3:5])
   
     for( i in 1:3){
-      z_values <- est[[i]]/cov_matrices[[i]]
+      z_values <- est[[i]]/sqrt(cov_matrices[[i]])
       p_values <- 2 * (1 - pnorm(abs(z_values)))
       power_imp[i,] <- p_values<=alpha
     }

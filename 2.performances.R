@@ -71,7 +71,7 @@ lapply(source_files, source)
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 2000
+n_pats <- 500
 cores <- 4
 
 
@@ -405,6 +405,8 @@ plot_lfe_bias(1)
 # Power -> refuse H0|H0 false -> significant|sign
 
 significancy <- vector(mode = "list", length = 4)
+significancy_all <- vector(mode = "list", length = 4)
+
 alpha <- 0.05
 
 for (scheme in 2:5){
@@ -414,12 +416,15 @@ for (scheme in 2:5){
     return(temp_results)
   })
   
-  results <- do.call(rbind, results_list)
+  results<- do.call(rbind, results_list)
+  significancy_all[[scheme-1]] <- results
   significancy[[scheme-1]] <- mean_power(results, scheme)
+  
 
 }
   
 save(significancy, file = file.path(model_dir,"significancy.RData"))
+save(significancy, file = file.path(model_dir,"significancy_all.RData"))
 
 significant_covs <- data.frame("cov1"= c(0,1,1), "cov2"= c(1,1,0), "cov3"=c(1,1,1), "transition"=c(1,2,3))
 
