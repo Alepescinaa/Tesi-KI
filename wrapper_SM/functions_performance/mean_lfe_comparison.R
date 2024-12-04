@@ -1,7 +1,7 @@
 mean_lfe_comparison <- function(data, scheme){
   temp <- data[[scheme-1]]
   temp <- as.data.frame(temp)
-  desired_order <- c("flexsurv_EO", "coxph", "flexsurv","nhm", "imputation")
+  desired_order <- c("flexsurv_EO", "coxph", "flexsurv", "imputation")
   temp$model <- factor(temp$model, levels = desired_order, ordered = TRUE)
   temp <- temp[order(temp$model), ]
   temp$lfe <- as.numeric(temp$lfe)

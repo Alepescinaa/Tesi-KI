@@ -14,6 +14,7 @@ library(future.apply)
 library(mstate)
 library(flexsurv)
 library(deSolve)
+library(hesim)
 
 setwd(here())
 
@@ -51,7 +52,11 @@ source_files <- c(
 "./wrapper_SM/functions_performance/ic_comparison.R",
 "./wrapper_SM/functions_performance/plot_coverage.R",
 "./wrapper_SM/functions_performance/plot_width.R",
-"./wrapper_SM/functions_performance/plot_ct.R"
+"./wrapper_SM/functions_performance/plot_ct.R",
+"./wrapper_SM/functions_performance/simulation_probs.R",
+"./wrapper_SM/functions_performance/plot_bias_lfe.R",
+"./wrapper_SM/functions_performance/plot_lfe.R"
+
 )
   
   # "./wrapper_SM/functions_performance/compute_bias_rel.R",
@@ -76,7 +81,7 @@ lapply(source_files, source)
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 5000
+n_pats <- 500
 cores <- 4
 
 
@@ -372,6 +377,8 @@ for (scheme in 2:5){
   
   results<- do.call(rbind, temp_est)
   lfe_estimates[[scheme-1]] <- results
+  
+  print(scheme)
 }
 
 res_bias_lfe <- vector(mode = "list", length = 4)

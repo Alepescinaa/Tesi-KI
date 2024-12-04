@@ -5,7 +5,7 @@ covariates_distr <- function(n_obs, meanlog, sdlog, covs){
   cov1 <- (cov1-min_val)/(max_val-min_val)
   cov2 <- rbinom(n=n_obs, size=1, prob=as.numeric(covs[2]))  
   cov3 <- rbinom(n=n_obs, size=1, prob=as.numeric(covs[3]))  
-  x1 <- runif(n_obs, min = 60, max = 96)
+  x1 <- 60
   Intercept <- matrix(1,n_pats,1)
   cov_df <- data.frame(Intercept, x1, cov1, cov2, cov3)
   colnames(cov_df)[1]="(Intercept)"

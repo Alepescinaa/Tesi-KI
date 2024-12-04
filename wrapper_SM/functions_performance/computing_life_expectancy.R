@@ -108,47 +108,65 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # (sim.fmsm relies on the presence of a function to sample random numbers from the parametric 
   # survival distribution used in the fitted model x)
   
-  #####################
-  # trying with hesim
-  #####################
+  # in the end I am using hesim to properly account for left truncation, I simulate a big amount of
+  # data for each parametric distribution I have to compare (not feasible for semi-parametric methods)
+  # then I am computing mean time spent in each state just by averaging since n-> inf 
   
-  #passare meanlog e sdlog da esterno come per covs
+
+  
+  # distribution of cov1 taken from original dataset
+  
   meanlog <- mean(log(fits_wei[[1]]$data$mml$rate[,2]))
   sdlog <- sd(log(fits_wei[[1]]$data$mml$rate[,2]))
   
-  #for each model i should pass different fits Idk about cox
-  #what about censoring?
-  sim_data <- simulation(n_pats, fits, meanlog, sdlog, covs)
+
   
-  temp <- dismod$sim_disease(max_t=120, max_age=120)
-  # I get prob of being in each state in each age how to compute lfe??
-  t <- seq(60,105,0.1)
-  probs <- dismod$sim_stateprobs(t)
-  probs[, c("sample", "strategy_id", "grp_id") := NULL]
   
   # ============================
   # life expectancy ground truth
   # ============================
   
   
-  tmat <- mstate::transMat(x = list(c(2, 3),c(3),c()), names = c("Dementia-free","Dementia", "Death")) 
- 
-  gt_tls <-  (totlos.simfs(fits_wei, trans=tmat, newdata = covs, t=105, cores = cores_lfe) - totlos.simfs(fits_wei, trans=tmat, newdata = newdata, t=t_start, cores = cores_lfe))[1:2]
-
-  #totlos.simfs.mine(fits_wei, tstart= t_start, trans=tmat, newdata = newdata, t=105, cores = cores_lfe)
- 
+  sim_data <- simulation(100000, fits_wei, meanlog, sdlog, covs)
+  sim_data_dis <- sim_data$sim_disease(max_t=120, max_age=120)
+  sim_data_dis$transition <- 0 #enter in the study
+  sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==3] <- 1 # out from healthy state (dem)
+  sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==4] <- 1 # out from healthy state (death)
+  sim_data_dis$transition[sim_data_dis$from==3 & sim_data_dis$to==4] <- 2 # out from dementia
+  sim_data_dis$time <- sim_data_dis$time_stop-sim_data_dis$time_start
+  
+  mean_time <- sim_data_dis %>%
+    group_by(transition) %>%
+    summarise(across(time, mean, na.rm = TRUE))
+  
+  gt_tls <- as.numeric(unlist(mean_time[2:3,2]))
+  
    # ===============
   # EO dataset
   # ===============
   
-  flexsurv_tls_EO <- (totlos.simfs(fits_gompertz_EO, trans=tmat, newdata = covs, t=105, cores = cores_lfe) - totlos.simfs(fits_gompertz_EO, trans=tmat, newdata = newdata, t=t_start, cores = cores_lfe))[1:2]
+  sim_data <- simulation(100000, fits_gompertz_EO, meanlog, sdlog, covs)
+  sim_data_dis <- sim_data$sim_disease(max_t=120, max_age=120)
+  sim_data_dis$transition <- 0 #enter in the study
+  sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==3] <- 1 # out from healthy state (dem)
+  sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==4] <- 1 # out from healthy state (death)
+  sim_data_dis$transition[sim_data_dis$from==3 & sim_data_dis$to==4] <- 2 # out from dementia
+  sim_data_dis$time <- sim_data_dis$time_stop-sim_data_dis$time_start
+  
+  mean_time <- sim_data_dis %>%
+    group_by(transition) %>%
+    summarise(across(time, mean, na.rm = TRUE))
+  
+  flexsurv_tls_EO <- as.numeric(unlist(mean_time[2:3,2]))
   bias_flexsurv_tls_EO <- (flexsurv_tls_EO-gt_tls)/gt_tls
   
   # ============
   # coxph
   # ============
   
+  # check sim_stateprobs.survival 
   if (convergence$coxph[seed]==2) {
+    tmat <- mstate::transMat(x = list(c(2, 3),c(3),c()), names = c("Dementia-free","Dementia", "Death")) 
     covs_cox <- as.numeric(covs)
     newdata_cox <- data.frame(
       trans = 1:3,
@@ -164,13 +182,10 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
       strata = 1:3
     )
   
-    #basehaz(model_cox,center=FALSE) I get different estimates
     msfit_obj <- msfit(model_cox, newdata = newdata_cox, variance=T, trans=tmat) 
-    # confused about times
-    tv <- unique(fit$Haz$time)
-    #forse non devo usare reset per come ho preparato i dati
-    cox_trans_prob <- mssample(msfit_obj$Haz, tmat, history = list(state = 1, time = min(msfit_obj$time)), )
-    cox_trans_prob <- probtrans(msfit_obj, predt=min(msfit_obj$Haz$time))[[1]]
+    #times <- seq(60,105,0.1)
+    #cox_trans_prob <- mssample(msfit_obj$Haz, tmat, history = list(state = 1, time = 0), tvec= times, clock="reset" )
+    cox_trans_prob <- probtrans(msfit_obj, predt=60)[[1]]
     check_neg <- apply(cox_trans_prob, 1, function(row) any(row < 0))
     cox_trans_prob <- cox_trans_prob[!check_neg,]
     time <- cox_trans_prob[,1]
@@ -197,8 +212,19 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # ==============
   
   if (convergence$flexsurv[seed]==2){
-  flexsurv_tls <-   (totlos.simfs(fits_gompertz, trans=tmat, newdata = covs, t=105, cores = cores_lfe) - totlos.simfs(fits_gompertz, trans=tmat, newdata = newdata, t=t_start, cores = cores_lfe))[1:2]
-  bias_flexsurv_tls <- (flexsurv_tls-gt_tls)/gt_tls
+    sim_data <- simulation(100000, fits_gompertz, meanlog, sdlog, covs)
+    sim_data_dis <- sim_data$sim_disease(max_t=120, max_age=120)
+    sim_data_dis$transition <- 0 #enter in the study
+    sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==3] <- 1 # out from healthy state (dem)
+    sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==4] <- 1 # out from healthy state (death)
+    sim_data_dis$transition[sim_data_dis$from==3 & sim_data_dis$to==4] <- 2 # out from dementia
+    sim_data_dis$time <- sim_data_dis$time_stop-sim_data_dis$time_start
+    
+    mean_time <- sim_data_dis %>%
+      group_by(transition) %>%
+      summarise(across(time, mean, na.rm = TRUE))
+    flexsurv_tls <-  as.numeric(unlist(mean_time[2:3,2]))  
+    bias_flexsurv_tls <- (flexsurv_tls-gt_tls)/gt_tls
   } else {
     flexsurv_tls <- rep(NA,2)
     bias_flexsurv_tls <- rep(NA,2)
@@ -216,7 +242,19 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
     m <- length(models_imp)
     
     for (i in 1:m){
-      temp <-  (totlos.simfs(models_imp[[i]], trans=tmat, newdata = covs, t=105, cores = cores_lfe) - totlos.simfs(models_imp[[i]], trans=tmat, newdata = newdata, t=t_start, cores = cores_lfe))[1:2]
+      sim_data <- simulation(100000, models_imp[[i]], meanlog, sdlog, covs)
+      sim_data_dis <- sim_data$sim_disease(max_t=120, max_age=120)
+      sim_data_dis$transition <- 0 #enter in the study
+      sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==3] <- 1 # out from healthy state (dem)
+      sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==4] <- 1 # out from healthy state (death)
+      sim_data_dis$transition[sim_data_dis$from==3 & sim_data_dis$to==4] <- 2 # out from dementia
+      sim_data_dis$time <- sim_data_dis$time_stop-sim_data_dis$time_start
+      
+      mean_time <- sim_data_dis %>%
+        group_by(transition) %>%
+        summarise(across(time, mean, na.rm = TRUE))
+      
+      temp <- as.numeric(unlist(mean_time[2:3,2]))  
       imputation_tls <- imputation_tls + temp
     }
     imputation_tls <- imputation_tls/m
@@ -236,7 +274,6 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
     cbind(lfe = flexsurv_tls_EO, model = "flexsurv_EO", seed=seed),
     cbind(lfe = coxph_tls, model = "coxph", seed = seed),
     cbind(lfe = flexsurv_tls, model = "flexsurv", seed = seed),
-    cbind(lfe = nhm_tls, model = "nhm", seed = seed),
     cbind(lfe = imputation_tls, model = "imputation", seed = seed) 
   )
   
@@ -244,7 +281,6 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
     cbind(lfe = bias_flexsurv_tls_EO, model = "flexsurv_EO", seed=seed),
     cbind(lfe = bias_coxph_tls, model = "coxph", seed = seed),
     cbind(lfe = bias_flexsurv_tls, model = "flexsurv", seed = seed),
-    cbind(lfe = bias_nhm_tls, model = "nhm", seed = seed),
     cbind(lfe = bias_imputation_tls, model = "imputation", seed = seed) 
   )
   
