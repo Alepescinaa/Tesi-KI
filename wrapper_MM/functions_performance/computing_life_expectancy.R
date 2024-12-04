@@ -1,5 +1,7 @@
 computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start, covs){
   
+  aaa prova
+  
   main_directory <- here()
   
   if (n_pats == 500){
@@ -75,7 +77,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
                        "flexsurv_model.RData", 
                        "msm_model.RData", 
                        "model_msm_age.RData", 
-                       "model_nhm.RData", 
+                       %"model_nhm.RData", 
                        "results_imp.RData", 
                        "computational_time.RData")
     for (file in files_to_load) {
