@@ -109,7 +109,7 @@ if (n_pats==500){
 
 
 # directory to save things
-model_dir <- here()
+model_dir <- here() 
 setwd(model_dir)
 if (n_pats==500){
   model_dir <- paste0("wrapper_MM/saved_performance_500")
@@ -432,9 +432,10 @@ significant_covs <- data.frame("cov1"= c(0,1,1), "cov2"= c(1,1,0), "cov3"=c(1,1,
 # yellow power
 table_power(significant_covs, significancy, scheme=2)
 table_power(significant_covs, significancy, scheme=3)
-table_power(significant_covs, significancy, scheme=4)
+t4 <- table_power(significant_covs, significancy, scheme=4)
 table_power(significant_covs, significancy, scheme=5)
 
+save_kable(t4, file = "power.html")
 
 ######################
 # computational time #
@@ -461,23 +462,35 @@ save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
 # Plots
 ##########
 
+dir <- here()
+dir <- here("wrapper_MM", "Plots")
+setwd(dir)
+
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 plot1 <- plot_convergence(2, titles)
 plot2 <- plot_convergence(3, titles)
 plot3 <- plot_convergence(4, titles)
 plot4 <- plot_convergence(5, titles)
 
-plot1 + plot2 + plot3 + plot4 + 
-  plot_layout(ncol = 2, nrow = 2, 
-              widths = c(0.5, 0.5), 
-              heights = c(0.8, 0.8)) +
-  theme(plot.margin = margin(10, 10, 10, 10))
+combined_plot <- (plot1 + theme(legend.position = "none")) +
+  (plot2 + theme(legend.position = "none")) +
+  (plot3 + theme(legend.position = "none")) +
+  (plot4 + theme(legend.position = "none")) +              
+  plot_layout(guides = "collect")  
 
+combined_plot <- combined_plot & theme(legend.position = "right")
+
+ggsave("convM.png", plot = combined_plot, path = NULL, width = 10, height = 7) 
+
+ 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
-plot_bias(2, titles)
+pb2 <- plot_bias(2, titles)
 plot_bias(3, titles)
-plot_bias(4, titles)
+pb4 <- plot_bias(4, titles)
 plot_bias(5, titles)
+
+ggsave("bias2.png", plot = pb2, path = NULL, width = 9, height = 7)
+ggsave("bias4.png", plot = pb4, path = NULL, width = 9, height = 7)
 
 # for (scheme in 2:5) {
 #   for (transition in 1:3) {
@@ -496,17 +509,21 @@ plot_bias(5, titles)
 # plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[5])
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
-plot_coverage(2, titles)
+cov2 <- plot_coverage(2, titles)
 plot_coverage(3, titles)
-plot_coverage(4, titles)
+cov4 <- plot_coverage(4, titles)
 plot_coverage(5, titles)
+
+ggsave("cov2.png", plot = cov2, path = NULL, width = 9, height = 7)
+ggsave("cov4.png", plot = cov4, path = NULL, width = 9, height = 7)
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 plot_width(mean_width,2, titles)
 plot_width(mean_width,3, titles)
-plot_width(mean_width,4, titles)
+w4 <- plot_width(mean_width,4, titles)
 plot_width(mean_width,5, titles)
 
+ggsave("width4.png", plot = w4, path = NULL, width = 9, height = 7)
 # titles <-c("(1 year)", "(3 years)", "(3-6 years)", "EHR")
 # plot_bias_lfe(res_bias_lfe, 2, titles) 
 # plot_bias_lfe(res_bias_lfe, 3, titles)
@@ -519,14 +536,16 @@ plot2 <- plot_ct(3, titles, combined_cov[[2]])
 plot3 <- plot_ct(4, titles, combined_cov[[3]])
 plot4 <- plot_ct(5, titles, combined_cov[[4]])
 
-plot1 + plot2 + plot3 + plot4 + 
-  plot_layout(ncol = 2, nrow = 2, 
-              widths = c(0.6, 0.6), 
-              heights = c(0.8, 0.8)) +
-  theme(plot.margin = margin(10, 10, 10, 10))
 
-dir <- here()
-dir <- paste0("wrapper_MM/Plots_500")
-ggsave("plot3.png", path=dir, width=5, height=8, bg = "transparent")
+ct_plot <- (plot1 + theme(legend.position = "none")) +
+  (plot2 + theme(legend.position = "none")) +
+  (plot3 + theme(legend.position = "none")) +
+  (plot4 + theme(legend.position = "none")) +       
+  plot_layout(guides = "collect")  
+
+ct_plot <- ct_plot & theme(legend.position = "left")
+
+ggsave("ct.png", plot = ct_plot, path = NULL, width = 9, height = 7)
+
 
 # keep in mind that these estimates of the bias are accounted only for the models for which convergence at optimum is met

@@ -15,6 +15,8 @@ library(mstate)
 library(flexsurv)
 library(deSolve)
 library(hesim)
+library(kableExtra)
+library(webshot)
 
 setwd(here())
 
@@ -42,11 +44,11 @@ source_files <- c(
   "./wrapper_SM/functions_performance/computing_life_expectancy.R",
   "./wrapper_SM/functions_performance/mean_lfe_comparison.R",
   "./wrapper_SM/functions_performance/extract_comp_time.R",
-  "./wrapper_MM/functions_performance/width_ic.R",
-  "./wrapper_MM/functions_performance/mean_width_ic.R",
-  "./wrapper_MM/functions_performance/compute_power.R",
-  "./wrapper_MM/functions_performance/mean_power.R",
-  "./wrapper_MM/functions_performance/table_power.R",
+  "./wrapper_SM/functions_performance/width_ic.R",
+  "./wrapper_SM/functions_performance/mean_width_ic.R",
+  "./wrapper_SM/functions_performance/compute_power.R",
+  "./wrapper_SM/functions_performance/mean_power.R",
+  "./wrapper_SM/functions_performance/table_power.R",
  "./wrapper_SM/functions_performance/plot_convergence.R",
  "./wrapper_SM/functions_performance/plot_bias.R",
 "./wrapper_SM/functions_performance/ic_comparison.R",
@@ -81,7 +83,7 @@ lapply(source_files, source)
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 500
+n_pats <- 5000
 cores <- 4
 
 
@@ -152,7 +154,7 @@ temp <- vector(mode = "list", length = 4)
 convergence_schemes <- vector(mode = "list", length = 4)
 hessian_schemes <- vector(mode = "list", length = 4)
 
-for (scheme in 2:3){
+for (scheme in 2:5){
   temp[[scheme-1]] <- wrapper_convergence(n_pats, scheme, seed ) 
   convergence_schemes[[scheme-1]] <- temp[[scheme-1]][[1]]
   hessian_schemes[[scheme-1]] <- temp[[scheme-1]][[2]]
@@ -165,7 +167,7 @@ for (scheme in 2:3){
 
 combined_cov <- vector(mode = "list", length = 4)
 
-for (scheme in 2:3){
+for (scheme in 2:5){
   combined_cov[[scheme-1]] <- level_convergence(scheme)
 }
 
@@ -179,7 +181,7 @@ save(combined_cov, file = file.path(model_dir,"convergence.RData"))
 bias_all_schemes <- vector(mode = "list", length = 4)
 estimates <- vector(mode = "list", length = 4)
 
-for (scheme in 2:3){
+for (scheme in 2:5){
   results <- data.frame(
     rate = numeric(0),
     shape = numeric(0),
@@ -215,18 +217,19 @@ for (scheme in 2:3){
 }
 
 res_bias <- vector(mode = "list", length = 4)
-for (scheme in 2:3){
+for (scheme in 2:5){
   res_bias[[scheme-1]] <- mean_bias_comparison(bias_all_schemes, scheme)
 }
 
 mean_estimates <- vector(mode = "list", length = 4)
-for (scheme in 2:3){
+for (scheme in 2:5){
   mean_estimates[[scheme-1]] <- mean_bias_comparison(estimates, scheme)
 }
 
 save(mean_estimates, file = file.path(model_dir,"mean_estimates.RData"))
 save(bias_all_schemes, file = file.path(model_dir,"bias_all.RData"))
 save(res_bias, file = file.path(model_dir,"res_bias.RData"))
+
 
 
 ############################
@@ -416,6 +419,11 @@ for (scheme in 2:5){
     return(temp_results)
   })
   
+  # for (seed in 1:100){
+  #   temp_results <- compute_power(n_pats, scheme, seed, combined_cov[[scheme - 1]], alpha)
+  #   print(seed)
+  # }
+
   results<- do.call(rbind, results_list)
   significancy_all[[scheme-1]] <- results
   significancy[[scheme-1]] <- mean_power(results, scheme)
@@ -431,9 +439,10 @@ significant_covs <- data.frame("cov1"= c(0,1,1), "cov2"= c(1,1,0), "cov3"=c(1,1,
 # yellow power
 table_power(significant_covs, significancy, scheme=2)
 table_power(significant_covs, significancy, scheme=3)
-table_power(significant_covs, significancy, scheme=4)
+t4 <- table_power(significant_covs, significancy, scheme=4)
 table_power(significant_covs, significancy, scheme=5)
 
+save_kable(t4, file = "powerM.html")
 
 
 ######################
@@ -461,6 +470,9 @@ save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
 # Plots #
 #########
 
+dir <- here()
+dir <- paste0("wrapper_SM/Plots")
+
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 plot1 <- plot_convergence(2, titles)
 plot2 <- plot_convergence(3, titles)
@@ -474,10 +486,13 @@ plot1 + plot2 + plot3 + plot4 +
   theme(plot.margin = margin(10, 10, 10, 10))
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
-plot_bias(2, titles)
+pb2 <- plot_bias(2, titles)
 plot_bias(3, titles)
-plot_bias(4, titles)
+pb4 <- plot_bias(4, titles)
 plot_bias(5, titles)
+
+ggsave("bias2.png", plot = pb2, path = NULL, width = 7, height = 6) 
+ggsave("bias4.png", plot = pb4, path = NULL, width = 7, height = 6)
 
 for (scheme in 2:5) {
   for (transition in 1:3) {
@@ -496,16 +511,23 @@ plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[4])
 plot_boxplot(list_data[[1]], list_data[[2]], list_data[[3]], parameters[5])
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
-plot_coverage(2, titles)
+pc2 <- plot_coverage(2, titles)
 plot_coverage(3, titles)
-plot_coverage(4, titles)
+pc4 <- plot_coverage(4, titles)
 plot_coverage(5, titles)
+
+ggsave("cov2.png", plot = pc2, path = NULL, width = 7, height = 6) 
+ggsave("cov4.png", plot = pc4, path = NULL, width = 7, height = 6)
+
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 plot_width(mean_width,2, titles)
 plot_width(mean_width,3, titles)
-plot_width(mean_width,4, titles)
+w4 <- plot_width(mean_width,4, titles)
 plot_width(mean_width,5, titles)
+
+ggsave("width4_M.png", plot = w4, path = NULL, width = 7, height = 6) 
+
 
 titles <-c("(1 year)", "(3 years)", "(3-6 years)", "EHR")
 plot_bias_lfe(res_bias_lfe, 2, titles) 
@@ -518,10 +540,8 @@ plot1 <- plot_ct(2, titles, combined_cov[[1]])
 plot2 <- plot_ct(3, titles, combined_cov[[2]])
 plot3 <- plot_ct(4, titles, combined_cov[[3]])
 plot4 <- plot_ct(5, titles, combined_cov[[4]])
-plot1+plot2+plot3+plot4
+print(plot1+plot2+plot3+plot4)
 
-dir <- here()
-dir <- paste0("wrapper_SM/Plots_500")
-ggsave("plot3.png", path=dir, width=5, height=8, bg = "transparent")
+
 
 # keep in mind that these estimates of the bias are accounted only for the models for which convergence at optimum is met

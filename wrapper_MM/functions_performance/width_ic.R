@@ -73,18 +73,19 @@ width_ic <- function(n_pats, scheme, seed, convergence) {
   if (dir.exists(seed_dir)) {
     setwd(seed_dir)
     
-    files_to_load <- c("cox_model.RData",
-                       "flexsurv_model.RData",
-                       "msm_model.RData",
-                       "model_msm_age.RData",
-                       "model_nhm.RData",
-                       "results_imp.RData",
+    files_to_load <- c("cox_model.RData", 
+                       "flexsurv_model.RData", 
+                       "msm_model.RData", 
+                       "model_msm_age.RData", 
+                       "model_nhm.RData", 
+                       "results_imp.RData", 
                        "computational_time.RData")
-    
     for (file in files_to_load) {
       if (file.exists(file)) {
         load(file)
       } else {
+        print(file)
+        print(seed)
         warning(paste("File does not exist:", file))
         model_nhm <- NULL
       }
@@ -92,7 +93,6 @@ width_ic <- function(n_pats, scheme, seed, convergence) {
   } else {
     warning(paste("Seed directory does not exist:", seed_dir))
   }
-  
   # ============
   # EO dataset
   # ============

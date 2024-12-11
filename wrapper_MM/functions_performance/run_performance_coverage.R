@@ -191,7 +191,7 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
     max_age <- max(model.msm_age$data[[1]]$age)
     mean_age <- mean(model.msm_age$data[[1]]$age)
     covs <- colMeans(model.msm_age$data[[1]][,1:3])
-    haz <- hazards_mine(model.msm_age, b.covariates = list(age = mean_age , cov1 = covs[1], cov2 = covs[2], cov3 = covs[3]), no.years = max_age, CI = F)
+    haz <- hazards_mine(model.msm_age, b.covariates = list(age = mean_age , cov1 = covs[1], cov2 = covs[2], cov3 = covs[3]), no.years = 40, CI = F)
     
     haz_estimates <- numeric()
     for (i in 1:3) {
