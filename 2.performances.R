@@ -71,7 +71,7 @@ lapply(source_files, source)
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 2000
+n_pats <- 500
 cores <- 4
 
 
@@ -144,7 +144,7 @@ convergence_schemes <- vector(mode = "list", length = 4)
 hessian_schemes <- vector(mode = "list", length = 4)
 
 for (scheme in 2:5){
-  temp[[scheme-1]] <- wrapper_convergence(n_pats, scheme, seed ) #fix cox inside
+  temp[[scheme-1]] <- wrapper_convergence(n_pats, scheme, seed )
   convergence_schemes[[scheme-1]] <- temp[[scheme-1]][[1]]
   hessian_schemes[[scheme-1]] <- temp[[scheme-1]][[2]]
 }
@@ -309,18 +309,47 @@ save(res_cov_ic, file = file.path(model_dir,"95%coverage.RData"))
 #  width confidence intervals #
 ###############################
 
-width_all_schemes <- vector(mode = "list", length = 4)
+# width_all_schemes <- vector(mode = "list", length = 4)
+# 
+# for (scheme in 2:5){
+#   plan(multisession, workers = cores) 
+#   results_list <- future_lapply(1:100, function(seed) {
+#     temp_results <- width_ic(n_pats, scheme, seed, combined_cov[[scheme-1]])
+#     return(temp_results)
+#   })
+#   
+#   results_width<- do.call(rbind, results_list)
+#   
+#   width_all_schemes[[scheme-1]] <- results_width
+#   
+# }
+# 
+# mean_width <- vector(mode = "list", length = 4)
+# for (scheme in 2:5){
+#   mean_width[[scheme-1]] <- mean_width_ic(width_all_schemes, scheme)
+# }
+# 
+# setwd(here())
+# save(width_all_schemes, file = file.path(model_dir,"width_all_ic.RData"))
+# save(mean_width, file = file.path(model_dir,"width_ic.RData"))
+
+
+###############################
+#  standard error #
+###############################
+
+se_all_schemes <- vector(mode = "list", length = 4)
 
 for (scheme in 2:5){
   plan(multisession, workers = cores) 
   results_list <- future_lapply(1:100, function(seed) {
-    temp_results <- width_ic(n_pats, scheme, seed, combined_cov[[scheme-1]])
+    temp_results <- standard_error(n_pats, scheme, seed, combined_cov[[scheme-1]])
     return(temp_results)
   })
   
-  results_width<- do.call(rbind, results_list)
+  results_se<- do.call(rbind, results_list)
   
-  width_all_schemes[[scheme-1]] <- results_width
+  se_all_schemes[[scheme-1]] <- results_se
   
 }
 
@@ -330,8 +359,8 @@ for (scheme in 2:5){
 }
 
 setwd(here())
-save(width_all_schemes, file = file.path(model_dir,"width_all_ic.RData"))
-save(mean_width, file = file.path(model_dir,"width_ic.RData"))
+save(se_all_schemes, file = file.path(model_dir,"se_all.RData"))
+save(mean_se, file = file.path(model_dir,"mean_se.RData"))
 
 
 ####################

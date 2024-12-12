@@ -131,7 +131,6 @@ wrapper_functions_MM <- function(data,n_pats,seed,cores_nhm){
   temp <- prepare_msm(data)
 
 
-
   time_msm_age<- system.time({
     model.msm_age <- msm(state ~ age,
                          subject = patient_id,

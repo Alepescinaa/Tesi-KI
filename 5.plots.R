@@ -88,12 +88,11 @@ if (n_pats==500){
   model_dir <- paste0("wrapper_MM/plots_10K")
   dir.create(model_dir, showWarnings = FALSE, recursive= T)  }
 
-setwd(model_dir)
+
 
 ##########
 # Plots
 ##########
-
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 plot1 <- plot_convergence(2, titles)
@@ -137,17 +136,19 @@ ggsave("cov5.png", plot = cov5, path = model_dir, width = 9, height = 7)
 
 
 #da sistemare per rappresentare dev standard
-titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
-sd2 <- plot_width(mean_width,2, titles)
-sd3 <- plot_width(mean_width,3, titles)
-sd4 <- plot_width(mean_width,4, titles)
-sd5 <- plot_width(mean_width,5, titles)
+# titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
+# sd2 <- plot_width(mean_width,2, titles)
+# sd3 <- plot_width(mean_width,3, titles)
+# sd4 <- plot_width(mean_width,4, titles)
+# sd5 <- plot_width(mean_width,5, titles)
+# 
+# ggsave("sd2.png", plot = sd2, path = model_dir, width = 9, height = 7)
+# ggsave("sd3.png", plot = sd3, path = model_dir, width = 9, height = 7)
+# ggsave("sd4.png", plot = sd4, path = model_dir, width = 9, height = 7)
+# ggsave("sd5.png", plot = sd5, path = model_dir, width = 9, height = 7)
 
-ggsave("sd2.png", plot = sd2, path = model_dir, width = 9, height = 7)
-ggsave("sd3.png", plot = sd3, path = model_dir, width = 9, height = 7)
-ggsave("sd4.png", plot = sd4, path = model_dir, width = 9, height = 7)
-ggsave("sd5.png", plot = sd5, path = model_dir, width = 9, height = 7)
 
+# add new version of error type one and power
 
 plfe <- plot_lfe(0)
 plfe_dem <- plot_lfe(1) 
