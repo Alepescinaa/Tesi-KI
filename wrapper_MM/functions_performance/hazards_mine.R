@@ -89,5 +89,5 @@ hazards_mine <- function(x, b.covariates, no.years, trans = NULL, CI = FALSE,
   }
   
   # Return the computed hazards (and confidence intervals if requested)
-  return(hazards)
+  return(list(hazards, age.grid))
 }

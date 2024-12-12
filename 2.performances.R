@@ -71,7 +71,7 @@ lapply(source_files, source)
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 500
+n_pats <- 2000
 cores <- 4
 
 
@@ -160,6 +160,7 @@ for (scheme in 2:5){
   combined_cov[[scheme-1]] <- level_convergence(scheme)
 }
 
+setwd(here())
 save(combined_cov, file = file.path(model_dir,"convergence.RData"))
 
 
@@ -214,6 +215,7 @@ for (scheme in 2:5){
   mean_estimates[[scheme-1]] <- mean_bias_comparison(estimates, scheme)
 }
 
+setwd(here())
 save(mean_estimates, file = file.path(model_dir,"mean_estimates.RData"))
 save(bias_all_schemes, file = file.path(model_dir,"bias_all.RData"))
 save(res_bias, file = file.path(model_dir,"res_bias.RData"))
@@ -298,6 +300,7 @@ for (scheme in 2:5){
   res_cov_ic[[scheme-1]] <- ic_comparison(coverage_all_schemes, scheme)
 }
 
+setwd(here())
 save(coverage_all_schemes, file = file.path(model_dir,"all_coverage.RData"))
 save(res_cov_ic, file = file.path(model_dir,"95%coverage.RData"))
 
@@ -326,6 +329,7 @@ for (scheme in 2:5){
   mean_width[[scheme-1]] <- mean_width_ic(width_all_schemes, scheme)
 }
 
+setwd(here())
 save(width_all_schemes, file = file.path(model_dir,"width_all_ic.RData"))
 save(mean_width, file = file.path(model_dir,"width_ic.RData"))
 
@@ -351,8 +355,9 @@ for (scheme in 2:5){
   # I've been using msm age without accounting for age as time varying
   plan(multisession, workers = cores) 
   results_list <- future_lapply(1:100, function(seed) {
-    temp <- data[[seed]][[scheme]]
-    t_start <- min(temp$age)
+    #temp <- data[[seed]][[scheme]]
+    #t_start <- min(temp$age)
+    t_start <- 60
     temp_results <- computing_life_expectancy(n_pats, scheme, seed, combined_cov[[scheme-1]], t_start, covs)
     return(temp_results)
   })
@@ -381,16 +386,10 @@ for (scheme in 2:5){
   mean_estimates_lfe[[scheme-1]] <- mean_lfe_comparison(lfe_estimates, scheme)
 }
 
+setwd(here())
 save(lfe_estimates, file = file.path(model_dir,"all_estimates_lfe.RData")) #to be used if I wannna compute ic
 save(mean_estimates_lfe, file = file.path(model_dir,"mean_estimates_lfe.RData"))
 save(res_bias_lfe, file = file.path(model_dir,"bias_lfe.RData"))
-
-plot_lfe(0)
-plot_lfe(1) 
-
-#relative bias
-plot_lfe_bias(0)
-plot_lfe_bias(1)
 
 
 ##########################
@@ -422,20 +421,14 @@ for (scheme in 2:5){
   
 
 }
-  
-save(significancy, file = file.path(model_dir,"significancy.RData"))
-save(significancy, file = file.path(model_dir,"significancy_all.RData"))
 
 significant_covs <- data.frame("cov1"= c(0,1,1), "cov2"= c(1,1,0), "cov3"=c(1,1,1), "transition"=c(1,2,3))
 
-# green type one error
-# yellow power
-table_power(significant_covs, significancy, scheme=2)
-table_power(significant_covs, significancy, scheme=3)
-t4 <- table_power(significant_covs, significancy, scheme=4)
-table_power(significant_covs, significancy, scheme=5)
+setwd(here())
+save(significancy, file = file.path(model_dir,"significancy.RData"))
+save(significancy_all, file = file.path(model_dir,"significancy_all.RData"))
+save(significant_covs, file = file.path(model_dir,"significancy_covs.RData"))
 
-save_kable(t4, file = "power.html")
 
 ######################
 # computational time #
@@ -455,6 +448,7 @@ for (scheme in 2:5){
   ct_all_schemes[[scheme-1]] <- results_ct
 }
 
+setwd(here())
 save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
 
 
@@ -524,12 +518,33 @@ w4 <- plot_width(mean_width,4, titles)
 plot_width(mean_width,5, titles)
 
 ggsave("width4.png", plot = w4, path = NULL, width = 9, height = 7)
-# titles <-c("(1 year)", "(3 years)", "(3-6 years)", "EHR")
-# plot_bias_lfe(res_bias_lfe, 2, titles) 
-# plot_bias_lfe(res_bias_lfe, 3, titles)
-# plot_bias_lfe(res_bias_lfe, 4, titles)
-# plot_bias_lfe(res_bias_lfe, 5, titles)
 
+plfe <- plot_lfe(0)
+plfe_dem <- plot_lfe(1) 
+
+#relative bias
+plfe_b <- plot_lfe_bias(0)
+plfe_dem_b <- plot_lfe_bias(1)
+
+dir <- here()
+dir <- here("wrapper_MM", "Plots")
+setwd(dir)
+
+ggsave("lfeM.png", plot = plfe, path = NULL, width = 10, height = 7) 
+ggsave("lfe_demM.png", plot = plfe_dem, path = NULL, width = 10, height = 7) 
+ggsave("lfeM_b.png", plot = plfe_b, path = NULL, width = 10, height = 7) 
+ggsave("lfe_demM_b.png", plot = plfe_dem_b, path = NULL, width = 10, height = 7) 
+
+
+
+# green type one error
+# yellow power
+table_power(significant_covs, significancy, scheme=2)
+table_power(significant_covs, significancy, scheme=3)
+t4 <- table_power(significant_covs, significancy, scheme=4)
+table_power(significant_covs, significancy, scheme=5)
+
+save_kable(t4, file = "power.html")
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 plot1 <- plot_ct(2, titles, combined_cov[[1]])
 plot2 <- plot_ct(3, titles, combined_cov[[2]])

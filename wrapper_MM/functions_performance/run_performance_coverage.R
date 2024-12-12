@@ -189,13 +189,13 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
   if (convergence$msm_age[seed]==2){
     min_age <- min(model.msm_age$data[[1]]$age)
     max_age <- max(model.msm_age$data[[1]]$age)
-    mean_age <- mean(model.msm_age$data[[1]]$age)
+    #mean_age <- mean(model.msm_age$data[[1]]$age)
     covs <- colMeans(model.msm_age$data[[1]][,1:3])
-    haz <- hazards_mine(model.msm_age, b.covariates = list(age = mean_age , cov1 = covs[1], cov2 = covs[2], cov3 = covs[3]), no.years = 40, CI = F)
+    haz <- hazards_mine(model.msm_age, b.covariates = list(age = min_age , cov1 = covs[1], cov2 = covs[2], cov3 = covs[3]), no.years = max_age-min_age, CI = F)
     
     haz_estimates <- numeric()
     for (i in 1:3) {
-      haz_estimates[i] <- haz[[i]]
+      haz_estimates[i] <- haz[[1]][[i]]
     }
     
     set.seed(2024)
@@ -208,7 +208,7 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
         sample_indices <- sample(1:length(haz_estimates[[i]]), replace = TRUE)
         sample_haz <- unlist(haz_estimates[[i]])[sample_indices]
         
-        age_grid <- seq(min_age, max_age, length.out = length(sample_haz))
+        age_grid <-  haz[[2]]
         y <- log(sample_haz)
         reg_model <- lm(y ~ age_grid)
         

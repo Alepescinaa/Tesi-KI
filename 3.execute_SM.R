@@ -22,7 +22,7 @@ n_pats <- 500 # CHANGE HERE
 
 source("./wrapper_SM/functions_wrapper/prepare_flex.R")
 source("./wrapper_SM/functions_wrapper/prepare_coxph.R")
-source("./wrapper_SM/functions_wrapper/prepare_msm.R")
+source("./wrapper_SM/functions_wrapper/prepare_smms.R")
 source("./wrapper_SM/functions_wrapper/prepare_imputation.R")
 source("./wrapper_SM/functions_wrapper/fit_model.R")
 source("./wrapper_SM/functions_wrapper/averaging_params.R")

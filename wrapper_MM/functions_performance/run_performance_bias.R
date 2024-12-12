@@ -189,9 +189,9 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
 
     min_age <- min(model.msm_age$data[[1]]$age)
     max_age <- max(model.msm_age$data[[1]]$age)
-    mean_age <- mean(model.msm_age$data[[1]]$age)
+    #mean_age <- mean(model.msm_age$data[[1]]$age)
     covs <- colMeans(model.msm_age$data[[1]][,1:3])
-    haz <- hazards_mine(model.msm_age, b.covariates = list(age = mean_age , cov1 = covs[1], cov2 = covs[2], cov3 = covs[3]), no.years = 40, CI = F)
+    haz <- hazards_mine(model.msm_age, b.covariates = list(age = min_age , cov1 = covs[1], cov2 = covs[2], cov3 = covs[3]), no.years = max_age-min_age, CI = F)
     
     # Assuming this hazards come from fitting a gompertz model I wanna retrieve for each transition
     # shape and rate value, parameters of the distribution
@@ -202,8 +202,8 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     rate <- numeric()
 
     for (i in 1:3){
-      age_grid <- seq(min_age, max_age , length.out = length(unlist(haz[[1]])))
-      y <- log(as.numeric(unlist(haz[[i]])))
+      age_grid <- haz[[2]]
+      y <- log(as.numeric(unlist(haz[[1]][[i]])))
       reg_model <- lm(y ~ age_grid)
       rate[[i]] <- reg_model$coefficients[1]
       shape[[i]]<- reg_model$coefficients[2]

@@ -56,7 +56,7 @@ source_files <- c(
 "./wrapper_SM/functions_performance/plot_width.R",
 "./wrapper_SM/functions_performance/plot_ct.R",
 "./wrapper_SM/functions_performance/simulation_probs.R",
-"./wrapper_SM/functions_performance/plot_bias_lfe.R",
+"./wrapper_SM/functions_performance/plot_lfe_bias.R",
 "./wrapper_SM/functions_performance/plot_lfe.R"
 
 )
@@ -397,6 +397,22 @@ for (scheme in 2:5){
 save(mean_estimates_lfe, file = file.path(model_dir,"mean_estimates_lfe.RData"))
 save(res_bias_lfe, file = file.path(model_dir,"bias_lfe.RData"))
 
+lfe <- plot_lfe(0)
+lfe_dem <- plot_lfe(1)
+
+lfe_b <- plot_lfe_bias(0)
+lfe_dem_b <- plot_lfe_bias(1)
+
+
+dir <- here()
+dir <- here("wrapper_SM", "Plots")
+setwd(dir)
+
+ggsave("lfeM.png", plot = lfe, path = NULL, width = 10, height = 7) 
+ggsave("lfe_demM.png", plot = lfe_dem, path = NULL, width = 10, height = 7) 
+ggsave("lfeM_b.png", plot = lfe_b, path = NULL, width = 10, height = 7) 
+ggsave("lfe_demM_b.png", plot = lfe_dem_b, path = NULL, width = 10, height = 7) 
+
 ##########################
 # Power and type 1 error #
 ##########################
@@ -472,6 +488,7 @@ save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
 
 dir <- here()
 dir <- paste0("wrapper_SM/Plots")
+setwd(dir)
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 plot1 <- plot_convergence(2, titles)
@@ -529,11 +546,11 @@ plot_width(mean_width,5, titles)
 ggsave("width4_M.png", plot = w4, path = NULL, width = 7, height = 6) 
 
 
-titles <-c("(1 year)", "(3 years)", "(3-6 years)", "EHR")
-plot_bias_lfe(res_bias_lfe, 2, titles) 
-plot_bias_lfe(res_bias_lfe, 3, titles)
-plot_bias_lfe(res_bias_lfe, 4, titles)
-plot_bias_lfe(res_bias_lfe, 5, titles)
+# titles <-c("(1 year)", "(3 years)", "(3-6 years)", "EHR")
+# plot_bias_lfe(res_bias_lfe, 2, titles) 
+# plot_bias_lfe(res_bias_lfe, 3, titles)
+# plot_bias_lfe(res_bias_lfe, 4, titles)
+# plot_bias_lfe(res_bias_lfe, 5, titles)
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 plot1 <- plot_ct(2, titles, combined_cov[[1]])

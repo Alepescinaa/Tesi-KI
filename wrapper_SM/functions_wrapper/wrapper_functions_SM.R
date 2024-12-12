@@ -141,12 +141,12 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   
   gc()
   
+
   
-  # for nhm parameters are in the following order rate1,rate2,rate3, shape1, shape2, shape3, covs...
-  # initial_guess <- c( fits_gompertz[[1]]$coefficients[2], fits_gompertz[[2]]$coefficients[2],
-  #                     fits_gompertz[[3]]$coefficients[2], fits_gompertz[[1]]$coefficients[1],
-  #                     fits_gompertz[[2]]$coefficients[1], fits_gompertz[[3]]$coefficients[1],
-  #                     0,0,0,0,0,0,0,0,0)
+  initial_guess <- c( fits_gompertz[[1]]$coefficients[2], fits_gompertz[[1]]$coefficients[1],
+                      0,0,0,fits_gompertz[[2]]$coefficients[2], fits_gompertz[[2]]$coefficients[1],
+                      0,0,0, fits_gompertz[[3]]$coefficients[2], fits_gompertz[[3]]$coefficients[1],
+                      0,0,0)
 
   
 
@@ -233,89 +233,90 @@ wrapper_functions_SM <- function(data,n_pats,seed,cores_nhm){
   # covs number of rows equal to the number of patients and one column for each covariate
   # call: smms(startval, data, graph, covs, abs_exact = T, mc_cores = 4, hessian_matrix = T, cmethod= "" )
 
-  # temp <- data
-  # 
-  # temp$state <- "dementia-free"
-  # temp <- temp %>%
-  #   group_by(patient_id) %>%
-  #   mutate(state = ifelse(onset == 1, "dementia", state)) %>%
-  #   mutate(state = ifelse(dead == 1 & row_number() == n(), "death", state)) %>%
-  #   ungroup() 
-  # temp <- temp[order(temp$patient_id),]
-  # 
-  # row_id <- temp %>%
-  #   group_by(patient_id) %>%  
-  #   summarise(nrows = n())
-  # 
-  # temp$patient_id <- rep(1:n_pats, times=as.numeric(row_id$nrows))
-  # temp <- temp %>%
-  #   group_by(patient_id) %>%
-  #   filter(n() > 1) %>%
-  #   ungroup() 
-  # 
-  # #kepping only needed cols and with names request by the package
-  # temp <- temp %>%
-  #   mutate(onset = NULL, onset_age = NULL, dead = NULL, death_time = NULL, visits = NULL)
-  # temp <- temp %>%
-  #   mutate(patient = patient_id, time = age, patient_id = NULL, age = NULL )
-  # temp <- temp[,c(5,6,1,2,3,4)]
-  # 
-  # gg = graph_from_literal("dementia-free"--+"dementia"--+"death", "dementia-free"--+"death", "dementia"--+"death")
-  # 
-  # X_data = aggregate(temp[,c("cov1","cov2","cov3")],by=list(temp$patient),FUN=median) 
-  # X_data = as.matrix(X_data[,2:4])
-  # 
-  # # remark: we are working with shape (a) and rate (b) parameters in which rate is in the log scale 
-  # # on rate we must set covariates effect
-  # # since a must be strictly positve is better to work with exp(a) and then extract shape 
-  # 
-  # # true model
-  # f_01 = function(param, x, tt){dgompertz(tt,exp(param[1]), exp(param[2] + param[3]*x[1] + param[4]*x[2] + param[5]*x[3]))}
-  # f_02 = function(param, x, tt){dgompertz(tt,exp(param[6]), exp(param[7] + param[8]*x[1] + param[9]*x[2] + param[10]*x[3]))}
-  # f_12 = function(param, x, tt){dgompertz(tt,exp(param[11]), exp(param[12] + param[13]*x[1] + param[14]*x[2] + param[15]*x[3]))}
-  # 
-  # S_01 = function(param, x, tt){1-pgompertz(tt,exp(param[1]), exp(param[2] + param[3]*x[1] + param[4]*x[2] + param[5]*x[3]))}
-  # S_02 = function(param, x, tt){1-pgompertz(tt,exp(param[6]), exp(param[7] + param[8]*x[1] + param[9]*x[2] + param[10]*x[3]))}
-  # S_12 = function(param, x, tt){1-pgompertz(tt,exp(param[11]), exp(param[12] + param[13]*x[1] + param[14]*x[2] + param[15]*x[3]))}
-  # 
-  # # exp + covs
-  # S_01 = function(param, x, t){(1-pexp(t,exp(param[1] + param[2]*x[1] + param[3]*x[2] + param[4]*x[3])))}
-  # S_02 = function(param, x, t){(1-pexp(t,exp(param[5] + param[6]*x[1] + param[7]*x[2] + param[8]*x[3])))}
-  # S_12 = function(param, x, t){(1-pexp(t,exp(param[9] + param[10]*x[1] + param[11]*x[2] + param[12]*x[3])))}
-  # 
-  # f_01 = function(param, x, t){dexp(t,exp(param[1] + param[2]*x[1] + param[3]*x[2] + param[4]*x[3]))}
-  # f_02 = function(param, x, t){dexp(t, exp(param[5] + param[6]*x[1] + param[7]*x[2] + param[8]*x[3]))}
-  # f_12 = function(param, x, t){dexp(t, exp(param[9] + param[10]*x[1] + param[11]*x[2] + param[12]*x[3]))}
-  # 
-  # # gompertz no covs
-  # f_01 = function(param, x, tt){dgompertz(tt, exp(param[1]), exp(param[2]))}
-  # f_02 = function(param, x, tt){dgompertz(tt, exp(param[3]), exp(param[4]))}
-  # f_12 = function(param, x, tt){dgompertz(tt, exp(param[5]), exp(param[6]))}
-  # 
-  # S_01 = function(param, x, tt){1-pgompertz(tt, exp(param[1]), exp(param[2]))}
-  # S_02 = function(param, x, tt){1-pgompertz(tt, exp(param[3]), exp(param[4]))}
-  # S_12 = function(param, x, tt){1-pgompertz(tt, exp(param[5]), exp(param[6]))}
-  # 
-  # 
-  # #just exp  
-  # S_01 = function(param, x, t){(1-pexp(t,exp(param[1])))}
-  # S_02 = function(param, x, t){(1-pexp(t,exp(param[2])))}
-  # S_12 = function(param, x, t){(1-pexp(t,exp(param[3])))}
-  # 
-  # f_01 = function(param, x, t){dexp(t,exp(param[1]))}
-  # f_02 = function(param, x, t){dexp(t,exp(param[2]))}
-  # f_12 = function(param, x, t){dexp(t,exp(param[3]))}
-  # 
-  # 
-  # print(names_of_survival_density(gg))
-  # 
-  # startval <- rep(0.5,3)
-  # 
-  # 
-  # startval <- c(fits_gompertz[[1]]$coefficients[2], fits_gompertz[[1]]$coefficients[1], fits_gompertz[[2]]$coefficients[2], fits_gompertz[[2]]$coefficients[1], fits_gompertz[[3]]$coefficients[2], fits_gompertz[[3]]$coefficients[1])
-  # model_smms <- smms_mine(startval, temp, gg, X_data, abs_exact = T, mc_cores = 4, hessian_matrix = FALSE)
-  # smms(startval, temp, gg, X_data, abs_exact = T, mc_cores = 4, hessian_matrix = FALSE)
+  temp <- prepare_smms(data)
 
+  row_id <- temp %>%
+    group_by(patient_id) %>%
+    summarise(nrows = n())
+
+  temp$patient_id <- rep(1:n_pats, times=as.numeric(row_id$nrows))
+ 
+  temp <- temp %>%
+    mutate(onset = NULL, onset_age = NULL, dead = NULL, death_time = NULL, visits = NULL)
+  temp <- temp %>%
+    mutate(patient = patient_id, time = age, patient_id = NULL, age = NULL )
+  temp <- temp[,c(5,6,1,2,3,4)]
+  
+  # temp <- temp %>%
+  #   group_by(patient)%>%
+  #   mutate(time= time-min(time))
+  temp$time <- temp$time/max(temp$time)
+
+  gg = graph_from_literal("1"--+"2"--+"3", "1"--+"3", "2"--+"3")
+
+  X_data = aggregate(temp[,c("cov1","cov2","cov3")],by=list(temp$patient),FUN=median)
+  X_data = as.matrix(X_data[,2:4])
+
+  # remark: we are working with shape (a) and rate (b) parameters in which rate is in the log scale
+  # on rate we must set covariates effect
+  # since a must be strictly positve is better to work with exp(a) and then extract shape
+
+  # true model
+  f_01 = function(param, x, tt){dgompertz(tt,exp(param[1]), exp(param[2] + param[3]*x[1] + param[4]*x[2] + param[5]*x[3]))}
+  f_02 = function(param, x, tt){dgompertz(tt,exp(param[6]), exp(param[7] + param[8]*x[1] + param[9]*x[2] + param[10]*x[3]))}
+  f_12 = function(param, x, tt){dgompertz(tt,exp(param[11]), exp(param[12] + param[13]*x[1] + param[14]*x[2] + param[15]*x[3]))}
+
+  S_01 = function(param, x, tt){1-pgompertz(tt,exp(param[1]), exp(param[2] + param[3]*x[1] + param[4]*x[2] + param[5]*x[3]))}
+  S_02 = function(param, x, tt){1-pgompertz(tt,exp(param[6]), exp(param[7] + param[8]*x[1] + param[9]*x[2] + param[10]*x[3]))}
+  S_12 = function(param, x, tt){1-pgompertz(tt,exp(param[11]), exp(param[12] + param[13]*x[1] + param[14]*x[2] + param[15]*x[3]))}
+
+  # exp + covs
+  S_01 = function(param, x, t){(1-pexp(t,exp(param[1] + param[2]*x[1] + param[3]*x[2] + param[4]*x[3])))}
+  S_02 = function(param, x, t){(1-pexp(t,exp(param[5] + param[6]*x[1] + param[7]*x[2] + param[8]*x[3])))}
+  S_12 = function(param, x, t){(1-pexp(t,exp(param[9] + param[10]*x[1] + param[11]*x[2] + param[12]*x[3])))}
+
+  f_01 = function(param, x, t){dexp(t,exp(param[1] + param[2]*x[1] + param[3]*x[2] + param[4]*x[3]))}
+  f_02 = function(param, x, t){dexp(t, exp(param[5] + param[6]*x[1] + param[7]*x[2] + param[8]*x[3]))}
+  f_12 = function(param, x, t){dexp(t, exp(param[9] + param[10]*x[1] + param[11]*x[2] + param[12]*x[3]))}
+
+  # gompertz no covs
+  f_01 = function(param, x, tt){dgompertz(tt, exp(param[1]), exp(param[2]))}
+  f_02 = function(param, x, tt){dgompertz(tt, exp(param[3]), exp(param[4]))}
+  f_12 = function(param, x, tt){dgompertz(tt, exp(param[5]), exp(param[6]))}
+
+  S_01 = function(param, x, tt){1-pgompertz(tt, exp(param[1]), exp(param[2]))}
+  S_02 = function(param, x, tt){1-pgompertz(tt, exp(param[3]), exp(param[4]))}
+  S_12 = function(param, x, tt){1-pgompertz(tt, exp(param[5]), exp(param[6]))}
+
+
+  #just exp
+  S_01 = function(param, x, t){(1-pexp(t,exp(param[1])))}
+  S_02 = function(param, x, t){(1-pexp(t,exp(param[2])))}
+  S_12 = function(param, x, t){(1-pexp(t,exp(param[3])))}
+
+  f_01 = function(param, x, t){dexp(t,exp(param[1]))}
+  f_02 = function(param, x, t){dexp(t,exp(param[2]))}
+  f_12 = function(param, x, t){dexp(t,exp(param[3]))}
+
+
+  print(names_of_survival_density(gg))
+
+  startval <- initial_guess
+  startval <- rep(0.5,3)
+
+
+  #startval <- c(fits_gompertz[[1]]$coefficients[2], fits_gompertz[[1]]$coefficients[1], fits_gompertz[[2]]$coefficients[2], fits_gompertz[[2]]$coefficients[1], fits_gompertz[[3]]$coefficients[2], fits_gompertz[[3]]$coefficients[1])
+  #model_smms <- smms_mine(startval, temp, gg, X_data, abs_exact = T, mc_cores = 4, hessian_matrix = FALSE)
+  model_smms <- smms(startval, temp, gg, X_data, abs_exact = T, mc_cores = 4, hessian_matrix = FALSE)
+
+  # times to be defined t0M (always) t1m and t1M (defined only if passage through dementia)
+  # t2M (death time only if not censored)
+  
+  # obs type "02" 0->2 t0M and t2M defined from transition times
+  # obs type "0" censored in dementia- free status we don't know whether developed dem only t0M defined as last visit
+  # obs type "01" 0->1 t0M, t1m, t1M
+  # obs type "012" 0->1->2 t0M, t1m, t2M
+  
   
   ####################
   # imputation model
