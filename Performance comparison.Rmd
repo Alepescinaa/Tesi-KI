@@ -1,0 +1,60 @@
+---
+title: "Performance Comparison"
+author: "Alessandra Pescina"
+date: "2024-12-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(fs)
+library(parallel)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(patchwork)
+library(here)
+library(kableExtra)
+```
+
+```{r}
+setwd(here())
+
+path <- "./wrapper_MM/plots_500/"
+files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
+lapply(files, load, .GlobalEnv)
+plots_500 <- plots
+remove(plots)
+```
+
+
+```{r}
+path <- "./wrapper_MM/plots_2K/"
+files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
+lapply(files, load, .GlobalEnv)
+plots_2K <- plots
+remove(plots)
+```
+
+
+```{r}
+path <- "./wrapper_MM/plots_5K/"
+files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
+lapply(files, load, .GlobalEnv)
+plots_5K <- plots
+remove(plots)
+```
+
+
+```{r}
+path <- "./wrapper_MM/plots_10K/"
+files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
+lapply(files, load, .GlobalEnv)
+plots_10K <- plots
+remove(plots)
+```
+
+

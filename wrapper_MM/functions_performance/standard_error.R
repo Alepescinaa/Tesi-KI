@@ -171,7 +171,7 @@ standard_error <- function(n_pats, scheme, seed, convergence) {
   # ============
   
   if (convergence$msm_age[seed]==2){
-    sd <- sqrt(diag(model.msm_age$covmat))[c(4:6, 8:10, 12:14)]
+    sd <- sqrt(diag(model.msm_age$covmat))[4:12]
     sd_msm_age <- matrix(sd, nrow = 3, ncol = 3, byrow=T) # are ordered by transition ex 1.cov1,2.cov1,3.cov1,1.cov2,2.cov2..
     
     rownames(sd_msm_age) <- c("cov1", "cov2", "cov3")

@@ -1,5 +1,5 @@
-ic_comparison <- function(bias_all_schemes, scheme) {
-  temp <- coverage_all_schemes[[scheme-1]]
+ic_comparison <- function(data, scheme) {
+  temp <- data[[scheme-1]]
   temp <- as.data.frame(temp)
   
   desired_order <- c("flexsurv_EO", "coxph", "flexsurv", "msm", "msm_age", "nhm", "imputation")
@@ -16,9 +16,9 @@ ic_comparison <- function(bias_all_schemes, scheme) {
     summarise(
       across(c(rate, shape, cov1, cov2, cov3), 
              list(
-               mean = ~ round(mean(.x, na.rm = TRUE), 3),
-               lower_ci = ~ round(mean(.x, na.rm = TRUE) - qt(0.975, df = sum(!is.na(.x)) - 1) * sd(.x, na.rm = TRUE) / sqrt(sum(!is.na(.x))), 3),
-               upper_ci = ~ round(mean(.x, na.rm = TRUE) + qt(0.975, df = sum(!is.na(.x)) - 1) * sd(.x, na.rm = TRUE) / sqrt(sum(!is.na(.x))), 3)
+               mean = ~ round(mean(.x, na.rm = TRUE), 5),
+               lower_ci = ~ round(mean(.x, na.rm = TRUE) - qt(0.975, df = sum(!is.na(.x)) - 1) * sd(.x, na.rm = TRUE) / sqrt(sum(!is.na(.x))), 5),
+               upper_ci = ~ round(mean(.x, na.rm = TRUE) + qt(0.975, df = sum(!is.na(.x)) - 1) * sd(.x, na.rm = TRUE) / sqrt(sum(!is.na(.x))), 5)
              )
       ),
       .groups = 'drop'

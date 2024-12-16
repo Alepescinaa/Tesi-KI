@@ -60,7 +60,9 @@ source_files <- c(
   "./wrapper_MM/functions_performance/mean_width_ic.R",
   "./wrapper_MM/functions_performance/plot_width.R",
   "./wrapper_MM/functions_performance/plot_lfe.R",
-  "./wrapper_MM/functions_performance/plot_lfe_bias.R"
+  "./wrapper_MM/functions_performance/plot_lfe_bias.R",
+  "./wrapper_MM/functions_performance/standard_error.R",
+  "./wrapper_MM/functions_performance/mean_se.R"
   
 )
 
@@ -71,7 +73,7 @@ lapply(source_files, source)
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 500
+n_pats <- 5000
 cores <- 4
 
 
@@ -132,7 +134,7 @@ if (n_pats==500){
 # this is gonna be useful to understand the smaller bias we can reach in out estimates
 # since we have to account for the problematics introduced by the sample size
 
-# plan(multisession, workers = cores) 
+# plan(multisession, workers = cores)
 # future_lapply(1:100, function(seed) {gt_flexsurv(n_pats, seed)})
 
 ########################
@@ -207,7 +209,7 @@ for (scheme in 2:5){
 
 res_bias <- vector(mode = "list", length = 4)
 for (scheme in 2:5){
-  res_bias[[scheme-1]] <- mean_bias_comparison(bias_all_schemes, scheme)
+  res_bias[[scheme-1]] <- ic_comparison(bias_all_schemes, scheme)
 }
 
 mean_estimates <- vector(mode = "list", length = 4)
@@ -240,30 +242,31 @@ save(res_bias, file = file.path(model_dir,"res_bias.RData"))
 #     model = character(0),
 #     seed = integer(0)
 #   )
-#   
-#   plan(multisession, workers = cores) 
+# 
+#   plan(multisession, workers = cores)
 #   results_list <- future_lapply(1:100, function(seed) {
 #     temp_results <- run_performance_bias_rel(n_pats, scheme, seed, combined_cov[[scheme - 1]])
 #     return(temp_results)
 #   })
-#   
+# 
 #   results_bias_rel <- do.call(rbind, results_list)
-#   
+# 
 #   rel_bias_all_schemes[[scheme-1]] <- results_bias_rel
 # }
 # 
 # res_bias_rel <- vector(mode = "list", length = 4)
 # for (scheme in 2:5){
-#   res_bias_rel[[scheme-1]] <- mean_bias_comparison(rel_bias_all_schemes, scheme)
+#   res_bias_rel[[scheme-1]] <- ic_comparison(rel_bias_all_schemes, scheme)
 # }
 # 
+# setwd(here())
 # save(rel_bias_all_schemes, file = file.path(model_dir,"bias_all_rel.RData"))
 # save(res_bias_rel, file = file.path(model_dir,"res_bias_rel.RData"))
-
-
-############################
-# 95 % coverage comparison #
-############################
+# 
+# 
+# ############################
+# # 95 % coverage comparison #
+# ############################
 
 coverage_all_schemes <- vector(mode = "list", length = 4)
 
@@ -277,17 +280,17 @@ for (scheme in 2:5){
     model = character(0),
     seed = integer(0)
   )
-  
-  plan(multisession, workers = cores) 
+
+  plan(multisession, workers = cores)
   results_list <- future_lapply(1:100, function(seed) {
     temp_results <- run_performance_coverage(n_pats, scheme, seed, combined_cov[[scheme-1]])
     return(temp_results)
   })
-  
+
   results_coverage <- do.call(rbind, results_list)
-  
+
   coverage_all_schemes[[scheme-1]] <- results_coverage
-  
+
 }
 
 res_cov <- vector(mode = "list", length = 4)
@@ -353,14 +356,14 @@ for (scheme in 2:5){
   
 }
 
-mean_width <- vector(mode = "list", length = 4)
+se_mean<- vector(mode = "list", length = 4)
 for (scheme in 2:5){
-  mean_width[[scheme-1]] <- mean_width_ic(width_all_schemes, scheme)
+  se_mean[[scheme-1]] <- mean_standard_error(se_all_schemes, scheme)
 }
 
 setwd(here())
 save(se_all_schemes, file = file.path(model_dir,"se_all.RData"))
-save(mean_se, file = file.path(model_dir,"mean_se.RData"))
+save(se_mean, file = file.path(model_dir,"mean_se.RData"))
 
 
 ####################
@@ -541,10 +544,10 @@ ggsave("cov2.png", plot = cov2, path = NULL, width = 9, height = 7)
 ggsave("cov4.png", plot = cov4, path = NULL, width = 9, height = 7)
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
-plot_width(mean_width,2, titles)
-plot_width(mean_width,3, titles)
-w4 <- plot_width(mean_width,4, titles)
-plot_width(mean_width,5, titles)
+plot_se(se_mean,2, titles)
+plot_se(se_mean,3, titles)
+plot_se(se_mean,4, titles)
+plot_se(se_mean,5, titles)
 
 ggsave("width4.png", plot = w4, path = NULL, width = 9, height = 7)
 

@@ -222,8 +222,8 @@ run_performance_coverage <- function(n_pats, scheme, seed, convergence) {
     
     coverage_msm_age <- matrix(0, nrow = 3, ncol = 3)
     
-    ci_lower_msm_age <- model.msm_age$ci[c(4:6, 8:10, 12:14), 1]
-    ci_upper_msm_age <- model.msm_age$ci[c(4:6, 8:10, 12:14), 2]
+    ci_lower_msm_age <- model.msm_age$ci[4:12, 1]
+    ci_upper_msm_age <- model.msm_age$ci[4:12, 2]
     
     ci_lower_msm_age <- matrix(ci_lower_msm_age, nrow = 3, ncol = 3, byrow=T)
     ci_upper_msm_age <- matrix(ci_upper_msm_age, nrow = 3, ncol = 3, byrow=T)
