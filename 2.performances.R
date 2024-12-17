@@ -73,7 +73,7 @@ lapply(source_files, source)
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 5000
+n_pats <- 10000
 cores <- 4
 
 
@@ -134,8 +134,8 @@ if (n_pats==500){
 # this is gonna be useful to understand the smaller bias we can reach in out estimates
 # since we have to account for the problematics introduced by the sample size
 
-plan(multisession, workers = cores)
-future_lapply(1:100, function(seed) {gt_flexsurv(n_pats, seed)})
+# plan(multisession, workers = cores)
+# future_lapply(1:100, function(seed) {gt_flexsurv(n_pats, seed)})
 
 ########################
 # check of convergence #

@@ -17,7 +17,7 @@ library(SmoothHazard)
 
 # choose the sample size and upload accordingly the datset, either 500, 2K, 5K
 setwd(here())
-n_pats <- 2000 # CHANGE HERE
+n_pats <- 000 # CHANGE HERE
 
 source("./wrapper_MM/functions_wrapper/prepare_coxph_flex.R")
 source("./wrapper_MM/functions_wrapper/prepare_msm.R")

@@ -28,7 +28,8 @@ source_files <- c(
   "./wrapper_MM/functions_performance/plot_lfe.R",
   "./wrapper_MM/functions_performance/plot_lfe_bias.R",
   "./wrapper_MM/functions_performance/power_categorical.R",
-  "./wrapper_MM/functions_performance/type_1_error.R"
+  "./wrapper_MM/functions_performance/type_1_error.R",
+  "./wrapper_MM/functions_performance/plot_distribution.R"
   
 )
 
@@ -36,7 +37,7 @@ source_files <- c(
 lapply(source_files, source)
 
 
-n_pats <- 5000
+n_pats <- 2000
 cores <- 4
 
 ###################
@@ -165,27 +166,29 @@ ggsave("se5.png", plot = se5, path = model_dir, width = 9, height = 7)
 setwd(model_dir)
 plots_se <- list(se2, se3, se4, se5)
 save(plots_se, file = "se_2K.RData" )
+setwd(here())
 
-combined_plot <- (sd2 + theme(legend.position = "none")) +
-  (sd4 + theme(legend.position = "right"))+
-  plot_layout(guides = "collect") 
+distr2 <- plot_distribution(estimates,2)
+distr3 <- plot_distribution(estimates,3)
+distr4 <- plot_distribution(estimates,4)
+distr5 <- plot_distribution(estimates,5)
 
-ggsave("sd2.png", plot = sd2, path = model_dir, width = 9, height = 7)
-ggsave("sd3.png", plot = sd3, path = model_dir, width = 9, height = 7)
-ggsave("sd4.png", plot = sd4, path = model_dir, width = 9, height = 7)
-ggsave("sd5.png", plot = sd5, path = model_dir, width = 9, height = 7)
+setwd(model_dir)
+plots_distr <- list(distr2, distr3, distr4, distr5)
+save(plots_distr, file = "distr_2K.RData" )
+setwd(here())
 
-
-plfe <- plot_lfe(0)
-plfe_dem <- plot_lfe(1) 
-
-plfe_b <- plot_lfe_bias(0)
-plfe_dem_b <- plot_lfe_bias(1)
-
-ggsave("lfe.png", plot = plfe, path = model_dir, width = 10, height = 7) 
-ggsave("years_dem.png", plot = plfe_dem, path = model_dir, width = 10, height = 7) 
-ggsave("lfe_b.png", plot = plfe_b, path = model_dir, width = 10, height = 7) 
-ggsave("years_dem_b.png", plot = plfe_dem_b, path = model_dir, width = 10, height = 7) 
+# 
+# plfe <- plot_lfe(0)
+# plfe_dem <- plot_lfe(1) 
+# 
+# plfe_b <- plot_lfe_bias(0)
+# plfe_dem_b <- plot_lfe_bias(1)
+# 
+# ggsave("lfe.png", plot = plfe, path = model_dir, width = 10, height = 7) 
+# ggsave("years_dem.png", plot = plfe_dem, path = model_dir, width = 10, height = 7) 
+# ggsave("lfe_b.png", plot = plfe_b, path = model_dir, width = 10, height = 7) 
+# ggsave("years_dem_b.png", plot = plfe_dem_b, path = model_dir, width = 10, height = 7) 
 
 significant_covs <- data.frame("cov1"= c(0,1,1), "cov2"= c(1,1,0), "cov3"=c(1,1,1), "transition"=c(1,2,3))
 
@@ -197,31 +200,32 @@ pw5 <- power_categorical(significant_covs, significancy, scheme=5)
 setwd(model_dir)
 plots_power <- list(pw2[[1]], pw2[[2]], pw2[[3]], pw3[[1]], pw3[[2]], pw3[[3]], pw4[[1]], pw4[[2]], pw4[[3]], pw5[[1]], pw5[[2]], pw5[[3]])
 save(plots_power, file = "power_5K.RData" )
+setwd(here())
 
 err2 <- type_1_error(significant_covs, significancy, scheme=2)
 err3 <- type_1_error(significant_covs, significancy, scheme=3)
 err4 <- type_1_error(significant_covs, significancy, scheme=4)
 err5 <- type_1_error(significant_covs, significancy, scheme=5)
 
-
+setwd(model_dir)
 plots_errorI <- list(err2,err3,err4,err5)
 save(plots_errorI, file = "typeIerr_5K.RData" )
-
-titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
-plot1 <- plot_ct(2, titles, combined_cov[[1]])
-plot2 <- plot_ct(3, titles, combined_cov[[2]])
-plot3 <- plot_ct(4, titles, combined_cov[[3]])
-plot4 <- plot_ct(5, titles, combined_cov[[4]])
-
-ct_plot <- (plot1 + theme(legend.position = "none")) +
-  (plot2 + theme(legend.position = "none")) +
-  (plot3 + theme(legend.position = "none")) +
-  (plot4 + theme(legend.position = "none")) +       
-  plot_layout(guides = "collect")  
-
-ct_plot <- ct_plot & theme(legend.position = "left")
-
-ggsave("ct.png", plot = ct_plot, path = model_dir, width = 9, height = 7)
+setwd(here())
+# titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
+# plot1 <- plot_ct(2, titles, combined_cov[[1]])
+# plot2 <- plot_ct(3, titles, combined_cov[[2]])
+# plot3 <- plot_ct(4, titles, combined_cov[[3]])
+# plot4 <- plot_ct(5, titles, combined_cov[[4]])
+# 
+# ct_plot <- (plot1 + theme(legend.position = "none")) +
+#   (plot2 + theme(legend.position = "none")) +
+#   (plot3 + theme(legend.position = "none")) +
+#   (plot4 + theme(legend.position = "none")) +       
+#   plot_layout(guides = "collect")  
+# 
+# ct_plot <- ct_plot & theme(legend.position = "left")
+# 
+# ggsave("ct.png", plot = ct_plot, path = model_dir, width = 9, height = 7)
 
 
 
