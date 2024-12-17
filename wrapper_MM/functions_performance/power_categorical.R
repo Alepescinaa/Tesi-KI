@@ -1,53 +1,108 @@
 power_categorical <- function(significant_covs, data, scheme){
   data <- data[[scheme-1]]
-
-  df_merged <- data %>%
+  
+  df <- data %>%
+    # mutate( beta1=cov1, beta2=cov2, beta3=cov3, cov1=NULL, cov2=NULL, cov3=NULL) %>%
+    mutate(
+      model = case_when(
+        model == "flexsurv_EO" ~ "0",
+        model == "coxph" ~ "a",
+        model == "flexsurv" ~ "b",
+        model == "msm" ~ "c",
+        model == "msm_age" ~ "d",
+        model == "nhm" ~ "e",
+        model == "imputation" ~ "f",
+        TRUE ~ model # Keep other values unchanged if they exist
+      )
+    )
+  
+  
+  df_merged <- df %>%
     left_join(significant_covs, by = c( "transition"))
   df_merged <- df_merged %>%
     arrange(transition)
   
-  cell_color <- function(value, condition) {
-    if (condition) {
-      if (value > 80) return("green")
-      if (value > 50) return("yellow")
-      return("red")
-    }
-    return("white")
-  }
-  
-  styled_table <- df_merged %>%
-    rowwise() %>%
-    mutate(
-      style_cov1.x = cell_color(cov1.x, cov1.y == 1),
-      style_cov2.x = cell_color(cov2.x, cov2.y == 1),
-      style_cov3.x = cell_color(cov3.x, cov3.y == 1)
+  df_long <- df_merged %>%
+    pivot_longer(
+      cols = starts_with("cov"),
+      names_to = c("covariate", "type"),
+      names_pattern = "(cov[0-9]+)\\.(x|y)"
     ) %>%
-    ungroup()
+    pivot_wider(
+      names_from = type,
+      values_from = value
+    ) %>%
+    filter(y == 1)  
   
-  
-  styled_table <- styled_table %>%
-    select(model, transition, style_cov1.x, style_cov2.x, style_cov3.x) %>%
-    mutate(cov1=style_cov1.x, cov2=style_cov2.x, cov3= style_cov3.x, style_cov1.x=NULL, style_cov2.x=NULL, style_cov3.x=NULL )
-  
-  styled_table <- styled_table %>%
+  df_long <- df_long %>%
     mutate(
-      cov1 = cell_spec("",  background = cov1),
-      cov2 = cell_spec("",  background = cov2),
-      cov3 = cell_spec("",  background = cov3)
+      power_category = case_when(
+        x < 50 ~ "Low (<50%)",
+        x < 80 ~ "Moderate (50%-80%)",
+        TRUE ~ "High (>80%)"
+      ),
+      covariate = case_when (
+        covariate == "cov1"  ~ "beta1",
+        covariate == "cov2"  ~ "beta2",
+        covariate == "cov3"  ~ "beta3",
+        TRUE ~ covariate
+      )
     )
   
-
-  kbl(styled_table, escape = FALSE) %>%
-    kable_styling("striped", full_width = FALSE)%>%
-    add_header_above(c(" "=2, "Power" = 3)) %>%
-    footnote(
-      general = "Red : Power < 50%, Yellow : 50% < Power < 80%, Green : Power > 80%",
-      general_title = "Legend:",
-      footnote_as_chunk = TRUE
+  df_long1 <- df_long[df_long$transition==1,]
+  df_long2 <- df_long[df_long$transition==2,]
+  df_long3 <- df_long[df_long$transition==3,]
+  
+  p1 <- ggplot(df_long1, aes(x = covariate, y = model, fill = power_category)) +
+    geom_tile(color = "white", linewidth = 0.5) +
+    scale_fill_manual(
+      values = c("Low (<50%)" = "red", "Moderate (50%-80%)" = "yellow", "High (>80%)" = "green"),
+      name = "Power Category"
+    ) +
+    labs(
+      title = "Heatmap of Power by Method and Covariate for transition Dementia-free->Dementia",
+      x = "Covariate",
+      y = "Model"
+    ) +
+    theme_minimal() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      plot.title = element_text(size = 12, hjust = 0.5)
     )
   
-
+  p2 <- ggplot(df_long2, aes(x = covariate, y = model, fill = power_category)) +
+    geom_tile(color = "white", linewidth = 0.5) +
+    scale_fill_manual(
+      values = c("Low (<50%)" = "red", "Moderate (50%-80%)" = "yellow", "High (>80%)" = "green"),
+      name = "Power Category"
+    ) +
+    labs(
+      title = "Heatmap of Power by Method and Covariate for transition Dementia-free->Death",
+      x = "Covariate",
+      y = "Model"
+    ) +
+    theme_minimal() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      plot.title = element_text(size = 12, hjust = 0.5)
+    )
   
+  p3 <- ggplot(df_long3, aes(x = covariate, y = model, fill = power_category)) +
+    geom_tile(color = "white", linewidth = 0.5) +
+    scale_fill_manual(
+      values = c("Low (<50%)" = "red", "Moderate (50%-80%)" = "yellow", "High (>80%)" = "green"),
+      name = "Power Category"
+    ) +
+    labs(
+      title = "Heatmap of Power by Method and Covariate for transition Dementia->Death",
+      x = "Covariate",
+      y = "Model"
+    ) +
+    theme_minimal() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      plot.title = element_text(size = 12, hjust = 0.5)
+    )
   
-  
+  return (list(p1,p2,p3))
 }

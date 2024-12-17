@@ -1,5 +1,7 @@
 plot_coverage <- function (scheme, titles){
   df <- res_cov_ic[[scheme-1]]
+  df <- df %>%
+    mutate(across(c(3:17), ~ pmax(pmin(., 1), 0)))
   df <- as.data.frame(df)
   df <- df %>%
     # mutate( beta1=cov1, beta2=cov2, beta3=cov3, cov1=NULL, cov2=NULL, cov3=NULL) %>%

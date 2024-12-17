@@ -5,7 +5,7 @@ date: "2024-12-16"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -26,8 +26,18 @@ setwd(here())
 path <- "./wrapper_MM/plots_500/"
 files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
 lapply(files, load, .GlobalEnv)
-plots_500 <- plots
-remove(plots)
+
+plots_bias500 <- plots_bias
+remove(plots_bias)
+
+plots_cov500 <- plots_cov
+remove(plots_cov)
+
+plots_errorI500 <- plots_errorI
+remove(plots_errorI)
+
+plots_power500 <- plots_power
+remove(plots_power)
 ```
 
 
@@ -35,8 +45,18 @@ remove(plots)
 path <- "./wrapper_MM/plots_2K/"
 files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
 lapply(files, load, .GlobalEnv)
-plots_2K <- plots
-remove(plots)
+
+plots_bias2K <- plots_bias
+remove(plots_bias)
+
+plots_cov2K <- plots_cov
+remove(plots_cov)
+
+plots_errorI2K <- plots_errorI
+remove(plots_errorI)
+
+plots_power2K <- plots_power
+remove(plots_power)
 ```
 
 
@@ -44,8 +64,18 @@ remove(plots)
 path <- "./wrapper_MM/plots_5K/"
 files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
 lapply(files, load, .GlobalEnv)
-plots_5K <- plots
-remove(plots)
+
+plots_bias5K<- plots_bias
+remove(plots_bias)
+
+plots_cov5K <- plots_cov
+remove(plots_cov)
+
+plots_errorI5K <- plots_errorI
+remove(plots_errorI)
+
+plots_power5K <- plots_power
+remove(plots_power)
 ```
 
 
@@ -53,8 +83,244 @@ remove(plots)
 path <- "./wrapper_MM/plots_10K/"
 files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
 lapply(files, load, .GlobalEnv)
-plots_10K <- plots
-remove(plots)
+
 ```
 
+
+BIAS 500
+```{r}
+bias_500 <- (plots_bias500[[1]] + plots_bias500[[3]]) / 
+                 (plots_bias500[[5]] + plots_bias500[[7]]) +
+                 plot_layout(guides = "collect")
+bias_500 & 
+  ylim(0, 3)
+```
+
+COVERAGE 500
+```{r, warning=FALSE}
+
+cov_500 <- (plots_cov500[[1]] + plots_cov500[[2]]) / 
+                 (plots_cov500[[3]] + plots_cov500[[4]]) +
+                 plot_layout(guides = "collect")
+cov_500
+```
+ERROR TYPE I 500
+
+```{r}
+p1 <- plots_errorI500[[1]] + labs(title = NULL)
+p2 <- plots_errorI500[[2]] + labs(title = NULL)
+p3 <- plots_errorI500[[3]] + labs(title = NULL)
+p4 <- plots_errorI500[[4]] + labs(title = NULL)
+typeIerror_500 <- (p1 / p2 / p3 / p4) +
+                  plot_layout(guides = "collect", widths = unit(rep(1, 2), "null")) +  
+                  plot_annotation(
+                    title ="Heatmap of Type I Error by Method and Covariate",
+                    theme = theme(plot.title = element_text(size = 15, hjust = 0.5))
+                  ) +
+                  labs(caption = "1 year observation scheme" | "3 years observation scheme" | "3-6 years       observation scheme" | "irregular observation scheme")
+                  plot_layout(guides = "collect")  
+
+
+typeIerror_500
+```
+
+POWER 500
+
+```{r}
+p1 <- plots_power500[[1]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power500[[4]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power500[[7]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power500[[10]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_500_trans1 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia-free -> Dementia",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_power500[[2]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power500[[5]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power500[[8]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power500[[11]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_500_trans2 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia-free -> Death",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_power500[[3]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power500[[6]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power500[[9]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power500[[12]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_500_trans3 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia -> Death",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+  
+power_500_trans1
+power_500_trans2
+power_500_trans3
+```
+
+BIAS_2K
+```{r}
+plots_bias_2K <- (plots_bias2K[[1]] + plots_bias2K[[3]]) / 
+                 (plots_bias2K[[5]] + plots_bias2K[[7]]) +
+                 plot_layout(guides = "collect")
+plots_bias_2K & 
+  ylim(0, 2)
+```
+
+COVERAGE 2K
+```{r, warning=FALSE}
+
+cov_2K <- (plots_cov2K[[1]] + plots_cov2K[[2]]) / 
+                 (plots_cov2K[[3]] + plots_cov2K[[4]]) +
+                 plot_layout(guides = "collect")
+cov_2K
+```
+
+POWER 2K
+```{r}
+p1 <- plots_power2K[[1]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power2K[[4]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power2K[[7]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power2K[[10]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_2K_trans1 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia-free -> Dementia",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_power2K[[2]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power2K[[5]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power2K[[8]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power2K[[11]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_2K_trans2 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia-free -> Death",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_power2K[[3]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power2K[[6]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power2K[[9]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power2K[[12]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_2K_trans3 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia -> Death",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+  
+power_2K_trans1
+power_2K_trans2
+power_2K_trans3
+```
+
+
+BIAS_5K
+```{r}
+plots_bias_5K <- (plots_bias5K[[1]] + plots_bias5K[[3]]) / 
+                 (plots_bias5K[[5]] + plots_bias5K[[7]]) +
+                 plot_layout(guides = "collect")
+plots_bias_5K & 
+  ylim(0, 1)
+```
+
+COVERAGE 5K
+```{r, warning=FALSE}
+
+cov_5K <- (plots_cov5K[[1]] + plots_cov5K[[2]]) / 
+                 (plots_cov5K[[3]] + plots_cov5K[[4]]) +
+                 plot_layout(guides = "collect")
+cov_5K
+```
+POWER 5K
+```{r}
+p1 <- plots_power5K[[1]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power5K[[4]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power5K[[7]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power5K[[10]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_5K_trans1 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia-free -> Dementia",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_power5K[[2]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power5K[[5]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power5K[[8]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power5K[[11]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_5K_trans2 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia-free -> Death",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_power5K[[3]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power5K[[6]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power5K[[9]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power5K[[12]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_5K_trans3 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia -> Death",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+  
+power_5K_trans1
+power_5K_trans2
+power_5K_trans3
+```
+
+
+BIAS COMPARISON
+```{r}
+p1 <- plots_bias500[[5]] + 
+  labs(title =NULL, caption = "500 observations") +
+  geom_point(size=0.5)
+p2 <- plots_bias2K[[5]] + 
+  labs(title= NULL, caption = "2K observations") +
+  geom_point(size=0.5)
+p3 <- plots_bias5K[[5]] + 
+  labs(title= NULL, caption = "5K observations") +
+  geom_point(size=0.5)
+
+plots_bias_all <- ( p1+p2) / (p3) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Bias comparison (3-6 years)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+plots_bias_all & 
+  ylim(0, 3)
+```
+COVERAGE COMPARISON
+
+```{r, warning=FALSE}
+p1 <- plots_cov500[[3]] + 
+  labs(title =NULL, caption = "500 observations") +
+  geom_point(size=0.5)
+p2 <- plots_cov2K[[3]] + 
+  labs(title= NULL, caption = "2K observations") +
+  geom_point(size=0.5)
+p3 <- plots_cov5K[[3]] + 
+  labs(title= NULL, caption = "5K observations") +
+  geom_point(size=0.5)
+
+plots_cov_all <- ( p1+p2) / (p3) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Coverage comparison (3-6 years)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+plots_cov_all & 
+  ylim(0, 1)
+```
 

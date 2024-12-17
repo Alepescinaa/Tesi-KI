@@ -36,7 +36,7 @@ source_files <- c(
 lapply(source_files, source)
 
 
-n_pats <- 500
+n_pats <- 5000
 cores <- 4
 
 ###################
@@ -120,6 +120,7 @@ pb3 <- plot_bias(res_bias, 3, titles)
 pb4 <- plot_bias(res_bias, 4, titles)
 pb5 <- plot_bias(res_bias, 5, titles)
 
+setwd(here())
 ggsave("bias2_cov.png", plot = pb2[[1]], path = model_dir, width = 9, height = 7)
 ggsave("bias2_base.png", plot = pb2[[2]], path = model_dir, width = 9, height = 7)
 ggsave("bias3_cov.png", plot = pb3[[1]], path = model_dir, width = 9, height = 7)
@@ -131,7 +132,7 @@ ggsave("bias5_base.png", plot = pb5[[2]], path = model_dir, width = 9, height = 
 
 plots_bias <- list( pb2[[1]], pb2[[2]], pb3[[1]], pb3[[2]], pb4[[1]], pb4[[2]], pb5[[1]], pb5[[2]])
 setwd(model_dir)
-save(plots_bias, file = "all_plots_500.RData" )
+save(plots_bias, file = "bias_2K.RData" )
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 cov2 <- plot_coverage(2, titles)
@@ -139,18 +140,31 @@ cov3 <- plot_coverage(3, titles)
 cov4 <- plot_coverage(4, titles)
 cov5 <- plot_coverage(5, titles)
 
+setwd(here())
 ggsave("cov2.png", plot = cov2, path = model_dir, width = 9, height = 7)
 ggsave("cov3.png", plot = cov3, path = model_dir, width = 9, height = 7)
 ggsave("cov4.png", plot = cov4, path = model_dir, width = 9, height = 7)
 ggsave("cov5.png", plot = cov5, path = model_dir, width = 9, height = 7)
 
-
+setwd(model_dir)
+plots_cov <- list(cov2, cov3, cov4, cov5)
+save(plots_cov, file = "cov_2K.RData" )
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
-sd2 <- plot_se(se_mean,2, titles)
-sd3 <- plot_se(se_mean,3, titles)
-sd4 <- plot_se(se_mean,4, titles)
-sd5 <- plot_se(se_mean,5, titles)
+se2 <- plot_se(se_mean,2, titles)
+se3 <- plot_se(se_mean,3, titles)
+se4 <- plot_se(se_mean,4, titles)
+se5 <- plot_se(se_mean,5, titles)
+
+setwd(here())
+ggsave("se2.png", plot = se2, path = model_dir, width = 9, height = 7)
+ggsave("se3.png", plot = se3, path = model_dir, width = 9, height = 7)
+ggsave("se4.png", plot = se4, path = model_dir, width = 9, height = 7)
+ggsave("se5.png", plot = se5, path = model_dir, width = 9, height = 7)
+
+setwd(model_dir)
+plots_se <- list(se2, se3, se4, se5)
+save(plots_se, file = "se_2K.RData" )
 
 combined_plot <- (sd2 + theme(legend.position = "none")) +
   (sd4 + theme(legend.position = "right"))+
@@ -181,23 +195,17 @@ pw4 <- power_categorical(significant_covs, significancy, scheme=4)
 pw5 <- power_categorical(significant_covs, significancy, scheme=5)
 
 setwd(model_dir)
-save_kable(pw2, file = "pw2.html")
-save_kable(pw3, file = "pw3.html")
-save_kable(pw4, file = "pw4.html")
-save_kable(pw5, file = "pw5.html")
+plots_power <- list(pw2[[1]], pw2[[2]], pw2[[3]], pw3[[1]], pw3[[2]], pw3[[3]], pw4[[1]], pw4[[2]], pw4[[3]], pw5[[1]], pw5[[2]], pw5[[3]])
+save(plots_power, file = "power_5K.RData" )
 
 err2 <- type_1_error(significant_covs, significancy, scheme=2)
 err3 <- type_1_error(significant_covs, significancy, scheme=3)
 err4 <- type_1_error(significant_covs, significancy, scheme=4)
 err5 <- type_1_error(significant_covs, significancy, scheme=5)
 
-#setwd(model_dir)
-save_kable(err2, file = "error2.html")
-save_kable(err3, file = "error3.html")
-save_kable(err4, file = "error4.html")
-save_kable(err4, file = "error5.html")
 
-
+plots_errorI <- list(err2,err3,err4,err5)
+save(plots_errorI, file = "typeIerr_5K.RData" )
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 plot1 <- plot_ct(2, titles, combined_cov[[1]])

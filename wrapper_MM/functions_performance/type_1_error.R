@@ -1,53 +1,102 @@
 type_1_error <- function(significant_covs, data, scheme){
   data <- data[[scheme-1]]
   
-  df_merged <- data %>%
+  df <- data %>%
+    # mutate( beta1=cov1, beta2=cov2, beta3=cov3, cov1=NULL, cov2=NULL, cov3=NULL) %>%
+    mutate(
+      model = case_when(
+        model == "flexsurv_EO" ~ "0",
+        model == "coxph" ~ "a",
+        model == "flexsurv" ~ "b",
+        model == "msm" ~ "c",
+        model == "msm_age" ~ "d",
+        model == "nhm" ~ "e",
+        model == "imputation" ~ "f",
+        TRUE ~ model # Keep other values unchanged if they exist
+      )
+    )
+  
+  
+  df_merged <- df %>%
     left_join(significant_covs, by = c( "transition"))
   df_merged <- df_merged %>%
     arrange(transition)
   
-  cell_color <- function(value, condition) {
-    if (condition) {
-      if (value > 5) return("yellow")
-      if (value > 10) return("red")
-      return("green")
-    }
-    return("white")
-  }
-  
-  styled_table <- df_merged %>%
-    rowwise() %>%
-    mutate(
-      style_cov1.x = cell_color(cov1.x, cov1.y == 0),
-      style_cov2.x = cell_color(cov2.x, cov2.y == 0),
-      style_cov3.x = cell_color(cov3.x, cov3.y == 0)
+  df_long <- df_merged %>%
+    pivot_longer(
+      cols = starts_with("cov"),
+      names_to = c("covariate", "type"),
+      names_pattern = "(cov[0-9]+)\\.(x|y)"
     ) %>%
-    ungroup()
+    pivot_wider(
+      names_from = type,
+      values_from = value
+    ) %>%
+    filter(y == 0)  
   
-  
-  styled_table <- styled_table %>%
-    select(model, transition, style_cov1.x, style_cov2.x, style_cov3.x) %>%
-    mutate(cov1=style_cov1.x, cov2=style_cov2.x, cov3= style_cov3.x, style_cov1.x=NULL, style_cov2.x=NULL, style_cov3.x=NULL )
-  
-  styled_table <- styled_table %>%
+  df_long <- df_long %>%
     mutate(
-      cov1 = cell_spec("",  background = cov1),
-      cov2 = cell_spec("",  background = cov2),
-      cov3 = cell_spec("",  background = cov3)
+      power_category = case_when(
+        x < 5 ~ "Low (<5%)",
+        x < 10 ~ "Moderate (5%-10%)",
+        TRUE ~ "High (>10%)"
+      ),
+      covariate = case_when (
+        covariate == "cov1"  ~ "beta1",
+        covariate == "cov2"  ~ "beta2",
+        covariate == "cov3"  ~ "beta3",
+        TRUE ~ covariate
+      )
     )
   
+  df_long1 <- df_long[df_long$transition==1,]
+ 
+  df_long3 <- df_long[df_long$transition==3,]
   
-  kbl(styled_table, escape = FALSE) %>%
-    kable_styling("striped", full_width = FALSE)%>%
-    add_header_above(c(" "=2, "Error type I" = 3)) %>%
-    footnote(
-      general = "Green : Error_type_I < 5%, Yellow : 5% < Error_type_I < 10%, Green : Error_type_I > 10%",
-      general_title = "Legend:",
-      footnote_as_chunk = TRUE
+  p1 <- ggplot(df_long1, aes(x = covariate, y = model, fill = power_category)) +
+    geom_tile(color = "white", linewidth = 0.5) +
+    scale_fill_manual(
+      values = c("Low (<5%)" = "green", "Moderate (5%-10%)" = "yellow", "High (>10%)" = "red"),
+      name = "Type I Error Category"
+    ) +
+    labs(
+      x = "Transition Dementia-free -> Dementia",
+      y = "Model"
+    ) +
+    theme_minimal() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      plot.title = element_text(size = 12, hjust = 0.5)
     )
   
+
   
+  p3 <- ggplot(df_long3, aes(x = covariate, y = model, fill = power_category)) +
+    geom_tile(color = "white", linewidth = 0.5) +
+    scale_fill_manual(
+      values = c("Low (<5%)" = "green", "Moderate (5%-10%)" = "yellow", "High (>10%)" = "red"),
+      name = "Type I Error Category"
+    ) +
+    labs(
+      x = "Transition Dementia -> Death",
+      y = "Model"
+
+    ) +
+    theme_minimal() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      plot.title = element_text(size = 12, hjust = 0.5)
+    )
   
+  combined_plot <- (p1 + p3) +
+    plot_layout(guides = "auto") + 
+    plot_annotation(
+      title = "Heatmap of Type I Error by Method and Covariate",
+      theme = theme(
+        plot.title = element_text(size = 12, hjust = 0.5),
+        plot.caption = element_text(size = 8, hjust = 0.5)
+      )
+    )
   
-  
+  return (combined_plot)
 }

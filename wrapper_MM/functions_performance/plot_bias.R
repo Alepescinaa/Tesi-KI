@@ -1,6 +1,7 @@
 plot_bias <- function (data, scheme, titles){
   
   df <- data[[scheme-1]]
+  
   df <- df %>%
    # mutate( beta1=cov1, beta2=cov2, beta3=cov3, cov1=NULL, cov2=NULL, cov3=NULL) %>%
     mutate(
@@ -15,6 +16,7 @@ plot_bias <- function (data, scheme, titles){
         TRUE ~ model # Keep other values unchanged if they exist
       )
     )
+  
   
   df_long_mean<- df %>%
     pivot_longer(cols = c("rate_mean", "shape_mean", "cov1_mean", "cov2_mean", "cov3_mean"),
@@ -38,12 +40,11 @@ plot_bias <- function (data, scheme, titles){
     mutate(parameter=gsub("_lower_ci","",parameter))
   
   df_long<-df_long_mean %>% left_join(df_long_lower) %>% left_join(df_long_upper)
-  
 
   cov_plot <- ggplot(data = df_long %>% 
                 filter(parameter %in% c( "cov1", "cov2", "cov3")),
               aes(x = model, y = bias_mean, color = model)) +
-    geom_point(size = 3) +
+    geom_point(size = 1.5) +
     facet_grid(parameter~transition, scales = "free", labeller = as_labeller(c(
       "1" = "Dementia-free -> Dementia",  
       "2" = "Dementia-free -> Death",
@@ -76,16 +77,16 @@ plot_bias <- function (data, scheme, titles){
                 filter(parameter %in% c( "rate", "shape"),
                        model %in% c( "0", "b", "d", "e", "f")),
               aes(x = model, y = bias_mean, color = model)) +
-    geom_point(size = 3) +
+    geom_point(size = 1.5) +
     facet_grid(parameter~transition, scales = "free", labeller = as_labeller(c(
       "1" = "Dementia-free -> Dementia",  
       "2" = "Dementia-free -> Death",
       "3" = "Dementia -> Death",
       "shape"="shape",
-      "rate"="log(rate)")))  +
+      "rate"="rate")))  +
     labs(title = titles[scheme - 1],  
          x = "Model",
-         y = "Bias") +
+         y = "Bias Rel") +
     theme_bw() +
     geom_errorbar(aes(x=model, ymin=bias_lower, ymax= bias_upper, color= model, width=0.3))+
     geom_hline(yintercept = 0, color = "red", linetype = "dashed", size = 0.5) +
@@ -107,8 +108,7 @@ plot_bias <- function (data, scheme, titles){
       "d" = viridis::viridis(7)[5],  
       "e" = viridis::viridis(7)[6],  
       "f" = viridis::viridis(7)[7]    
-    ))+
-    scale_y_continuous(trans = ifelse(df_long$parameter == "rate", "log10", "identity"))
+    ))
   
   return(list(cov_plot,baseline_plot))
 

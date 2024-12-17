@@ -134,8 +134,8 @@ if (n_pats==500){
 # this is gonna be useful to understand the smaller bias we can reach in out estimates
 # since we have to account for the problematics introduced by the sample size
 
-# plan(multisession, workers = cores)
-# future_lapply(1:100, function(seed) {gt_flexsurv(n_pats, seed)})
+plan(multisession, workers = cores)
+future_lapply(1:100, function(seed) {gt_flexsurv(n_pats, seed)})
 
 ########################
 # check of convergence #
@@ -218,6 +218,7 @@ for (scheme in 2:5){
 }
 
 setwd(here())
+save(estimates, file = file.path(model_dir,"all_estimates.RData"))
 save(mean_estimates, file = file.path(model_dir,"mean_estimates.RData"))
 save(bias_all_schemes, file = file.path(model_dir,"bias_all.RData"))
 save(res_bias, file = file.path(model_dir,"res_bias.RData"))
