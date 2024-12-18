@@ -10,6 +10,7 @@ library(tidyr)
 library(patchwork)
 library(here)
 library(kableExtra)
+library(ggridges)
 
 setwd(here())
 
@@ -98,6 +99,29 @@ if (n_pats==500){
 # Plots
 ##########
 
+tot_convergence <- rbind(combined_cov[[1]],combined_cov[[2]],combined_cov[[3]],combined_cov[[4]])
+tot_convergence$scheme <- rep(2:5,each=100)
+tot_convergence$seed <- rep(1:100,times=4)
+tot_convergence <- tot_convergence %>%
+  mutate(a=coxph, b=flexsurv, c=msm, d=msm_age, e=nhm, f=imputation, coxph=NULL, flexsurv=NULL, msm=NULL, msm_age=NULL, nhm=NULL, imputation=NULL)
+conv_long <- tot_convergence %>%
+  pivot_longer(cols = c("a","b","c","d","e","f"),
+               names_to = "model",
+               values_to = "convergence")
+conv_summary <- conv_long %>%
+  group_by(scheme, model, convergence) %>%
+  summarise(count = n(), .groups = "drop")%>%
+  group_by(scheme, model) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+conv_table <- conv_summary %>%
+  select(scheme, model, convergence, percentage) %>%
+  pivot_wider(names_from = convergence, values_from = percentage, values_fill = 0) %>%
+  rename( `Convergence 1` = `1`, `Convergence 2` = `2`)
+
+setwd(model_dir)
+save(conv_table, file = "convergence_10K.RData" )
+
 # titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 # plot1 <- plot_convergence(2, titles)
 # plot2 <- plot_convergence(3, titles)
@@ -133,7 +157,7 @@ ggsave("bias5_base.png", plot = pb5[[2]], path = model_dir, width = 9, height = 
 
 plots_bias <- list( pb2[[1]], pb2[[2]], pb3[[1]], pb3[[2]], pb4[[1]], pb4[[2]], pb5[[1]], pb5[[2]])
 setwd(model_dir)
-save(plots_bias, file = "bias_2K.RData" )
+save(plots_bias, file = "bias_500.RData" )
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 cov2 <- plot_coverage(2, titles)
@@ -149,7 +173,7 @@ ggsave("cov5.png", plot = cov5, path = model_dir, width = 9, height = 7)
 
 setwd(model_dir)
 plots_cov <- list(cov2, cov3, cov4, cov5)
-save(plots_cov, file = "cov_2K.RData" )
+save(plots_cov, file = "cov_10K.RData" )
 
 titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 se2 <- plot_se(se_mean,2, titles)
@@ -165,7 +189,7 @@ ggsave("se5.png", plot = se5, path = model_dir, width = 9, height = 7)
 
 setwd(model_dir)
 plots_se <- list(se2, se3, se4, se5)
-save(plots_se, file = "se_2K.RData" )
+save(plots_se, file = "se_5K.RData" )
 setwd(here())
 
 distr2 <- plot_distribution(estimates,2)
@@ -175,7 +199,7 @@ distr5 <- plot_distribution(estimates,5)
 
 setwd(model_dir)
 plots_distr <- list(distr2, distr3, distr4, distr5)
-save(plots_distr, file = "distr_2K.RData" )
+save(plots_distr, file = "distr_10K.RData" )
 setwd(here())
 
 # 
@@ -199,7 +223,7 @@ pw5 <- power_categorical(significant_covs, significancy, scheme=5)
 
 setwd(model_dir)
 plots_power <- list(pw2[[1]], pw2[[2]], pw2[[3]], pw3[[1]], pw3[[2]], pw3[[3]], pw4[[1]], pw4[[2]], pw4[[3]], pw5[[1]], pw5[[2]], pw5[[3]])
-save(plots_power, file = "power_5K.RData" )
+save(plots_power, file = "power_10K.RData" )
 setwd(here())
 
 err2 <- type_1_error(significant_covs, significancy, scheme=2)
@@ -209,8 +233,30 @@ err5 <- type_1_error(significant_covs, significancy, scheme=5)
 
 setwd(model_dir)
 plots_errorI <- list(err2,err3,err4,err5)
-save(plots_errorI, file = "typeIerr_5K.RData" )
+save(plots_errorI, file = "typeIerr_10K.RData" )
 setwd(here())
+
+
+computational_time <- rbind(ct_all_schemes[[1]], ct_all_schemes[[2]], ct_all_schemes[[3]], ct_all_schemes[[4]])
+colnames(computational_time) <- c("a","b","c","d","e","f")
+computational_time <- as.data.frame(computational_time)
+computational_time$scheme <- rep(2:5, each=100)
+mean_ct <- computational_time %>%
+  group_by(scheme)%>%
+  summarise(across(everything(), mean, na.rm = TRUE))
+mean_ct <- mean_ct%>%
+  mutate(
+    scheme = case_when(
+      scheme == "2" ~ "1 year",
+      scheme == "3" ~ "3 years",
+      scheme == "4" ~ "3-6 years",
+      scheme == "5" ~ "irregular",
+      ))
+setwd(model_dir)
+save(mean_ct, file = "ct_2K.RData" )
+setwd(here())
+
+
 # titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
 # plot1 <- plot_ct(2, titles, combined_cov[[1]])
 # plot2 <- plot_ct(3, titles, combined_cov[[2]])

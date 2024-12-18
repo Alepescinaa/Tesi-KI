@@ -44,7 +44,7 @@ plot_bias <- function (data, scheme, titles){
   cov_plot <- ggplot(data = df_long %>% 
                 filter(parameter %in% c( "cov1", "cov2", "cov3")),
               aes(x = model, y = bias_mean, color = model)) +
-    geom_point(size = 1.5) +
+    geom_point(size = 3) +
     facet_grid(parameter~transition, scales = "free", labeller = as_labeller(c(
       "1" = "Dementia-free -> Dementia",  
       "2" = "Dementia-free -> Death",
@@ -77,7 +77,7 @@ plot_bias <- function (data, scheme, titles){
                 filter(parameter %in% c( "rate", "shape"),
                        model %in% c( "0", "b", "d", "e", "f")),
               aes(x = model, y = bias_mean, color = model)) +
-    geom_point(size = 1.5) +
+    geom_point(size = 3) +
     facet_grid(parameter~transition, scales = "free", labeller = as_labeller(c(
       "1" = "Dementia-free -> Dementia",  
       "2" = "Dementia-free -> Death",

@@ -103,7 +103,7 @@ plot_distribution <- function (data, scheme){
       plot.title = element_text(size = 14, face = "bold", hjust = 0.5)
     )
  
-  return(list(p1,p2,p2))
+  return(list(p1,p2,p3))
   
   
 }

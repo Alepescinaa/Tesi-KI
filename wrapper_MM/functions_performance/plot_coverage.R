@@ -46,9 +46,9 @@ plot_coverage <- function (scheme, titles){
     geom_point(size = 3) +
     geom_errorbar(aes(x=model, ymin= coverage_lower, ymax= coverage_upper, color= model))+
     facet_grid(transition~ parameter, scales = "fixed",  labeller = as_labeller(c(
-      "1" = "Dementia-free -> Dementia",  
-      "2" = "Dementia-free -> Death",
-      "3" = "Dementia -> Death",
+      "1" = "Trans 1",  
+      "2" = "Trans 2",
+      "3" = "Trans 3",
       "cov1"="beta1",
       "cov2"="beta2",
       "cov3"="beta3",
