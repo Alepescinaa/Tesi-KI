@@ -40,29 +40,31 @@ plot_bias <- function (data, scheme, titles){
     mutate(parameter=gsub("_lower_ci","",parameter))
   
   df_long<-df_long_mean %>% left_join(df_long_lower) %>% left_join(df_long_upper)
+  
+  latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1" = "beta[1]",
+    "cov2" = "beta[2]",
+    "cov3" = "beta[3]"
+  )
 
   cov_plot <- ggplot(data = df_long %>% 
                 filter(parameter %in% c( "cov1", "cov2", "cov3")),
               aes(x = model, y = bias_mean, color = model)) +
     geom_point(size = 3) +
-    facet_grid(parameter~transition, scales = "free", labeller = as_labeller(c(
-      "1" = "Dementia-free -> Dementia",  
-      "2" = "Dementia-free -> Death",
-      "3" = "Dementia -> Death",
-      "cov1"="beta1",
-      "cov2"="beta2",
-      "cov3"="beta3"
-    ))) +    
+    facet_grid(parameter~transition, scales = "free",  labeller = labeller(
+      parameter = as_labeller(latex_labels, label_parsed),
+      transition = as_labeller(latex_labels)
+    )) +    
     labs(title = titles[scheme - 1],  
          x = "Model",
          y = "Bias") +
     geom_errorbar(aes(x=model, ymin= bias_lower, ymax= bias_upper, color= model, width= 0.3))+
     theme_bw() +
     geom_hline(yintercept = 0, color = "red", linetype = "dashed", size = 0.5) +
-    theme(axis.text.x = element_blank(), 
-        legend.position = "right",
-        axis.title.x = element_blank()) +
-    #theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "right") labels on x axis  
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)) +
     geom_line(data = df_long %>% 
                 filter(parameter %in% c( "cov1", "cov2", "cov3")),
                 aes(group = transition), 
@@ -72,28 +74,30 @@ plot_bias <- function (data, scheme, titles){
                 na.rm = TRUE)+ 
     scale_color_viridis_d() 
   
+  latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "shape" = "mu",
+    "rate" = "lambda"
+  )
   
   baseline_plot <- ggplot(data = df_long %>% 
                 filter(parameter %in% c( "rate", "shape"),
                        model %in% c( "0", "b", "d", "e", "f")),
               aes(x = model, y = bias_mean, color = model)) +
     geom_point(size = 3) +
-    facet_grid(parameter~transition, scales = "free", labeller = as_labeller(c(
-      "1" = "Dementia-free -> Dementia",  
-      "2" = "Dementia-free -> Death",
-      "3" = "Dementia -> Death",
-      "shape"="shape",
-      "rate"="rate")))  +
+    facet_grid(parameter~transition, scales = "free", labeller = labeller(
+      parameter = as_labeller(latex_labels, label_parsed),
+      transition = as_labeller(latex_labels)
+    )) +    
     labs(title = titles[scheme - 1],  
          x = "Model",
-         y = "Bias Rel") +
+         y = "Bias") +
     theme_bw() +
     geom_errorbar(aes(x=model, ymin=bias_lower, ymax= bias_upper, color= model, width=0.3))+
     geom_hline(yintercept = 0, color = "red", linetype = "dashed", size = 0.5) +
-    theme(axis.text.x = element_blank(), 
-          legend.position = "right",
-          axis.title.x = element_blank()) +
-    #theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "right") labels on x axis  
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)) +
     geom_line(data = df_long %>% 
                 filter(parameter %in% c( "rate", "shape"),
                        model %in% c( "0", "b", "d", "e", "f")),

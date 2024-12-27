@@ -42,9 +42,9 @@ type_1_error <- function(significant_covs, data, scheme){
         TRUE ~ "High (>10%)"
       ),
       covariate = case_when (
-        covariate == "cov1"  ~ "beta1",
-        covariate == "cov2"  ~ "beta2",
-        covariate == "cov3"  ~ "beta3",
+        covariate == "cov1"  ~ "beta[1]",
+        covariate == "cov2"  ~ "beta[2]",
+        covariate == "cov3"  ~ "beta[3]",
         TRUE ~ covariate
       )
     )
@@ -57,17 +57,20 @@ type_1_error <- function(significant_covs, data, scheme){
     geom_tile(color = "white", linewidth = 0.5) +
     scale_fill_manual(
       values = c("Low (<5%)" = "green", "Moderate (5%-10%)" = "yellow", "High (>10%)" = "red"),
-      name = "Type I Error Category"
+      name = "Type I Error (%)"
     ) +
     labs(
-      x = "Transition Dementia-free -> Dementia",
+      x = "Transition from Dementia-free to Dementia",
       y = "Model"
     ) +
     theme_minimal() +
     theme(
       axis.text.x = element_text(angle = 45, hjust = 1),
-      plot.title = element_text(size = 12, hjust = 0.5)
-    )
+      plot.title = element_text(size = 12, hjust = 0.5),
+      #axis.title.x = element_blank(), 
+      axis.title.y = element_blank() 
+    )+
+    scale_x_discrete(labels = function(x) parse(text = x))
   
 
   
@@ -75,18 +78,21 @@ type_1_error <- function(significant_covs, data, scheme){
     geom_tile(color = "white", linewidth = 0.5) +
     scale_fill_manual(
       values = c("Low (<5%)" = "green", "Moderate (5%-10%)" = "yellow", "High (>10%)" = "red"),
-      name = "Type I Error Category"
+      name = "Type I Error (%)"
     ) +
     labs(
-      x = "Transition Dementia -> Death",
+      x = "Transition from Dementia to Death",
       y = "Model"
 
     ) +
     theme_minimal() +
     theme(
       axis.text.x = element_text(angle = 45, hjust = 1),
-      plot.title = element_text(size = 12, hjust = 0.5)
-    )
+      plot.title = element_text(size = 12, hjust = 0.5),
+      #axis.title.x = element_blank(), 
+      axis.title.y = element_blank() 
+    )+
+    scale_x_discrete(labels = function(x) parse(text = x))
   
   combined_plot <- (p1 + p3) +
     plot_layout(guides = "auto") + 

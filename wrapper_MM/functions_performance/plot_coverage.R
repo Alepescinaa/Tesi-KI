@@ -4,7 +4,6 @@ plot_coverage <- function (scheme, titles){
     mutate(across(c(3:17), ~ pmax(pmin(., 1), 0)))
   df <- as.data.frame(df)
   df <- df %>%
-    # mutate( beta1=cov1, beta2=cov2, beta3=cov3, cov1=NULL, cov2=NULL, cov3=NULL) %>%
     mutate(
       model = case_when(
         model == "flexsurv_EO" ~ "0",
@@ -18,6 +17,11 @@ plot_coverage <- function (scheme, titles){
       )
     )
   
+  df <- df %>%
+    mutate(across(
+      .cols = !c(model, transition),
+      .fns = ~ . * 100             
+    ))
   
   df_long_mean<- df %>%
     pivot_longer(cols = c("rate_mean", "shape_mean", "cov1_mean", "cov2_mean", "cov3_mean"),
@@ -42,26 +46,31 @@ plot_coverage <- function (scheme, titles){
   
   df_long<-df_long_mean %>% left_join(df_long_lower) %>% left_join(df_long_upper)
   
+  latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1" = "beta[1]",
+    "cov2" = "beta[2]",
+    "cov3" = "beta[3]",
+    "rate" ="lambda",
+    "shape"= "mu"
+  )
+  
+  
   ggplot(df_long, aes(x = model, y = coverage_mean, color = model)) +
     geom_point(size = 3) +
     geom_errorbar(aes(x=model, ymin= coverage_lower, ymax= coverage_upper, color= model))+
-    facet_grid(transition~ parameter, scales = "fixed",  labeller = as_labeller(c(
-      "1" = "Trans 1",  
-      "2" = "Trans 2",
-      "3" = "Trans 3",
-      "cov1"="beta1",
-      "cov2"="beta2",
-      "cov3"="beta3",
-      "rate"="rate",
-      "shape"="shape"))) +  
+    facet_grid(transition~ parameter, scales = "fixed",   labeller = labeller(
+      parameter = as_labeller(latex_labels, label_parsed),
+      transition = as_labeller(latex_labels)
+    )) +    
     labs(title = titles[scheme - 1],  
          x = "Model",
-         y = "Coverage") +
+         y = "Coverage (%)") +
     theme_bw() +
-    geom_hline(yintercept = 0.95, color = "red", linetype = "dashed", size = 0.5) +
-    theme(axis.text.x = element_blank(), 
-          legend.position = "right",
-          axis.title.x = element_blank()) +
+    geom_hline(yintercept = 95, color = "red", linetype = "dashed", size = 0.5) +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)) +
     scale_color_viridis_d()  
   
 

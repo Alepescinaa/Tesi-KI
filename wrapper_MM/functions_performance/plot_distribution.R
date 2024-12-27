@@ -27,17 +27,26 @@ plot_distribution <- function (data, scheme){
   df_long1 <- df_long[df_long$transition==1,]
   df_long2 <- df_long[df_long$transition==2,]
   df_long3 <- df_long[df_long$transition==3,]
-
+  
+  latex_labels <- c(
+    "beta1" = "beta[1]",
+    "beta2" = "beta[2]",
+    "beta3" = "beta[3]"
+  )
+  
+  
   p1 <- ggplot(df_long1 %>% 
            filter(parameter %in% c( "beta1", "beta2", "beta3")), aes(x = estimates, y = model, fill = model)) +
     geom_density_ridges() +
     theme_ridges() + 
-    facet_grid(parameter  ~ ., scales = "free")+
+    facet_grid(parameter  ~ ., scales = "free",labeller = labeller(
+      parameter = as_labeller(latex_labels, label_parsed))
+    )+
     # geom_violin(trim = TRUE) +  
     labs(
       x =NULL,
       y=NULL,
-      title = "Distribution of estimates for transition Dementia-free -> Dementia"
+      title = "Distribution of estimates for transition from Dementia-free to Dementia"
     ) +
     scale_fill_manual(values = c(
       "0" = viridis::viridis(7)[1], 
@@ -57,12 +66,14 @@ plot_distribution <- function (data, scheme){
            filter(parameter %in% c( "beta1", "beta2", "beta3")), aes(x = estimates, y = model, fill = model)) +
     geom_density_ridges() +
     theme_ridges() + 
-    facet_grid(parameter  ~ ., scales = "free")+
+    facet_grid(parameter  ~ ., scales = "free",labeller = labeller(
+      parameter = as_labeller(latex_labels, label_parsed))
+    )+
     # geom_violin(trim = TRUE) +  
     labs(
       x =NULL,
       y=NULL,
-      title = "Distribution of estimates for transition Dementia-free -> Death"
+      title = "Distribution of estimates for transition form Dementia-free to Death"
     ) +
     scale_fill_manual(values = c(
       "0" = viridis::viridis(7)[1], 
@@ -82,12 +93,14 @@ plot_distribution <- function (data, scheme){
            filter(parameter %in% c( "beta1", "beta2", "beta3")), aes(x = estimates, y = model, fill = model)) +
     geom_density_ridges() +
     theme_ridges() + 
-    facet_grid(parameter  ~ ., scales = "free")+
+    facet_grid(parameter  ~ ., scales = "free",labeller = labeller(
+      parameter = as_labeller(latex_labels, label_parsed))
+    )+
     # geom_violin(trim = TRUE) +  
     labs(
       x =NULL,
       y=NULL,
-      title = "Distribution of estimates for transition Dementia-> Death"
+      title = "Distribution of estimates for transition from Dementia to Death"
     ) +
     scale_fill_manual(values = c(
       "0" = viridis::viridis(7)[1], 

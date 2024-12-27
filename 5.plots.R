@@ -11,6 +11,7 @@ library(patchwork)
 library(here)
 library(kableExtra)
 library(ggridges)
+library(scales)
 
 setwd(here())
 
@@ -139,7 +140,7 @@ save(conv_table, file = "convergence_10K.RData" )
 # ggsave("convergence.png", plot = combined_plot, path = model_dir, width = 10, height = 7) 
 
 
-titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
+titles <- c("1 year observation scheme", "3 years observation scheme", "3-6 years observation scheme", "irregular observation scheme")
 pb2 <- plot_bias(res_bias, 2, titles)
 pb3 <- plot_bias(res_bias, 3, titles)
 pb4 <- plot_bias(res_bias, 4, titles)
@@ -159,7 +160,7 @@ plots_bias <- list( pb2[[1]], pb2[[2]], pb3[[1]], pb3[[2]], pb4[[1]], pb4[[2]], 
 setwd(model_dir)
 save(plots_bias, file = "bias_500.RData" )
 
-titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
+
 cov2 <- plot_coverage(2, titles)
 cov3 <- plot_coverage(3, titles)
 cov4 <- plot_coverage(4, titles)
@@ -173,9 +174,9 @@ ggsave("cov5.png", plot = cov5, path = model_dir, width = 9, height = 7)
 
 setwd(model_dir)
 plots_cov <- list(cov2, cov3, cov4, cov5)
-save(plots_cov, file = "cov_10K.RData" )
+save(plots_cov, file = "cov_500.RData" )
 
-titles <- c("Population Based Study (1 year)", "Population Based Study (3 years)", "Population Based Study (3-6 years)", "Electronic Health Record")
+
 se2 <- plot_se(se_mean,2, titles)
 se3 <- plot_se(se_mean,3, titles)
 se4 <- plot_se(se_mean,4, titles)
@@ -189,7 +190,7 @@ ggsave("se5.png", plot = se5, path = model_dir, width = 9, height = 7)
 
 setwd(model_dir)
 plots_se <- list(se2, se3, se4, se5)
-save(plots_se, file = "se_5K.RData" )
+save(plots_se, file = "se_500.RData" )
 setwd(here())
 
 distr2 <- plot_distribution(estimates,2)
@@ -199,15 +200,53 @@ distr5 <- plot_distribution(estimates,5)
 
 setwd(model_dir)
 plots_distr <- list(distr2, distr3, distr4, distr5)
-save(plots_distr, file = "distr_10K.RData" )
+save(plots_distr, file = "distr_500.RData" )
 setwd(here())
 
 # 
-# plfe <- plot_lfe(0)
-# plfe_dem <- plot_lfe(1) 
+#plfe <- plot_lfe(0)
+#plfe_dem <- plot_lfe(1) 
 # 
-# plfe_b <- plot_lfe_bias(0)
-# plfe_dem_b <- plot_lfe_bias(1)
+
+relbias_lfe <- function(df, gt_tls) {
+  df <- as.data.frame(df)
+  gt_vec <- rep(gt_tls, times = nrow(df) / 2)
+  dem_vec <- rep(c(0,1),times = nrow(df) / 2)
+  df$dem <- dem_vec
+  df$lfe <- (as.numeric(as.character(df$lfe)) - gt_vec) / gt_vec
+  return(df)
+}
+
+lfe_estimates <- lapply(lfe_estimates, relbias_lfe, gt_tls = gt_tls)
+
+process_ci <- function(temp) {
+  ci_lfe <- temp %>%
+    group_by(model, dem) %>%
+    summarise(
+      across(
+        lfe,
+        list(
+          mean = ~ round(mean(.x, na.rm = TRUE), 5),
+          lower_ci = ~ round(
+            mean(.x, na.rm = TRUE) - qt(0.975, df = sum(!is.na(.x)) - 1) * sd(.x, na.rm = TRUE) / sqrt(sum(!is.na(.x))),5),
+          upper_ci = ~ round(
+            mean(.x, na.rm = TRUE) + qt(0.975, df = sum(!is.na(.x)) - 1) * sd(.x, na.rm = TRUE) / sqrt(sum(!is.na(.x))),5)
+          )),
+      .groups = 'drop'
+    )
+  
+  desired_order <- c("flexsurv_EO", "coxph", "flexsurv", "msm", "msm_age", "nhm", "imputation")
+  ci_lfe$model <- factor(ci_lfe$model, levels = desired_order, ordered = TRUE)
+  ci_lfe <- ci_lfe[order(ci_lfe$model), ]
+  
+  return(ci_lfe)
+}
+
+ci_lfe <- lapply(lfe_estimates, process_ci)
+
+
+plfe_b <- plot_lfe_bias(0)
+plfe_dem_b <- plot_lfe_bias(1)
 # 
 # ggsave("lfe.png", plot = plfe, path = model_dir, width = 10, height = 7) 
 # ggsave("years_dem.png", plot = plfe_dem, path = model_dir, width = 10, height = 7) 
@@ -223,7 +262,7 @@ pw5 <- power_categorical(significant_covs, significancy, scheme=5)
 
 setwd(model_dir)
 plots_power <- list(pw2[[1]], pw2[[2]], pw2[[3]], pw3[[1]], pw3[[2]], pw3[[3]], pw4[[1]], pw4[[2]], pw4[[3]], pw5[[1]], pw5[[2]], pw5[[3]])
-save(plots_power, file = "power_10K.RData" )
+save(plots_power, file = "power_500.RData" )
 setwd(here())
 
 err2 <- type_1_error(significant_covs, significancy, scheme=2)
@@ -233,7 +272,7 @@ err5 <- type_1_error(significant_covs, significancy, scheme=5)
 
 setwd(model_dir)
 plots_errorI <- list(err2,err3,err4,err5)
-save(plots_errorI, file = "typeIerr_10K.RData" )
+save(plots_errorI, file = "typeIerr_500.RData" )
 setwd(here())
 
 

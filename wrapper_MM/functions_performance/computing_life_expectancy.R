@@ -107,15 +107,47 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
 
   tmat <- mstate::transMat(x = list(c(2, 3),c(3),c()), names = c("Dementia-free","Dementia", "Death")) 
  
-  gt_tls <-  totlos.fs.mine(fits_wei, t_start= t_start,  trans=tmat, newdata = covs, t=105)[1,][1:2]
+  #gt_tls <-  totlos.fs.mine(fits_wei, t_start= t_start,  trans=tmat, newdata = covs, t=120)[1,][1:2]
+  
+  meanlog <- mean(log(fits_wei[[1]]$data$mml$rate[,2]))
+  sdlog <- sd(log(fits_wei[[1]]$data$mml$rate[,2]))
+  sim_data <- simulation(100000, fits_wei, meanlog, sdlog, covs)
+  sim_data_dis <- sim_data$sim_disease(max_t=120, max_age=120)
+  sim_data_dis$transition <- 0 #enter in the study
+  sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==3] <- 1 # out from healthy state (dem)
+  sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==4] <- 1 # out from healthy state (death)
+  sim_data_dis$transition[sim_data_dis$from==3 & sim_data_dis$to==4] <- 2 # out from dementia
+  sim_data_dis$time <- sim_data_dis$time_stop-sim_data_dis$time_start
+  
+  mean_time <- sim_data_dis %>%
+    group_by(transition) %>%
+    summarise(across(time, mean, na.rm = TRUE))
+  
+  gt_tls <- as.numeric(unlist(mean_time[2:3,2]))
+  
 
  
   # ===============
   # EO dataset
   # ===============
   
-  flexsurv_tls_EO <- totlos.fs.mine(fits_gompertz_EO, t_start=t_start,  trans=tmat, newdata = covs, t=105)[1,][1:2]
-  bias_flexsurv_tls_EO <- (flexsurv_tls_EO-gt_tls)/gt_tls
+  #flexsurv_tls_EO <- totlos.fs.mine(fits_gompertz_EO, t_start=t_start,  trans=tmat, newdata = covs, t=105)[1,][1:2]
+  #bias_flexsurv_tls_EO <- (flexsurv_tls_EO-gt_tls)/gt_tls
+  
+  sim_data <- simulation(100000, fits_gompertz_EO, meanlog, sdlog, covs)
+  sim_data_dis <- sim_data$sim_disease(max_t=120, max_age=120)
+  sim_data_dis$transition <- 0 #enter in the study
+  sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==3] <- 1 # out from healthy state (dem)
+  sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==4] <- 1 # out from healthy state (death)
+  sim_data_dis$transition[sim_data_dis$from==3 & sim_data_dis$to==4] <- 2 # out from dementia
+  sim_data_dis$time <- sim_data_dis$time_stop-sim_data_dis$time_start
+  
+  mean_time <- sim_data_dis %>%
+    group_by(transition) %>%
+    summarise(across(time, mean, na.rm = TRUE))
+  
+  flexsurv_tls_EO <- as.numeric(unlist(mean_time[2:3,2]))
+  bias_flexsurv_tls_EO<- (flexsurv_tls_EO-gt_tls)/gt_tls
   
   # ============
   # coxph
@@ -167,7 +199,22 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # ==============
   
   if (convergence$flexsurv[seed]==2){
-  flexsurv_tls <-  totlos.fs.mine(fits_gompertz, t_start=t_start,  trans=tmat, newdata = covs, t=105)[1,][1:2]
+  #flexsurv_tls <-  totlos.fs.mine(fits_gompertz, t_start=t_start,  trans=tmat, newdata = covs, t=105)[1,][1:2]
+  #bias_flexsurv_tls <- (flexsurv_tls-gt_tls)/gt_tls
+  
+  sim_data <- simulation(100000, fits_gompertz, meanlog, sdlog, covs)
+  sim_data_dis <- sim_data$sim_disease(max_t=120, max_age=120)
+  sim_data_dis$transition <- 0 #enter in the study
+  sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==3] <- 1 # out from healthy state (dem)
+  sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==4] <- 1 # out from healthy state (death)
+  sim_data_dis$transition[sim_data_dis$from==3 & sim_data_dis$to==4] <- 2 # out from dementia
+  sim_data_dis$time <- sim_data_dis$time_stop-sim_data_dis$time_start
+  
+  mean_time <- sim_data_dis %>%
+    group_by(transition) %>%
+    summarise(across(time, mean, na.rm = TRUE))
+  
+  flexsurv_tls <- as.numeric(unlist(mean_time[2:3,2]))
   bias_flexsurv_tls <- (flexsurv_tls-gt_tls)/gt_tls
   } else {
     flexsurv_tls <- rep(NA,2)
@@ -206,6 +253,8 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   if (convergence$msm[seed]==2){
     msm_tls <- totlos.msm(model.msm, fromt=0, tot=105-t_start, covariates = list(covs[1],covs[2],covs[3])) [1:2]
     bias_msm_tls <- (msm_tls-gt_tls)/gt_tls
+    
+    
   } else{
     msm_tls <- rep(NA,2)
     bias_msm_tls <- rep(NA,2)
@@ -319,17 +368,45 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # imputation
   # ==========
   
+  # if(convergence$imputation[seed]==2){
+  #   imputation_tls <- matrix(0,3,3)
+  #   models_imp <- results_imp[[2]]
+  #   m <- length(models_imp)
+  #   
+  #   for (i in 1:m){
+  #     temp <-  totlos.fs.mine(models_imp[[i]], t_start=t_start,  trans=tmat, newdata = covs, t=105)
+  #     imputation_tls <- imputation_tls + temp
+  #   }
+  #   imputation_tls <- imputation_tls/m
+  #   imputation_tls <- imputation_tls[1,][1:2]
+  #   bias_imputation_tls <- (imputation_tls-gt_tls)/gt_tls
+  # }else{
+  #   imputation_tls <- rep(NA,2)
+  #   bias_imputation_tls <- rep(NA,2)
+  # }
+  
   if(convergence$imputation[seed]==2){
-    imputation_tls <- matrix(0,3,3)
+    imputation_tls <- c(0,0)
     models_imp <- results_imp[[2]]
     m <- length(models_imp)
     
     for (i in 1:m){
-      temp <-  totlos.fs.mine(models_imp[[i]], t_start=t_start,  trans=tmat, newdata = covs, t=105)
+      sim_data <- simulation(100000, models_imp[[i]], meanlog, sdlog, covs)
+      sim_data_dis <- sim_data$sim_disease(max_t=120, max_age=120)
+      sim_data_dis$transition <- 0 #enter in the study
+      sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==3] <- 1 # out from healthy state (dem)
+      sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==4] <- 1 # out from healthy state (death)
+      sim_data_dis$transition[sim_data_dis$from==3 & sim_data_dis$to==4] <- 2 # out from dementia
+      sim_data_dis$time <- sim_data_dis$time_stop-sim_data_dis$time_start
+      
+      mean_time <- sim_data_dis %>%
+        group_by(transition) %>%
+        summarise(across(time, mean, na.rm = TRUE))
+      
+      temp <- as.numeric(unlist(mean_time[2:3,2]))  
       imputation_tls <- imputation_tls + temp
     }
     imputation_tls <- imputation_tls/m
-    imputation_tls <- imputation_tls[1,][1:2]
     bias_imputation_tls <- (imputation_tls-gt_tls)/gt_tls
   }else{
     imputation_tls <- rep(NA,2)

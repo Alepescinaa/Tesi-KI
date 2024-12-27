@@ -1,5 +1,5 @@
-ic_comparison <- function(bias_all_schemes, scheme) {
-  temp <- coverage_all_schemes[[scheme-1]]
+ic_comparison <- function(data, scheme) {
+  temp <- data[[scheme-1]]
   temp <- as.data.frame(temp)
   
   desired_order <- c("flexsurv_EO", "coxph", "flexsurv", "imputation")

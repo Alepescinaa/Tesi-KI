@@ -16,6 +16,7 @@ library(mstate)
 library(flexsurv)
 library(deSolve)
 library(kableExtra)
+library(hesim)
 
 setwd(here())
 
@@ -62,7 +63,8 @@ source_files <- c(
   "./wrapper_MM/functions_performance/plot_lfe.R",
   "./wrapper_MM/functions_performance/plot_lfe_bias.R",
   "./wrapper_MM/functions_performance/standard_error.R",
-  "./wrapper_MM/functions_performance/mean_se.R"
+  "./wrapper_MM/functions_performance/mean_se.R",
+  "./wrapper_MM/functions_performance/simulation_probs.R"
   
 )
 
@@ -420,6 +422,7 @@ for (scheme in 2:5){
 }
 
 setwd(here())
+save(gt_tls, file = file.path(model_dir,"gt_tls.RData"))
 save(lfe_estimates, file = file.path(model_dir,"all_estimates_lfe.RData")) #to be used if I wannna compute ic
 save(mean_estimates_lfe, file = file.path(model_dir,"mean_estimates_lfe.RData"))
 save(res_bias_lfe, file = file.path(model_dir,"bias_lfe.RData"))
