@@ -1,0 +1,2031 @@
+---
+title: "Performance Comparison"
+author: "Alessandra Pescina"
+date: "2024-12-16"
+output: html_document
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(fs)
+library(parallel)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(patchwork)
+library(here)
+library(kableExtra)
+library(plotly)
+```
+
+```{r}
+setwd(here())
+
+path <- "./wrapper_MM/plots_500/"
+files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
+lapply(files, load, .GlobalEnv)
+
+conv_table500 <- conv_table
+remove(conv_table)
+
+mean_ct500 <- mean_ct
+remove(mean_ct)
+
+plots_bias500 <- plots_bias
+remove(plots_bias)
+
+plots_cov500 <- plots_cov
+remove(plots_cov)
+
+plots_errorI500 <- plots_errorI
+remove(plots_errorI)
+
+plots_power500 <- plots_power
+remove(plots_power)
+
+plots_distr500 <- plots_distr
+remove(plots_distr)
+
+plfe500 <- plfe
+remove(plfe)
+
+```
+
+
+```{r}
+path <- "./wrapper_MM/plots_2K/"
+files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
+lapply(files, load, .GlobalEnv)
+
+conv_table2K <- conv_table
+remove(conv_table)
+
+mean_ct2K <- mean_ct
+remove(mean_ct)
+
+plots_bias2K <- plots_bias
+remove(plots_bias)
+
+plots_cov2K <- plots_cov
+remove(plots_cov)
+
+plots_errorI2K <- plots_errorI
+remove(plots_errorI)
+
+plots_power2K <- plots_power
+remove(plots_power)
+
+plots_distr2K <- plots_distr
+remove(plots_distr)
+
+plfe2K <- plfe
+remove(plfe)
+
+
+```
+
+
+```{r}
+path <- "./wrapper_MM/plots_5K/"
+files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
+lapply(files, load, .GlobalEnv)
+
+conv_table5K <- conv_table
+remove(conv_table)
+
+mean_ct5K <- mean_ct
+remove(mean_ct)
+
+plots_bias5K<- plots_bias
+remove(plots_bias)
+
+plots_cov5K <- plots_cov
+remove(plots_cov)
+
+plots_errorI5K <- plots_errorI
+remove(plots_errorI)
+
+plots_power5K <- plots_power
+remove(plots_power)
+
+plots_distr5K <- plots_distr
+remove(plots_distr)
+
+plfe5K <- plfe
+remove(plfe)
+
+```
+
+
+```{r}
+path <- "./wrapper_MM/plots_10K/"
+files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
+lapply(files, load, .GlobalEnv)
+
+conv_table10K <- conv_table
+remove(conv_table)
+
+mean_ct10K <- mean_ct
+remove(mean_ct)
+
+plots_bias10K<- plots_bias
+remove(plots_bias)
+
+plots_cov10K <- plots_cov
+remove(plots_cov)
+
+plots_errorI10K <- plots_errorI
+remove(plots_errorI)
+
+plots_power10K <- plots_power
+remove(plots_power)
+
+plots_distr10K <- plots_distr
+remove(plots_distr)
+
+plfe10K <- plfe
+remove(plfe)
+
+```
+
+### Plots 500 observations
+
+BIAS 500
+```{r}
+p1 <- plots_bias500[[1]] + labs(title= "1 year observation scheme")
+p2 <- plots_bias500[[3]] + labs(title= "3 years observation scheme")
+p3 <- plots_bias500[[5]] + labs(title= "3-6 years observation scheme")
+p4 <- plots_bias500[[7]] + labs(title= "irregular observation scheme")
+bias_500 <- (p1+p2) / (p3+p4) + plot_layout(guides = "collect")
+bias_500 &
+  ylim(0, 4)
+
+
+```
+
+```{r}
+
+p1 <- plots_bias500[[1]]$data
+p2 <- plots_bias500[[3]]$data
+p3 <- plots_bias500[[5]]$data
+p4 <- plots_bias500[[7]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df_all <- rbind(p1,p2,p3,p4)
+latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1" = "beta[1]",
+    "cov2" = "beta[2]",
+    "cov3" = "beta[3]"
+  )
+
+
+ ggplot(data = df_all, aes(x = model, y = bias_mean, color = scenario)) + 
+  geom_point(size = 3, shape = 19) + 
+  
+  facet_grid(parameter ~ transition, scales = "free", 
+             labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
+                                 transition = as_labeller(latex_labels))) + 
+  
+  labs(title = "Bias of the estimates", 
+       x = "Model", 
+       y = "Bias",
+       color = "Observation Scheme") + 
+  
+  geom_line(aes(group = scenario), size = 1, linetype = "solid", alpha = 0.8) + 
+  
+  #geom_errorbar(aes(ymin = bias_lower, ymax = bias_upper), width = 0.3, color = "black") + 
+
+  theme_bw() + 
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12), 
+        plot.title = element_text(size = 14, hjust = 0.5),
+        strip.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        panel.spacing = unit(1, "lines"),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 14)) + 
+  
+  scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)
+
+```
+
+
+
+COVERAGE 500
+```{r, warning=FALSE}
+p1 <- plots_cov500[[1]] + labs(title= "1 year observation scheme")
+p2 <- plots_cov500[[2]] + labs(title= "3 years observation scheme")
+p3 <- plots_cov500[[3]] + labs(title= "3-6 years observation scheme")
+p4 <- plots_cov500[[4]] + labs(title= "irregular observation scheme")
+
+
+cov_500 <- (p1+p2) / (p3+p4) + plot_layout(guides = "collect") 
+cov_500
+```
+
+ERROR TYPE I 500
+```{r}
+p1 <- plots_errorI500[[1]][[1]] + labs(title = NULL,  x = "1 year observation scheme")+ theme(legend.position = "none")
+p2 <- plots_errorI500[[2]][[1]] + labs(title = NULL,  x = "3 years observation scheme") 
+p3 <- plots_errorI500[[3]][[1]] + labs(title = NULL, x = "3-6 years observation scheme")
+p4 <- plots_errorI500[[4]][[1]] + labs(title = NULL,  x = "irregular observation scheme") 
+
+typeIerror_500_trans1 <- (p1 + p2) / (p3 + p4) +
+                  plot_layout(guides = "collect", widths = unit(rep(1, 4), "null")) +
+                  plot_annotation(
+                    title ="Heatmap of Type I Error by Method and Covariate for transition Dementia-free -> Dementia", 
+                    theme = theme(plot.title = element_text(size = 15, hjust = 0.5)),
+                  ) 
+p1 <- plots_errorI500[[1]][[2]] + labs(title = NULL,  x = "1 year observation scheme") + theme(legend.position = "none")
+p2 <- plots_errorI500[[2]][[2]] + labs(title = NULL,  x = "3 years observation scheme") 
+p3 <- plots_errorI500[[3]][[2]] + labs(title = NULL, x = "3-6 years observation scheme") 
+p4 <- plots_errorI500[[4]][[2]] + labs(title = NULL,  x = "irregular observation scheme") 
+
+typeIerror_500_trans3 <- (p1 + p2 )/ (p3 + p4) +
+                  plot_layout(guides = "collect", widths = unit(rep(1, 4), "null")) +
+                  plot_annotation(
+                    title ="Heatmap of Type I Error by Method and Covariate for transition Dementia -> Death", 
+                    theme = theme(plot.title = element_text(size = 15, hjust = 0.5)),
+                  ) 
+
+
+typeIerror_500_trans1
+typeIerror_500_trans3
+
+```
+```{r}
+p1 <- plots_errorI500[[1]][[1]]$data
+p1$scenario <- "1 year"
+p2 <- plots_errorI500[[2]][[1]]$data
+p2$scenario <- "3 years"
+p3 <- plots_errorI500[[3]][[1]]$data
+p3$scenario <- "3-6 years"
+p4 <- plots_errorI500[[4]][[1]]$data
+p4$scenario <- "irregular"
+
+df1 <- rbind(p1,p2,p3,p4)
+df1 <- df1 %>%
+  mutate(
+    power_category = factor(power_category, levels = c("Low (<5%)", "Moderate (5%-10%)", "High (>10%)"))
+  )
+
+p1 <- plots_errorI500[[1]][[2]]$data
+p1$scenario <- "1 year"
+p2 <- plots_errorI500[[2]][[2]]$data
+p2$scenario <- "3 years"
+p3 <- plots_errorI500[[3]][[2]]$data
+p3$scenario <- "3-6 years"
+p4 <- plots_errorI500[[4]][[2]]$data
+p4$scenario <- "irregular"
+
+df2 <- rbind(p1,p2,p3,p4)
+df2 <- df2 %>%
+  mutate(
+    power_category = factor(power_category, levels = c("Low (<5%)", "Moderate (5%-10%)", "High (>10%)"))
+  )
+
+
+
+ggplot(df1, aes(x = model, y = power_category, color = scenario)) +
+  geom_point(size = 4, position = position_dodge(width = 0.7)) +
+  scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)+
+  labs(
+    title = "Error type I by Observation scheme",
+    x = "Model",
+    y = NULL,
+    color = "Observation scheme",
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    axis.text.x = element_text(size = 12, angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 12),
+    legend.position = "top"
+  )
+```
+
+```{r}
+df1$scenario <- factor(df1$scenario, levels = c("irregular", "3-6 years", "3 years", "1 year"))
+df2$scenario <- factor(df2$scenario, levels = c("irregular", "3-6 years", "3 years", "1 year"))
+
+
+plot1 <- ggplot(df1, aes(x = model, y = power_category, fill = power_category,  group = interaction(model, covariate))) +
+  geom_bar(stat = "identity", color = "black", position = position_dodge(), aes(y=1)) +  # Aggiungi il bordo nero per le barre
+ scale_fill_manual(
+    values = c(
+      "Low (<5%)" = "#8BC34A",  # Muted olive green
+      "Moderate (5%-10%)" = "#FFEB3B",  # Warm golden yellow
+      "High (>10%)" = "#E57373"  # Soft coral red
+    )
+  ) +
+  
+facet_wrap(~ scenario, ncol = 1, strip.position = "left") + 
+  labs(
+    title = "Type I Error by Model and Observation Scheme",
+    subtitle = "Transition from Dementia-free to Dementia",
+    x = "Model",
+    y = "Observation scheme",
+    fill = "Category"
+  ) +
+  theme_minimal() +
+ theme(
+    plot.title = element_text(size = 18, face = "bold", hjust = 0.5, margin = margin(b = 15)),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, margin = margin(b = 15)),
+    axis.text.x = element_text(size = 10, angle = 0, hjust = 1, color = "black"),
+    axis.text.y = element_blank(),
+    axis.title.x = element_text(size = 14, face = "bold"),
+    axis.title.y = element_text(size = 14, face = "bold"),
+    strip.text.y = element_text(size = 12, angle = 0, face = "italic", hjust = 1, color = "black"),
+    strip.text.x = element_text(size = 12, face = "italic", color = "black"),
+    legend.position = element_blank(),
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    legend.key.size = unit(1, "lines"),  # Increase legend key size
+    plot.margin = margin(20, 10, 20, 10)  # Add margin around the plot for spacing
+  )
+
+
+plot2 <- ggplot(df2, aes(x = model, y = power_category, fill = power_category,  group = interaction(model, covariate))) +
+  geom_bar(stat = "identity", color = "black", position = position_dodge(), aes(y=1)) +  # Aggiungi il bordo nero per le barre
+ scale_fill_manual(
+    values = c(
+      "Low (<5%)" = "#8BC34A",  # Muted olive green
+      "Moderate (5%-10%)" = "#FFEB3B",  # Warm golden yellow
+      "High (>10%)" = "#E57373"  # Soft coral red
+    )
+  ) +
+  
+facet_wrap(~ scenario, ncol = 1, strip.position = "left") + 
+  labs(
+    title = "Type I Error by Model and Observation Scheme",
+    subtitle = "Transition from Dementia to Death",
+    x = "Model",
+    y = "Observation scheme",
+    fill = "Category"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 18, face = "bold", hjust = 0.5, margin = margin(b = 15)),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, margin = margin(b = 15)),
+    axis.text.x = element_text(size = 10, angle = 0, hjust = 1, color = "black"),
+    axis.text.y = element_blank(),
+    axis.title.x = element_text(size = 14, face = "bold"),
+    axis.title.y = element_text(size = 14, face = "bold"),
+    strip.text.y = element_text(size = 12, angle = 0, face = "italic", hjust = 1, color = "black"),
+    strip.text.x = element_text(size = 12, face = "italic", color = "black"),
+    legend.position = element_blank(),
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    legend.key.size = unit(1, "lines"),  # Increase legend key size
+    plot.margin = margin(20, 10, 20, 10)  # Add margin around the plot for spacing
+  )
+
+plot1 <- plot1 + theme(legend.position = "none", plot.title = element_blank())  
+plot2 <- plot2 + theme(legend.position = "right", plot.title = element_blank())  
+
+combined_plot <- (plot1 | plot2) +plot_layout(guides = 'collect')
+
+combined_plot & 
+  plot_annotation( title = "Type I Error by Model and Observation Scheme",
+                   theme = theme(plot.title = element_text(size = 18, face = "bold", hjust = 0.5)))
+
+ 
+```
+
+
+POWER 500
+
+```{r}
+p1 <- plots_power500[[1]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power500[[4]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power500[[7]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power500[[10]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_500_trans1 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia-free -> Dementia",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_power500[[2]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power500[[5]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power500[[8]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power500[[11]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_500_trans2 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia-free -> Death",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_power500[[3]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power500[[6]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power500[[9]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power500[[12]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_500_trans3 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia -> Death",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+  
+power_500_trans1
+power_500_trans2
+power_500_trans3
+```
+```{r}
+p1 <- plots_power500[[1]]$data
+p2 <- plots_power500[[4]]$data
+p3 <- plots_power500[[7]]$data
+p4 <- plots_power500[[10]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years"
+p3$scenario <- "3-6 years"
+p4$scenario <- "irregular"
+
+df1 <- rbind(p1,p2,p3,p4) #dementia-free to dem
+df1 <- df1 %>%
+  mutate(
+    power_category = factor(power_category, levels = c("Low (<50%)", "Moderate (50%-80%)", "High (>80%)"))
+  )
+
+p1 <- plots_power500[[2]]$data
+p2 <- plots_power500[[5]]$data
+p3 <- plots_power500[[8]]$data
+p4 <- plots_power500[[11]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years"
+p3$scenario <- "3-6 years"
+p4$scenario <- "irregular"
+
+df2 <- rbind(p1,p2,p3,p4) #dementia-free to death
+df2 <- df2 %>%
+  mutate(
+    power_category = factor(power_category, levels = c("Low (<50%)", "Moderate (50%-80%)", "High (>80%)"))
+  )
+
+p1 <- plots_power500[[3]]$data
+p2 <- plots_power500[[6]]$data
+p3 <- plots_power500[[9]]$data
+p4 <- plots_power500[[12]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years"
+p3$scenario <- "3-6 years"
+p4$scenario <- "irregular"
+
+df3 <- rbind(p1,p2,p3,p4) #dementia to death
+df3 <- df3 %>%
+  mutate(
+    power_category = factor(power_category, levels = c("Low (<50%)", "Moderate (50%-80%)", "High (>80%)"))
+  )
+
+df1$scenario <- factor(df1$scenario, levels = c("irregular", "3-6 years", "3 years", "1 year"))
+df2$scenario <- factor(df2$scenario, levels = c("irregular", "3-6 years", "3 years", "1 year"))
+df3$scenario <- factor(df3$scenario, levels = c("irregular", "3-6 years", "3 years", "1 year"))
+
+latex_labels <- c(
+  "beta[1]" = "beta[1]",
+  "beta[2]" = "beta[2]",
+  "beta[3]" = "beta[3]"
+)
+
+create_power_plot <- function(data, subtitle){
+  ggplot(data, aes(x = model, y = power_category, fill = power_category)) + 
+  geom_bar(stat = "identity", color = "black", position = position_dodge(), aes(y = 1)) +  # Add bar borders
+  scale_fill_manual(
+    values = c(
+      "Low (<50%)" = "#E57373",        
+      "Moderate (50%-80%)" = "#FFEB3B",       
+      "High (>80%)" =  "#8BC34A"      
+    )
+  ) + 
+  facet_grid(
+    scenario ~ covariate, 
+    labeller = labeller(covariate = as_labeller(latex_labels, label_parsed)),
+    switch ="y"
+  ) + 
+  labs(
+    title = "Power by Model and Observation Scheme",
+    subtitle = subtitle,
+    x = "Model",
+    y = "Observation scheme",
+    fill = "Category"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 18, face = "bold", hjust = 0.5, margin = margin(b = 15)),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, margin = margin(b = 15)),
+    axis.text.x = element_text(size = 10, angle = 0, hjust = 1, color = "black"),
+    axis.text.y = element_blank(),
+    axis.title.x = element_text(size = 14, face = "bold"),
+    axis.title.y = element_text(size = 14, face = "bold"),
+    strip.text.y = element_text(size = 12, angle = 0, face = "italic", hjust = 1, color = "black"),
+    strip.text.x = element_text(size = 12, face = "italic", color = "black"),
+    legend.position = element_blank(),
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    legend.key.size = unit(1, "lines"),  # Increase legend key size
+    plot.margin = margin(20, 10, 20, 10)  # Add margin around the plot for spacing
+  )
+}
+
+plot1 <- create_power_plot(df1, "Transition from Dementia-free status to Dementia") 
+plot2 <- create_power_plot(df2, "Transition from Dementia-free status to Death")
+plot3 <- create_power_plot(df3, "Transition from Dementia status to Death")
+
+plot1 <- plot1 + theme(legend.position = "none", plot.title = element_blank())  
+plot3 <- plot3 + theme(legend.position = "none", plot.title = element_blank())  
+plot2 <- plot2 + theme(legend.position = "right", plot.title = element_blank())  
+
+
+combined_plot <- (plot1 | plot2 | plot3) +plot_layout(guides = 'collect')
+
+combined_plot & 
+  plot_annotation( title = "Power by Model and Observation Scheme",
+                   theme = theme(plot.title = element_text(size = 18, face = "bold", hjust = 0.5)))
+```
+
+
+COEFFICIENTS DISTRIBUTION 500
+```{r, warning=FALSE, message=FALSE} 
+p1 <- plots_distr500[[1]][[1]] + 
+  labs(title = NULL, x = "1 year observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p2 <- plots_distr500[[2]][[1]] + 
+  labs(title = NULL, x = "3 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p3 <- plots_distr500[[3]][[1]] + 
+  labs(title = NULL, x = "3-6 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p4 <- plots_distr500[[4]][[1]] + 
+  labs(title = NULL, x = "irregular observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+distr_500_trans1 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Coefficients density distribution for transition Dementia-free to Dementia",  
+  theme = theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_distr500[[1]][[2]] + 
+  labs(title = NULL, x = "1 year observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p2 <- plots_distr500[[2]][[2]] + 
+  labs(title = NULL, x = "3 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p3 <- plots_distr500[[3]][[2]] + 
+  labs(title = NULL, x = "3-6 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p4 <- plots_distr500[[4]][[2]] + 
+  labs(title = NULL, x = "irregular observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+distr_500_trans2 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Coefficients density distribution for transition Dementia-free to Death",  
+  theme = theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_distr500[[1]][[3]] + 
+  labs(title = NULL, x = "1 year observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p2 <- plots_distr500[[2]][[3]] + 
+  labs(title = NULL, x = "3 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p3 <- plots_distr500[[3]][[3]] + 
+  labs(title = NULL, x = "3-6 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p4 <- plots_distr500[[4]][[3]] + 
+  labs(title = NULL, x = "irregular observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+distr_500_trans3 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Coefficients density distribution for transition Dementia to Death",  
+  theme = theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5)))+ 
+  plot_layout(guides = "collect")
+  
+distr_500_trans1
+distr_500_trans2
+distr_500_trans3
+```
+
+
+```{r,warning=FALSE, message=FALSE} 
+
+create_distr_plot <- function(plot, caption_text) {
+  plot + 
+    labs(
+      title = NULL, 
+      caption = caption_text  
+    ) + 
+    theme(
+      axis.title.x = element_text(size = 8, face = "bold"), 
+      axis.text.x = element_text(size = 8), 
+      axis.text.y = element_text(size = 7), 
+      plot.caption = element_text(size = 9, hjust = 0.5, vjust = 0.5, face = "bold"),
+      plot.margin = margin(10, 10, 10, 10)  
+    )
+}
+
+p1 <- create_distr_plot(plots_distr500[[1]][[1]], "1 year observation scheme")
+p2 <- create_distr_plot(plots_distr500[[2]][[1]], "3 years observation scheme")
+p3 <- create_distr_plot(plots_distr500[[3]][[1]], "3-6 years observation scheme")
+p4 <- create_distr_plot(plots_distr500[[4]][[1]], "irregular observation scheme")
+
+distr_500_trans1 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + 
+  plot_annotation(
+    title = "Coefficients Density Distribution for Transition Dementia-free to Dementia",
+    theme = theme(plot.title = element_text(size = 13, face = "bold", hjust = 0.5)) 
+  )
+
+#
+p1 <- create_distr_plot(plots_distr500[[1]][[2]], "1 year observation scheme")
+p2 <- create_distr_plot(plots_distr500[[2]][[2]], "3 years observation scheme")
+p3 <- create_distr_plot(plots_distr500[[3]][[2]], "3-6 years observation scheme")
+p4 <- create_distr_plot(plots_distr500[[4]][[2]], "irregular observation scheme")
+
+# Combine the plots for transition Dementia-free -> Death
+distr_500_trans2 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + 
+  plot_annotation(
+    title = "Coefficients Density Distribution for Transition Dementia-free to Death",
+    theme = theme(plot.title = element_text(size = 13, face = "bold", hjust = 0.5))  
+  )
+
+
+p1 <- create_distr_plot(plots_distr500[[1]][[3]], "1 year observation scheme")
+p2 <- create_distr_plot(plots_distr500[[2]][[3]], "3 years observation scheme")
+p3 <- create_distr_plot(plots_distr500[[3]][[3]], "3-6 years observation scheme")
+p4 <- create_distr_plot(plots_distr500[[4]][[3]], "irregular observation scheme")
+
+# Combine the plots for transition Dementia to Death
+distr_500_trans3 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + 
+  plot_annotation(
+    title = "Coefficients Density Distribution for Transition Dementia to Death",
+    theme = theme(plot.title = element_text(size = 13, face = "bold", hjust = 0.5))  
+  )
+
+
+distr_500_trans1 
+distr_500_trans2 
+distr_500_trans3 
+ 
+
+
+```
+
+
+
+### Plots 2K observations
+
+BIAS_2K
+```{r}
+p1 <- plots_bias2K[[1]] + labs(title= "1 year observation scheme")
+p2 <- plots_bias2K[[3]] + labs(title= "3 years observation scheme")
+p3 <- plots_bias2K[[5]] + labs(title= "3-6 years observation scheme")
+p4 <- plots_bias2K[[7]] + labs(title= "irregular observation scheme")
+
+plots_bias_2K <- (p1+p2) / 
+                 (p3+p4) +
+                 plot_layout(guides = "collect")
+plots_bias_2K & 
+  ylim(0, 2)
+```
+
+```{r}
+
+p1 <- plots_bias2K[[1]]$data
+p2 <- plots_bias2K[[3]]$data
+p3 <- plots_bias2K[[5]]$data
+p4 <- plots_bias2K[[7]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df_all <- rbind(p1,p2,p3,p4)
+latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1" = "beta[1]",
+    "cov2" = "beta[2]",
+    "cov3" = "beta[3]"
+  )
+
+
+ ggplot(data = df_all, aes(x = model, y = bias_mean, color = scenario)) + 
+  geom_point(size = 3, shape = 19) + 
+  
+  facet_grid(parameter ~ transition, scales = "free", 
+             labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
+                                 transition = as_labeller(latex_labels))) + 
+  
+  labs(title = "Bias of the estimates", 
+       x = "Model", 
+       y = "Bias",
+       color = "Observation Scheme") + 
+  
+  geom_line(aes(group = scenario), size = 1, linetype = "solid", alpha = 0.8) + 
+  
+  #geom_errorbar(aes(ymin = bias_lower, ymax = bias_upper), width = 0.3, color = "black") + 
+
+  theme_bw() + 
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12), 
+        plot.title = element_text(size = 14, hjust = 0.5),
+        strip.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        panel.spacing = unit(1, "lines"),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 14)) + 
+  
+  scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)
+
+```
+
+COVERAGE 2K
+```{r, warning=FALSE}
+p1 <- plots_cov2K[[1]] + labs(title= "1 year observation scheme")
+p2 <- plots_cov2K[[2]] + labs(title= "3 years observation scheme")
+p3 <- plots_cov2K[[3]] + labs(title= "3-6 years observation scheme")
+p4 <- plots_cov2K[[4]] + labs(title= "irregular observation scheme")
+
+cov_2K <- (p1+p2) / (p3+p4) + plot_layout(guides = "collect")
+cov_2K
+```
+
+ERROR TYPE I 2K
+```{r}
+p1 <- plots_errorI2K[[1]][[1]] + labs(title = NULL,  x = "1 year observation scheme")+ theme(legend.position = "none")
+p2 <- plots_errorI2K[[2]][[1]] + labs(title = NULL,  x = "3 years observation scheme") 
+p3 <- plots_errorI2K[[3]][[1]] + labs(title = NULL, x = "3-6 years observation scheme")
+p4 <- plots_errorI2K[[4]][[1]] + labs(title = NULL,  x = "irregular observation scheme") 
+
+typeIerror_2K_trans1 <- (p1 + p2) / (p3 + p4) +
+                  plot_layout(guides = "collect", widths = unit(rep(1, 4), "null")) +
+                  plot_annotation(
+                    title ="Heatmap of Type I Error by Method and Covariate for transition Dementia-free -> Dementia", 
+                    theme = theme(plot.title = element_text(size = 15, hjust = 0.5)),
+                  ) 
+p1 <- plots_errorI2K[[1]][[2]] + labs(title = NULL,  x = "1 year observation scheme") 
+p2 <- plots_errorI2K[[2]][[2]] + labs(title = NULL,  x = "3 years observation scheme") + theme(legend.position = "none")
+p3 <- plots_errorI2K[[3]][[2]] + labs(title = NULL, x = "3-6 years observation scheme") + theme(legend.position = "none")
+p4 <- plots_errorI2K[[4]][[2]] + labs(title = NULL,  x = "irregular observation scheme") + theme(legend.position = "none")
+
+typeIerror_2K_trans3 <- (p1 + p2 )/ (p3 + p4) +
+                  plot_layout(guides = "collect", widths = unit(rep(1, 4), "null")) +
+                  plot_annotation(
+                    title ="Heatmap of Type I Error by Method and Covariate for transition Dementia -> Death", 
+                    theme = theme(plot.title = element_text(size = 15, hjust = 0.5)),
+                  ) 
+
+
+typeIerror_2K_trans1
+typeIerror_2K_trans3
+
+```
+
+POWER 2K
+```{r}
+p1 <- plots_power2K[[1]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power2K[[4]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power2K[[7]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power2K[[10]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_2K_trans1 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia-free -> Dementia",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_power2K[[2]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power2K[[5]] + labs(title =NULL, x = "3 years observation scheme")+ theme(legend.position = "none")
+p3 <- plots_power2K[[8]] + labs(title =NULL, x = "3-6 years observation scheme")+ theme(legend.position = "none")
+p4 <- plots_power2K[[11]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_2K_trans2 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia-free -> Death",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_power2K[[3]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power2K[[6]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power2K[[9]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power2K[[12]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_2K_trans3 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia -> Death",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+  
+power_2K_trans1
+power_2K_trans2
+power_2K_trans3
+```
+
+COEFFICIENTS DISTRIBUTION 2K
+```{r, warning=FALSE, message=FALSE} 
+p1 <- plots_distr2K[[1]][[1]] + 
+  labs(title = NULL, x = "1 year observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p2 <- plots_distr2K[[2]][[1]] + 
+  labs(title = NULL, x = "3 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p3 <- plots_distr2K[[3]][[1]] + 
+  labs(title = NULL, x = "3-6 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p4 <- plots_distr2K[[4]][[1]] + 
+  labs(title = NULL, x = "irregular observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+distr_2K_trans1 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Coefficients density distribution for transition Dementia-free -> Dementia",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_distr2K[[1]][[2]] + 
+  labs(title = NULL, x = "1 year observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p2 <- plots_distr2K[[2]][[2]] + 
+  labs(title = NULL, x = "3 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p3 <- plots_distr2K[[3]][[2]] + 
+  labs(title = NULL, x = "3-6 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p4 <- plots_distr2K[[4]][[2]] + 
+  labs(title = NULL, x = "irregular observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+distr_2K_trans2 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Coefficients density distribution for transition Dementia-free -> Death",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_distr2K[[1]][[3]] + 
+  labs(title = NULL, x = "1 year observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p2 <- plots_distr2K[[2]][[3]] + 
+  labs(title = NULL, x = "3 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p3 <- plots_distr2K[[3]][[3]] + 
+  labs(title = NULL, x = "3-6 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p4 <- plots_distr2K[[4]][[3]] + 
+  labs(title = NULL, x = "irregular observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+distr_2K_trans3 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Coefficients density distribution for transition Dementia -> Death",  
+  theme = theme(plot.title = element_text(size = 14, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+  
+distr_2K_trans1
+distr_2K_trans2
+distr_2K_trans3
+```
+
+
+RELATIVE BIAS OF TIME SPENT IN EACH STATE
+
+```{r}
+plfe2K
+```
+
+### Plots 5K observations
+
+BIAS_5K
+```{r}
+p1 <- plots_bias5K[[1]] + labs(title= "1 year observation scheme")
+p2 <- plots_bias5K[[3]] + labs(title= "3 years observation scheme")
+p3 <- plots_bias5K[[5]] + labs(title= "3-6 years observation scheme")
+p4 <- plots_bias5K[[7]] + labs(title= "irregular observation scheme")
+
+plots_bias_5K <- (p1+p2) / 
+                 (p3+p4) +
+                 plot_layout(guides = "collect")
+plots_bias_5K & 
+  ylim(0, 1)
+```
+
+```{r}
+
+p1 <- plots_bias5K[[1]]$data
+p2 <- plots_bias5K[[3]]$data
+p3 <- plots_bias5K[[5]]$data
+p4 <- plots_bias5K[[7]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df_all <- rbind(p1,p2,p3,p4)
+latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1" = "beta[1]",
+    "cov2" = "beta[2]",
+    "cov3" = "beta[3]"
+  )
+
+
+ ggplot(data = df_all, aes(x = model, y = bias_mean, color = scenario)) + 
+  geom_point(size = 3, shape = 19) + 
+  
+  facet_grid(parameter ~ transition, scales = "free", 
+             labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
+                                 transition = as_labeller(latex_labels))) + 
+  
+  labs(title = "Bias of the estimates", 
+       x = "Model", 
+       y = "Bias",
+       color = "Observation Scheme") + 
+  
+  geom_line(aes(group = scenario), size = 1, linetype = "solid", alpha = 0.8) + 
+  
+  #geom_errorbar(aes(ymin = bias_lower, ymax = bias_upper), width = 0.3, color = "black") + 
+
+  theme_bw() + 
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12), 
+        plot.title = element_text(size = 14, hjust = 0.5),
+        strip.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        panel.spacing = unit(1, "lines"),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 14)) + 
+  
+  scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)
+
+```
+
+COVERAGE 5K
+```{r, warning=FALSE}
+
+p1 <- plots_cov5K[[1]] + labs(title= "1 year observation scheme")
+p2 <- plots_cov5K[[2]] + labs(title= "3 years observation scheme")
+p3 <- plots_cov5K[[3]] + labs(title= "3-6 years observation scheme")
+p4 <- plots_cov5K[[4]] + labs(title= "irregular observation scheme")
+
+
+cov_5K <- (p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect")
+cov_5K
+```
+ERROR TYPE I 5K
+```{r}
+p1 <- plots_errorI5K[[1]][[1]] + labs(title = NULL,  x = "1 year observation scheme")+ theme(legend.position = "none")
+p2 <- plots_errorI5K[[2]][[1]] + labs(title = NULL,  x = "3 years observation scheme") 
+p3 <- plots_errorI5K[[3]][[1]] + labs(title = NULL, x = "3-6 years observation scheme")
+p4 <- plots_errorI5K[[4]][[1]] + labs(title = NULL,  x = "irregular observation scheme") 
+
+typeIerror_5K_trans1 <- (p1 + p2) / (p3 + p4) +
+                  plot_layout(guides = "collect", widths = unit(rep(1, 4), "null")) +
+                  plot_annotation(
+                    title ="Heatmap of Type I Error by Method and Covariate for transition Dementia-free -> Dementia", 
+                    theme = theme(plot.title = element_text(size = 15, hjust = 0.5)),
+                  ) 
+p1 <- plots_errorI5K[[1]][[2]] + labs(title = NULL,  x = "1 year observation scheme") + theme(legend.position = "none")
+p2 <- plots_errorI5K[[2]][[2]] + labs(title = NULL,  x = "3 years observation scheme") 
+p3 <- plots_errorI5K[[3]][[2]] + labs(title = NULL, x = "3-6 years observation scheme") 
+p4 <- plots_errorI5K[[4]][[2]] + labs(title = NULL,  x = "irregular observation scheme") 
+
+typeIerror_5K_trans3 <- (p1 + p2 )/ (p3 + p4) +
+                  plot_layout(guides = "collect", widths = unit(rep(1, 4), "null")) +
+                  plot_annotation(
+                    title ="Heatmap of Type I Error by Method and Covariate for transition Dementia -> Death", 
+                    theme = theme(plot.title = element_text(size = 15, hjust = 0.5)),
+                  ) 
+
+
+typeIerror_5K_trans1
+typeIerror_5K_trans3
+
+```
+
+POWER 5K
+```{r}
+p1 <- plots_power5K[[1]] + labs(title =NULL, x = "1 year observation scheme")+theme(legend.position = "none")
+p2 <- plots_power5K[[4]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power5K[[7]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power5K[[10]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_5K_trans1 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia-free -> Dementia",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_power5K[[2]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power5K[[5]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power5K[[8]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power5K[[11]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_5K_trans2 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia-free -> Death",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_power5K[[3]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power5K[[6]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power5K[[9]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power5K[[12]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_5K_trans3 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia -> Death",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+  
+power_5K_trans1
+power_5K_trans2
+power_5K_trans3
+```
+
+COEFFICIENTS DISTRIBUTION 5K
+```{r, warning=FALSE, message=FALSE} 
+p1 <- plots_distr5K[[1]][[1]] + 
+  labs(title = NULL, x = "1 year observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p2 <- plots_distr5K[[2]][[1]] + 
+  labs(title = NULL, x = "3 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p3 <- plots_distr5K[[3]][[1]] + 
+  labs(title = NULL, x = "3-6 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p4 <- plots_distr5K[[4]][[1]] + 
+  labs(title = NULL, x = "irregular observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+distr_5K_trans1 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Coefficients density distribution for transition Dementia-free -> Dementia",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_distr5K[[1]][[2]] + 
+  labs(title = NULL, x = "1 year observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p2 <- plots_distr5K[[2]][[2]] + 
+  labs(title = NULL, x = "3 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p3 <- plots_distr5K[[3]][[2]] + 
+  labs(title = NULL, x = "3-6 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p4 <- plots_distr5K[[4]][[2]] + 
+  labs(title = NULL, x = "irregular observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+distr_5K_trans2 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Coefficients density distribution for transition Dementia-free -> Death",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_distr5K[[1]][[3]] + 
+  labs(title = NULL, x = "1 year observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p2 <- plots_distr5K[[2]][[3]] + 
+  labs(title = NULL, x = "3 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p3 <- plots_distr5K[[3]][[3]] + 
+  labs(title = NULL, x = "3-6 years observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+
+p4 <- plots_distr5K[[4]][[3]] + 
+  labs(title = NULL, x = "irregular observation scheme") + 
+  theme(axis.title.x = element_text(size = 8))
+distr_5K_trans3 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Coefficients density distribution for transition Dementia -> Death",  
+  theme = theme(plot.title = element_text(size = 14, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+  
+distr_5K_trans1
+distr_5K_trans2
+distr_5K_trans3
+```
+
+RELATIVE BIAS OF TIME SPENT IN EACH STATE
+```{r}
+plfe5K
+```
+
+
+### Plots 10K observations
+
+BIAS_10K
+```{r}
+p1 <- plots_bias10K[[1]] + labs(title= "1 year observation scheme")
+p2 <- plots_bias10K[[3]] + labs(title= "3 years observation scheme")
+p3 <- plots_bias10K[[5]] + labs(title= "3-6 years observation scheme")
+p4 <- plots_bias10K[[7]] + labs(title= "irregular observation scheme")
+
+plots_bias_10K <- (p1+p2) / 
+                 (p3+p4) +
+                 plot_layout(guides = "collect")
+plots_bias_10K & 
+  ylim(0, 1)
+```
+
+
+```{r}
+
+p1 <- plots_bias10K[[1]]$data
+p2 <- plots_bias10K[[3]]$data
+p3 <- plots_bias10K[[5]]$data
+p4 <- plots_bias10K[[7]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df_all <- rbind(p1,p2,p3,p4)
+latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1" = "beta[1]",
+    "cov2" = "beta[2]",
+    "cov3" = "beta[3]"
+  )
+
+
+ ggplot(data = df_all, aes(x = model, y = bias_mean, color = scenario)) + 
+  geom_point(size = 3, shape = 19) + 
+  
+  facet_grid(parameter ~ transition, scales = "free", 
+             labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
+                                 transition = as_labeller(latex_labels))) + 
+  
+  labs(title = "Bias of the estimates", 
+       x = "Model", 
+       y = "Bias",
+       color = "Observation Scheme") + 
+  
+  geom_line(aes(group = scenario), size = 1, linetype = "solid", alpha = 0.8) + 
+  
+  #geom_errorbar(aes(ymin = bias_lower, ymax = bias_upper), width = 0.3, color = "black") + 
+
+  theme_bw() + 
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12), 
+        plot.title = element_text(size = 14, hjust = 0.5),
+        strip.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        panel.spacing = unit(1, "lines"),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 14)) + 
+  
+  scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)
+
+```
+COVERAGE 10K
+```{r, warning=FALSE}
+
+p1 <- plots_cov10K[[1]] + labs(title= "1 year observation scheme")
+p2 <- plots_cov10K[[2]] + labs(title= "3 years observation scheme")
+p3 <- plots_cov10K[[3]] + labs(title= "3-6 years observation scheme")
+p4 <- plots_cov10K[[4]] + labs(title= "irregular observation scheme")
+
+
+cov_10K <- (p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect")
+cov_10K
+```
+
+ERROR TYPE I 10K
+```{r}
+p1 <- plots_errorI10K[[1]][[1]] + labs(title = NULL,  x = "1 year observation scheme")+ theme(legend.position = "none")
+p2 <- plots_errorI10K[[2]][[1]] + labs(title = NULL,  x = "3 years observation scheme") 
+p3 <- plots_errorI10K[[3]][[1]] + labs(title = NULL, x = "3-6 years observation scheme")
+p4 <- plots_errorI10K[[4]][[1]] + labs(title = NULL,  x = "irregular observation scheme") 
+
+typeIerror_10K_trans1 <- (p1 + p2) / (p3 + p4) +
+                  plot_layout(guides = "collect", widths = unit(rep(1, 4), "null")) +
+                  plot_annotation(
+                    title ="Heatmap of Type I Error by Method and Covariate for transition Dementia-free -> Dementia", 
+                    theme = theme(plot.title = element_text(size = 15, hjust = 0.5)),
+                  ) 
+p1 <- plots_errorI10K[[1]][[2]] + labs(title = NULL,  x = "1 year observation scheme") + theme(legend.position = "none")
+p2 <- plots_errorI10K[[2]][[2]] + labs(title = NULL,  x = "3 years observation scheme") 
+p3 <- plots_errorI10K[[3]][[2]] + labs(title = NULL, x = "3-6 years observation scheme") 
+p4 <- plots_errorI10K[[4]][[2]] + labs(title = NULL,  x = "irregular observation scheme") 
+
+typeIerror_10K_trans3 <- (p1 + p2 )/ (p3 + p4) +
+                  plot_layout(guides = "collect", widths = unit(rep(1, 4), "null")) +
+                  plot_annotation(
+                    title ="Heatmap of Type I Error by Method and Covariate for transition Dementia -> Death", 
+                    theme = theme(plot.title = element_text(size = 15, hjust = 0.5)),
+                  ) 
+
+
+typeIerror_10K_trans1
+typeIerror_10K_trans3
+
+```
+
+
+POWER 10K
+```{r}
+p1 <- plots_power10K[[1]] + labs(title =NULL, x = "1 year observation scheme")+theme(legend.position = "none")
+p2 <- plots_power10K[[4]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power10K[[7]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power10K[[10]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_10K_trans1 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia-free -> Dementia",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_power10K[[2]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power10K[[5]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power10K[[8]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power10K[[11]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_10K_trans2 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia-free -> Death",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+
+p1 <- plots_power10K[[3]] + labs(title =NULL, x = "1 year observation scheme")
+p2 <- plots_power10K[[6]] + labs(title =NULL, x = "3 years observation scheme")
+p3 <- plots_power10K[[9]] + labs(title =NULL, x = "3-6 years observation scheme")
+p4 <- plots_power10K[[12]] +labs(title =NULL, x = "irregular observation scheme")
+
+power_10K_trans3 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + plot_annotation(
+  title ="Heatmap of Power by Method and Covariate for transition Dementia -> Death",  
+  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  plot_layout(guides = "collect")
+  
+power_10K_trans1
+power_10K_trans2
+power_10K_trans3
+```
+
+
+RELATIVE BIAS OF TIME SPENT IN EACH STATE
+
+```{r}
+plfe10K
+```
+
+### Comparing performances for different samples sizes for frequent and sporadic visits
+
+
+CONVERGENCE
+```{r}
+t1 <- conv_table500 %>%
+  select(scheme,model, `Convergence 2`) %>%
+  mutate(conv500=`Convergence 2`, `Convergence 2`=NULL)
+t2 <- conv_table2K %>%
+  select(scheme,model, `Convergence 2`)%>%
+  mutate(conv2K=`Convergence 2`, `Convergence 2`=NULL)
+t3 <- conv_table5K %>%
+  select(scheme,model, `Convergence 2`)%>%
+  mutate(conv5K=`Convergence 2`, `Convergence 2`=NULL)
+t4 <- conv_table5K %>%
+  select(scheme,model, `Convergence 2`)%>%
+  mutate(conv10K=`Convergence 2`, `Convergence 2`=NULL)
+
+table_convergence <- full_join(t1,t2)
+table_convergence <- full_join(table_convergence,t3)
+table_convergence <- full_join(table_convergence,t4)
+
+
+conv_long <- table_convergence %>%
+  pivot_longer(cols = starts_with("conv"), names_to = "sample_size", values_to = "convergence") 
+conv_long <- conv_long %>%
+    mutate(
+      sample_size = case_when(
+        sample_size == "conv500" ~ "500 observations",
+        sample_size == "conv2K" ~ "2K observations",
+        sample_size == "conv5K" ~ "5K observations",
+        sample_size == "conv10K" ~ "10K observations",
+      )) %>%
+  mutate(
+     scheme = case_when(
+        scheme == "2" ~ "1 year",
+        scheme == "3" ~ "3 years",
+        scheme == "4" ~ "3-6 years",
+        scheme == "5" ~ "irregular",
+        )) %>%
+  mutate(sample_size = factor(sample_size, levels = c("500 observations", "2K observations", "5K observations", "10K observations"))) %>%
+  arrange(sample_size, scheme, model)
+
+ggplot(conv_long, aes(x = scheme, y = model, fill = convergence)) +
+  geom_tile(color = "white") +
+  #geom_text(aes(label = round(convergence, 1)), color = "black", size = 3) +
+  facet_wrap(~sample_size) +
+  scale_fill_gradient(low = "white", high = "blue", name = "Percentage (%)") +
+  labs(
+    title = "Heatmap of Models Convergence",
+    x = "Sample Size",
+    y = "Model"
+  ) +
+  theme_minimal()+
+   theme(
+    plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
+    legend.position = "top")
+```
+
+
+
+COMPUTATIONAL TIME
+```{r}
+t1 <- mean_ct500
+t2 <- mean_ct2K
+t3 <- mean_ct5K
+t4 <- mean_ct10K
+
+mean_ct_all <- rbind(t1,t2,t3,t4)
+mean_ct_all$sample_size <- rep(1:4, each=4)
+
+
+mean_ct_all <- mean_ct_all%>%
+  pivot_longer(cols=c("a","b","c","d","e","f"),
+               names_to = "model",
+               values_to = "time")
+
+ggplot(mean_ct_all, aes(x = factor(sample_size, labels = c("500", "2K", "5K", "10K")), 
+                        y = time, color = model, group = model)) +
+  geom_line(size = 1.2, alpha = 0.7) +
+  geom_point(size = 3, alpha = 0.7)+
+
+  facet_wrap(~ scheme, ncol = 2, scales = "fixed") + 
+  scale_color_viridis_d() +
+  labs(
+    title = "Trend of Average Computational Time Across Sample Sizes and Observation Schemes",
+    x = "Sample Size",
+    y = "Time (s)",
+    color = "Model"
+  ) +
+  theme_minimal(base_size = 14) + 
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  
+  
+    axis.title = element_text(size = 14, face = "bold"), 
+    axis.text = element_text(size = 12),  
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    legend.position = "top", 
+    legend.title = element_text(size = 12, face = "bold"),  
+    legend.text = element_text(size = 11),  
+    panel.grid.major = element_line(color = "gray80", size = 0.5),  
+    panel.grid.minor = element_blank()  
+  )
+
+
+```
+
+```{r}
+disegna_scatter <- function(t, c, n, m) {
+
+  # Verifica che tutti i vettori abbiano la stessa lunghezza
+  if (!(length(t) == length(c) &&
+        length(c) == length(n) &&
+        length(n) == length(m))) {
+    stop("Tutti i vettori devono avere la stessa lunghezza!")
+  }
+
+  # Definiamo una palette di colori in base a 'm'
+  colori <- viridis(6)[as.integer(as.factor(m))]
+
+  # Disegniamo il grafico: pch=16 (cerchi pieni),
+  # cex = n (dimensione dei cerchi), col = colori
+  y_low=min(c)*1.1
+  y_upp=max(c)
+    
+  plot(
+    x    = t,
+    y    = c,
+    pch  = 16,
+    cex  = n/max(n)*3,
+    col  = colori,
+    xlab = "Computational Time [sec]",
+    ylab = "Convergency rate [%]",
+    main = "Evviva lo zio" ,  # Titolo del grafico
+    ylim=c(y_low, y_upp)
+  )
+
+  # Aggiungiamo la griglia nei tick principali
+  grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted")
+
+  # Se si vuole aggiungere una legenda, decommentare il codice seguente:
+  # legend(
+  #   "topright",
+  #   legend = levels(factor(m)),
+  #   col = rainbow(length(unique(m))),
+  #   pch = 16,
+  #   title = "Valori di m"
+  # )
+}
+
+```
+
+```{r}
+t <- unname(unlist(c(mean_ct500[1,-1],mean_ct2K[1,-1],mean_ct5K[1,-1],mean_ct10K[1,-1])))
+n <- rep(c(500,2000,5000,10000), each=6)
+c <- unname(unlist(c(conv_table500[1:6,4],conv_table2K[1:6,4],conv_table5K[1:6,4],conv_table10K[1:6,4])))
+m <- as.character(rep(1:6, times=4))
+
+
+# t <- c(0.072990, 0.227080,  0.148680 ,  0.421870 , 0.608300  , 3.565610,  1.051761 ,  6.309565)
+# n <- c(500,500,2000,2000,5000,5000,10000,10000)
+# c <- c(82,100,83,100, 87,100,77,100)
+# m <- as.character(rep(1:2, times=4))
+# 
+disegna_scatter(t,c,n,m)
+
+```
+
+
+
+
+
+BIAS COMPARISON (1 Year)
+```{r}
+p1 <- plots_bias500[[1]] + 
+  labs(title =NULL, caption = "500 observations") +
+  geom_point(size=0.5)
+p2 <- plots_bias2K[[1]] + 
+  labs(title= NULL, caption = "2K observations") +
+  geom_point(size=0.5)
+p3 <- plots_bias5K[[1]] + 
+  labs(title= NULL, caption = "5K observations") +
+  geom_point(size=0.5)
+p4 <- plots_bias10K[[1]] + 
+  labs(title= NULL, caption = "10K observations") +
+  geom_point(size=0.5)
+
+
+plots_bias_all <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Bias comparison (1 year)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+plots_bias_all & 
+  ylim(0, 1.5)
+```
+
+
+BIAS COMPARISON (3-6 years)
+```{r}
+p1 <- plots_bias500[[5]] + 
+  labs(title =NULL, caption = "500 observations") +
+  geom_point(size=0.5)
+p2 <- plots_bias2K[[5]] + 
+  labs(title= NULL, caption = "2K observations") +
+  geom_point(size=0.5)
+p3 <- plots_bias5K[[5]] + 
+  labs(title= NULL, caption = "5K observations") +
+  geom_point(size=0.5)
+p4 <- plots_bias10K[[5]] + 
+  labs(title= NULL, caption = "10K observations") +
+  geom_point(size=0.5)
+
+
+plots_bias_all <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Bias comparison (3-6 years)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+plots_bias_all & 
+  ylim(0, 3)
+```
+```{r}
+
+df_scenario <- function(scenario,title){
+  p1 <- plots_bias500[[scenario]]$data
+  p2 <- plots_bias2K[[scenario]]$data
+  p3 <- plots_bias5K[[scenario]]$data
+  p4 <- plots_bias10K[[scenario]]$data
+  
+  
+  p1$size <- "500 observations"
+  p2$size <- "2K observations"
+  p3$size <- "5K observations"
+  p4$size <- "10K observations"
+  
+  df_all <- rbind(p1,p2,p3,p4)
+  df_all$size <- factor(df_all$size, levels = c("500 observations", "2K observations", "5K observations", "10K observations"))
+  df_all <- df_all[order(df_all$size), ]
+  df_all$scenario <- title
+  return(df_all)
+}
+
+df_all1 <- df_scenario(1,"1 year")
+df_all2 <- df_scenario(3,"3 years")
+df_all3 <- df_scenario(5,"3-6 years")
+df_all4 <- df_scenario(7,"irregular")
+
+create_plot <- function(df){
+  latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1" = "beta[1]",
+    "cov2" = "beta[2]",
+    "cov3" = "beta[3]"
+  )
+  ggplot(data = df, aes(x = model, y = bias_mean, color = size)) + 
+  geom_point(size = 3, shape = 19) + 
+  
+  facet_grid(parameter ~ transition, scales = "free", 
+             labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
+                                 transition = as_labeller(latex_labels)),) + 
+  
+  labs(title = NULL, 
+       x = NULL, 
+       y = NULL) + 
+  
+  geom_line(aes(group = size), size = 1, linetype = "solid", alpha = 0.8) + 
+  theme_bw() + 
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12), 
+        plot.title = element_text(size = 14, hjust = 0.5),
+        strip.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        panel.spacing = unit(1, "lines"),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 14)) + 
+  
+  scale_color_viridis_d(option = "C", begin = 0.2, end = 0.8)
+  
+}
+
+plot1 <- create_plot(df_all1)+labs(caption = "1 year observation scheme")
+plot2 <- create_plot(df_all2)+labs(caption = "3 years observation scheme")
+plot3 <- create_plot(df_all3)+labs(caption = "3-6 years observation scheme")
+plot4 <- create_plot(df_all4)+labs(caption = "irregular observation scheme")
+
+ ( plot1+plot2) / (plot3+plot4) + plot_layout(guides = "collect")+
+  plot_annotation(title = "Bias of Estimates")& 
+  theme(legend.position = "top", 
+        legend.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        plot.title = element_text(size = 14, hjust = 0.5)) 
+ # ylim(0,3)
+  
+
+```
+
+
+COVERAGE COMPARISON (1 year)
+```{r, warning=FALSE}
+p1 <- plots_cov500[[1]] + 
+  labs(title =NULL, caption = "500 observations") +
+  geom_point(size=0.5)
+p2 <- plots_cov2K[[1]] + 
+  labs(title= NULL, caption = "2K observations") +
+  geom_point(size=0.5)
+p3 <- plots_cov5K[[1]] + 
+  labs(title= NULL, caption = "5K observations") +
+  geom_point(size=0.5)
+p4 <- plots_cov10K[[1]] + 
+  labs(title= NULL, caption = "10K observations") +
+  geom_point(size=0.5)
+
+plots_cov_all <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Coverage comparison (1 year)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+plots_cov_all & 
+  ylim(0, 1)
+```
+
+
+COVERAGE COMPARISON (3-6 years)
+```{r, warning=FALSE}
+p1 <- plots_cov500[[3]] + 
+  labs(title =NULL, caption = "500 observations") +
+  geom_point(size=0.5)
+p2 <- plots_cov2K[[3]] + 
+  labs(title= NULL, caption = "2K observations") +
+  geom_point(size=0.5)
+p3 <- plots_cov5K[[3]] + 
+  labs(title= NULL, caption = "5K observations") +
+  geom_point(size=0.5)
+p4 <- plots_cov10K[[3]] + 
+  labs(title= NULL, caption = "10K observations") +
+  geom_point(size=0.5)
+
+plots_cov_all <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Coverage comparison (3-6 years)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+plots_cov_all & 
+  ylim(0, 1)
+```
+
+
+ERROR TYPE I COMPARISON (1 year)
+```{r, warning=FALSE}
+p1 <- plots_errorI500[[1]][[1]] + 
+  labs(title =NULL, x=NULL, caption = "500 observations") +
+  geom_point(size=0.5) 
+p2 <- plots_errorI2K[[1]][[1]] + 
+  labs(title= NULL, x=NULL, caption = "2K observations") +
+  geom_point(size=0.5)
+p3 <- plots_errorI5K[[1]][[1]] + 
+  labs(title= NULL, x=NULL, caption = "5K observations") +
+  geom_point(size=0.5)
+p4 <- plots_errorI5K[[1]][[1]] + 
+  labs(title= NULL, x=NULL, caption = "10K observations") +
+  geom_point(size=0.5)
+
+plots_errorI_all_trans1 <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Type I error comparison on transition Dementia-free -> Dementia (3-6 years)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+p1 <- plots_errorI500[[1]][[2]] + 
+  labs(title =NULL, x=NULL, caption = "500 observations") +
+  geom_point(size=0.5)+ theme(legend.position = "none")
+p2 <- plots_errorI2K[[1]][[2]] + 
+  labs(title= NULL, x=NULL, caption = "2K observations") +
+  geom_point(size=0.5)
+p3 <- plots_errorI5K[[1]][[2]] + 
+  labs(title= NULL, x=NULL, caption = "5K observations") +
+  geom_point(size=0.5)+ theme(legend.position = "none")
+p4 <- plots_errorI5K[[1]][[2]] + 
+  labs(title= NULL, x=NULL, caption = "10K observations") +
+  geom_point(size=0.5)+ theme(legend.position = "none")
+
+plots_errorI_all_trans3 <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Type I error comparison on transition Dementia-> Death (1 year)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+plots_errorI_all_trans1
+plots_errorI_all_trans3
+```
+
+
+ERROR TYPE I COMPARISON (3-6)
+```{r, warning=FALSE}
+p1 <- plots_errorI500[[3]][[1]] + 
+  labs(title =NULL, x=NULL, caption = "500 observations") +
+  geom_point(size=0.5) 
+p2 <- plots_errorI2K[[3]][[1]] + 
+  labs(title= NULL, x=NULL, caption = "2K observations") +
+  geom_point(size=0.5)
+p3 <- plots_errorI5K[[3]][[1]] + 
+  labs(title= NULL, x=NULL, caption = "5K observations") +
+  geom_point(size=0.5)
+p4 <- plots_errorI5K[[3]][[1]] + 
+  labs(title= NULL, x=NULL, caption = "10K observations") +
+  geom_point(size=0.5)
+
+plots_errorI_all_trans1 <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Type I error comparison on transition Dementia-free -> Dementia (3-6 years)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+p1 <- plots_errorI500[[3]][[2]] + 
+  labs(title =NULL, x=NULL, caption = "500 observations") +
+  geom_point(size=0.5) 
+p2 <- plots_errorI2K[[3]][[2]] + 
+  labs(title= NULL, x=NULL, caption = "2K observations") +
+  geom_point(size=0.5)+ theme(legend.position = "none")
+p3 <- plots_errorI5K[[3]][[2]] + 
+  labs(title= NULL, x=NULL, caption = "5K observations") +
+  geom_point(size=0.5)+ theme(legend.position = "none")
+p4 <- plots_errorI5K[[3]][[2]] + 
+  labs(title= NULL, x=NULL, caption = "10K observations") +
+  geom_point(size=0.5)+ theme(legend.position = "none")
+
+plots_errorI_all_trans3 <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Type I error comparison on transition Dementia-> Death (3-6 years)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+plots_errorI_all_trans1
+plots_errorI_all_trans3
+```
+
+
+POWER COMPARISON (1 year) 
+```{r warning=FALSE}
+p1 <- plots_power500[[1]] + 
+  labs(title =NULL, x=NULL, caption = "500 observations") +
+  geom_point(size=0.5)+ theme(legend.position = "none")
+p2 <- plots_power2K[[1]] + 
+  labs(title= NULL, x=NULL, caption = "2K observations") +
+  geom_point(size=0.5)
+p3 <- plots_power5K[[1]] + 
+  labs(title= NULL, x=NULL, caption = "5K observations") +
+  geom_point(size=0.5)+theme(legend.position = "none")
+p4 <- plots_power5K[[1]] + 
+  labs(title= NULL, x=NULL, caption = "10K observations") +
+  geom_point(size=0.5)+theme(legend.position = "none")
+
+plots_power_all_trans1 <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Power comparison on transition Dementia-free -> Dementia (1 year)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+p1 <- plots_power500[[2]] + 
+  labs(title =NULL, x=NULL, caption = "500 observations") +
+  geom_point(size=0.5)
+p2 <- plots_power2K[[2]] + 
+  labs(title= NULL, x=NULL, caption = "2K observations") +
+  geom_point(size=0.5)+ theme(legend.position = "none")
+p3 <- plots_power5K[[2]] + 
+  labs(title= NULL, x=NULL, caption = "5K observations") +
+  geom_point(size=0.5)
+p4 <- plots_power5K[[2]] + 
+  labs(title= NULL, x=NULL, caption = "10K observations") +
+  geom_point(size=0.5)
+
+plots_power_all_trans2 <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Power comparison on transition Dementia-free-> Death (1 year)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+p1 <- plots_power500[[3]] + 
+  labs(title =NULL, x=NULL, caption = "500 observations") +
+  geom_point(size=0.5)+ theme(legend.position = "none")
+p2 <- plots_power2K[[3]] + 
+  labs(title= NULL, x=NULL, caption = "2K observations") + theme(legend.position = "none")
+  geom_point(size=0.5)
+p3 <- plots_power5K[[3]] + 
+  labs(title= NULL, x=NULL, caption = "5K observations") +
+  geom_point(size=0.5)
+p4 <- plots_power5K[[3]] + 
+  labs(title= NULL, x=NULL, caption = "10K observations") +
+  geom_point(size=0.5)
+
+plots_power_all_trans3 <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Power comparison on transition Dementia-> Death (1 year)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+plots_power_all_trans1
+plots_power_all_trans2
+plots_power_all_trans3
+```
+
+
+POWER COMPARISON (3-6 years)
+```{r warning=FALSE}
+p1 <- plots_power500[[7]] + 
+  labs(title =NULL, x=NULL, caption = "500 observations") +
+  geom_point(size=0.5)+ theme(legend.position = "none")
+p2 <- plots_power2K[[7]] + 
+  labs(title= NULL, x=NULL, caption = "2K observations") +
+  geom_point(size=0.5)
+p3 <- plots_power5K[[7]] + 
+  labs(title= NULL, x=NULL, caption = "5K observations") +
+  geom_point(size=0.5)
+p4 <- plots_power5K[[7]] + 
+  labs(title= NULL, x=NULL, caption = "10K observations") +
+  geom_point(size=0.5)
+
+plots_power_all_trans1 <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Power comparison on transition Dementia-free -> Dementia (3-6 years)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+p1 <- plots_power500[[8]] + 
+  labs(title =NULL, x=NULL, caption = "500 observations") +
+  geom_point(size=0.5)
+p2 <- plots_power2K[[8]] + 
+  labs(title= NULL, x=NULL, caption = "2K observations") +
+  geom_point(size=0.5)+ theme(legend.position = "none")
+p3 <- plots_power5K[[8]] + 
+  labs(title= NULL, x=NULL, caption = "5K observations") +
+  geom_point(size=0.5)
+p4 <- plots_power5K[[8]] + 
+  labs(title= NULL, x=NULL, caption = "10K observations") +
+  geom_point(size=0.5)
+
+plots_power_all_trans2 <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Power comparison on transition Dementia-free-> Death (3-6 years)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+p1 <- plots_power500[[9]] + 
+  labs(title =NULL, x=NULL, caption = "500 observations") +
+  geom_point(size=0.5)+ theme(legend.position = "none")
+p2 <- plots_power2K[[9]] + 
+  labs(title= NULL, x=NULL, caption = "2K observations") + theme(legend.position = "none")
+  geom_point(size=0.5)
+p3 <- plots_power5K[[9]] + 
+  labs(title= NULL, x=NULL, caption = "5K observations") +
+  geom_point(size=0.5)
+p4 <- plots_power5K[[9]] + 
+  labs(title= NULL, x=NULL, caption = "10K observations") +
+  geom_point(size=0.5)
+
+plots_power_all_trans3 <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Power comparison on transition Dementia-> Death (3-6 years)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+plots_power_all_trans1
+plots_power_all_trans2
+plots_power_all_trans3
+```
+
+
+COEFFICIENT DISTRIBUTION (1 year)
+```{r warning=FALSE, message=FALSE}
+p1 <- plots_distr500[[1]][[1]] + 
+  labs(title =NULL, x=NULL, caption = "500 observations") 
+p2 <- plots_distr2K[[1]][[1]] + 
+  labs(title= NULL, x=NULL, caption = "2K observations") 
+p3 <- plots_distr5K[[1]][[1]] + 
+  labs(title= NULL, x=NULL, caption = "5K observations") 
+p4 <- plots_distr10K[[1]][[1]] + 
+  labs(title= NULL, x=NULL, caption = "10K observations") 
+
+plots_distr_all_trans1 <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Coefficients distribution comparison on transition Dementia-free -> Dementia (1 year)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+p1 <- plots_distr500[[1]][[2]] + 
+  labs(title =NULL, x=NULL, caption = "500 observations") 
+p2 <- plots_distr2K[[1]][[2]] + 
+  labs(title= NULL, x=NULL, caption = "2K observations") 
+p3 <- plots_distr5K[[1]][[2]] + 
+  labs(title= NULL, x=NULL, caption = "5K observations") 
+p4 <- plots_distr10K[[1]][[2]] + 
+  labs(title= NULL, x=NULL, caption = "10K observations") 
+
+plots_distr_all_trans2 <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Coefficients distribution comparison on transition Dementia-free-> Death (1 year)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+p1 <- plots_distr500[[1]][[3]] + 
+  labs(title =NULL, x=NULL, caption = "500 observations") 
+p2 <- plots_distr2K[[1]][[3]] + 
+  labs(title= NULL, x=NULL, caption = "2K observations") 
+p3 <- plots_distr5K[[1]][[3]] + 
+  labs(title= NULL, x=NULL, caption = "5K observations") 
+p4 <- plots_distr10K[[1]][[3]] + 
+  labs(title= NULL, x=NULL, caption = "10K observations") 
+
+plots_distr_all_trans3 <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Coefficients distribution comparison on transition Dementia-> Death (1 year)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+plots_distr_all_trans1
+plots_distr_all_trans2
+plots_distr_all_trans3
+```
+
+
+COEFFICIENT DISTRIBUTION (3-6 years)
+```{r warning=FALSE, message=FALSE}
+p1 <- plots_distr500[[3]][[1]] + 
+  labs(title =NULL, x=NULL, caption = "500 observations") 
+p2 <- plots_distr2K[[3]][[1]] + 
+  labs(title= NULL, x=NULL, caption = "2K observations") 
+p3 <- plots_distr5K[[3]][[1]] + 
+  labs(title= NULL, x=NULL, caption = "5K observations") 
+p4 <- plots_distr10K[[3]][[1]] + 
+  labs(title= NULL, x=NULL, caption = "10K observations") 
+
+plots_distr_all_trans1 <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Coefficients distribution comparison on transition Dementia-free -> Dementia (3-6 years)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+p1 <- plots_distr500[[3]][[2]] + 
+  labs(title =NULL, x=NULL, caption = "500 observations") 
+p2 <- plots_distr2K[[3]][[2]] + 
+  labs(title= NULL, x=NULL, caption = "2K observations") 
+p3 <- plots_distr5K[[3]][[2]] + 
+  labs(title= NULL, x=NULL, caption = "5K observations") 
+p4 <- plots_distr10K[[3]][[2]] + 
+  labs(title= NULL, x=NULL, caption = "10K observations") 
+
+plots_distr_all_trans2 <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Coefficients distribution comparison on transition Dementia-free-> Death (3-6 years)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+p1 <- plots_distr500[[3]][[3]] + 
+  labs(title =NULL, x=NULL, caption = "500 observations") 
+p2 <- plots_distr2K[[3]][[3]] + 
+  labs(title= NULL, x=NULL, caption = "2K observations") 
+p3 <- plots_distr5K[[3]][[3]] + 
+  labs(title= NULL, x=NULL, caption = "5K observations") 
+p4 <- plots_distr10K[[3]][[3]] + 
+  labs(title= NULL, x=NULL, caption = "10K observations") 
+
+plots_distr_all_trans3 <- ( p1+p2) / (p3+p4) +
+                 plot_layout(guides = "collect") + 
+  plot_annotation(title = "Coefficients distribution comparison on transition Dementia-> Death (3-6 years)",
+    theme = theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)))
+
+plots_distr_all_trans1
+plots_distr_all_trans2
+plots_distr_all_trans3
+```
+
+
+RELATIVE BIAS OF TIME SPENT IN EACH STATE (3-6 years)
+```{r}
+df_subset500 <- plfe500$data[plfe500$data$scenario == "3-6 years observation scheme", ]
+df_subset2K <- plfe2K$data[plfe2K$data$scenario == "3-6 years observation scheme", ]
+df_subset5K <- plfe5K$data[plfe5K$data$scenario == "3-6 years observation scheme", ]
+df_subset10K <- plfe10K$data[plfe10K$data$scenario == "3-6 years observation scheme", ]
+
+ df_all <- rbind(
+      transform(df_subset500, size = "500 observations"),
+      transform(df_subset2K, size = "2K observations"),
+      transform(df_subset5K, size = "5K observations"),
+      transform(df_subset10K, size = "10K observations")
+    )
+ df_all$size <- factor(df_all$size, levels = c("500 observations", "2K observations", "5K observations", "10K observations"))
+df_all <- df_all[order(df_all$size), ]
+
+  ggplot(df_all, aes(x = model, y = lfe_mean, fill = as.factor(dem))) +
+      geom_bar(stat = "identity", position = position_dodge(width = 0.7), width = 0.4) +
+      geom_errorbar(aes(ymin = lfe_lower_ci, ymax = lfe_upper_ci),
+                    position = position_dodge(width = 0.7), width = 0.25) +
+      labs(
+        title = "Relative Bias of Time Spent in State",
+        x = NULL,
+        y = "Relative Bias (%)",
+        fill = NULL
+      ) +
+      scale_y_continuous(limits = c(-1, 0.7)) +
+      scale_fill_manual(values = c("0" = "skyblue", "1" = "purple"),
+                        labels = c("Dementia-free", "Dementia")) +
+      theme_minimal() +
+      theme(
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(size = 12, hjust = 0.5),
+        legend.position = "top", 
+        legend.margin = margin(t = 10),  
+        panel.spacing = unit(1, "lines") 
+      ) +
+      facet_wrap(~size, ncol = 2)
+    
+```
+
