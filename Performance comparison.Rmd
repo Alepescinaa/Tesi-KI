@@ -295,9 +295,9 @@ df2 <- df2 %>%
     power_category = factor(power_category, levels = c("Low (<5%)", "Moderate (5%-10%)", "High (>10%)"))
   )
 
-df_all <- rbind(df1,df2)
 
-ggplot(df, aes(x = model, y = power_category, color = scenario)) +
+
+ggplot(df1, aes(x = model, y = power_category, color = scenario)) +
   geom_point(size = 4, position = position_dodge(width = 0.7)) +
   scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)+
   labs(
@@ -316,10 +316,12 @@ ggplot(df, aes(x = model, y = power_category, color = scenario)) +
 ```
 
 ```{r}
-df_all$scenario <- factor(df_all$scenario, levels = c("irregular", "3-6 years", "3 years", "1 year"))
+df1$scenario <- factor(df1$scenario, levels = c("irregular", "3-6 years", "3 years", "1 year"))
+df2$scenario <- factor(df2$scenario, levels = c("irregular", "3-6 years", "3 years", "1 year"))
 
-ggplot(df_all, aes(x = model, y = power_category, fill = power_category), group = interaction(model, covariate)) +
-  geom_bar(stat = "identity", color = "black", aes(y=1)) +  # Aggiungi il bordo nero per le barre
+
+plot1 <- ggplot(df1, aes(x = model, y = power_category, fill = power_category,  group = interaction(model, covariate))) +
+  geom_bar(stat = "identity", color = "black", position = position_dodge(), aes(y=1)) +  # Aggiungi il bordo nero per le barre
  scale_fill_manual(
     values = c(
       "Low (<5%)" = "#8BC34A",  # Muted olive green
@@ -331,20 +333,74 @@ ggplot(df_all, aes(x = model, y = power_category, fill = power_category), group 
 facet_wrap(~ scenario, ncol = 1, strip.position = "left") + 
   labs(
     title = "Type I Error by Model and Observation Scheme",
+    subtitle = "Transition from Dementia-free to Dementia",
+    x = "Model",
+    y = "Observation scheme",
+    fill = "Category"
+  ) +
+  theme_minimal() +
+ theme(
+    plot.title = element_text(size = 18, face = "bold", hjust = 0.5, margin = margin(b = 15)),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, margin = margin(b = 15)),
+    axis.text.x = element_text(size = 10, angle = 0, hjust = 1, color = "black"),
+    axis.text.y = element_blank(),
+    axis.title.x = element_text(size = 14, face = "bold"),
+    axis.title.y = element_text(size = 14, face = "bold"),
+    strip.text.y = element_text(size = 12, angle = 0, face = "italic", hjust = 1, color = "black"),
+    strip.text.x = element_text(size = 12, face = "italic", color = "black"),
+    legend.position = element_blank(),
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    legend.key.size = unit(1, "lines"),  # Increase legend key size
+    plot.margin = margin(20, 10, 20, 10)  # Add margin around the plot for spacing
+  )
+
+
+plot2 <- ggplot(df2, aes(x = model, y = power_category, fill = power_category,  group = interaction(model, covariate))) +
+  geom_bar(stat = "identity", color = "black", position = position_dodge(), aes(y=1)) +  # Aggiungi il bordo nero per le barre
+ scale_fill_manual(
+    values = c(
+      "Low (<5%)" = "#8BC34A",  # Muted olive green
+      "Moderate (5%-10%)" = "#FFEB3B",  # Warm golden yellow
+      "High (>10%)" = "#E57373"  # Soft coral red
+    )
+  ) +
+  
+facet_wrap(~ scenario, ncol = 1, strip.position = "left") + 
+  labs(
+    title = "Type I Error by Model and Observation Scheme",
+    subtitle = "Transition from Dementia to Death",
     x = "Model",
     y = "Observation scheme",
     fill = "Category"
   ) +
   theme_minimal() +
   theme(
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
-    axis.text.x = element_text(size = 12, angle = 45, hjust = 1),
+    plot.title = element_text(size = 18, face = "bold", hjust = 0.5, margin = margin(b = 15)),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, margin = margin(b = 15)),
+    axis.text.x = element_text(size = 10, angle = 0, hjust = 1, color = "black"),
     axis.text.y = element_blank(),
-    legend.position = "top"
+    axis.title.x = element_text(size = 14, face = "bold"),
+    axis.title.y = element_text(size = 14, face = "bold"),
+    strip.text.y = element_text(size = 12, angle = 0, face = "italic", hjust = 1, color = "black"),
+    strip.text.x = element_text(size = 12, face = "italic", color = "black"),
+    legend.position = element_blank(),
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    legend.key.size = unit(1, "lines"),  # Increase legend key size
+    plot.margin = margin(20, 10, 20, 10)  # Add margin around the plot for spacing
   )
 
+plot1 <- plot1 + theme(legend.position = "none", plot.title = element_blank())  
+plot2 <- plot2 + theme(legend.position = "right", plot.title = element_blank())  
 
+combined_plot <- (plot1 | plot2) +plot_layout(guides = 'collect')
 
+combined_plot & 
+  plot_annotation( title = "Type I Error by Model and Observation Scheme",
+                   theme = theme(plot.title = element_text(size = 18, face = "bold", hjust = 0.5)))
+
+ 
 ```
 
 
@@ -388,6 +444,121 @@ power_500_trans1
 power_500_trans2
 power_500_trans3
 ```
+```{r}
+p1 <- plots_power500[[1]]$data
+p2 <- plots_power500[[4]]$data
+p3 <- plots_power500[[7]]$data
+p4 <- plots_power500[[10]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years"
+p3$scenario <- "3-6 years"
+p4$scenario <- "irregular"
+
+df1 <- rbind(p1,p2,p3,p4) #dementia-free to dem
+df1 <- df1 %>%
+  mutate(
+    power_category = factor(power_category, levels = c("Low (<50%)", "Moderate (50%-80%)", "High (>80%)"))
+  )
+
+p1 <- plots_power500[[2]]$data
+p2 <- plots_power500[[5]]$data
+p3 <- plots_power500[[8]]$data
+p4 <- plots_power500[[11]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years"
+p3$scenario <- "3-6 years"
+p4$scenario <- "irregular"
+
+df2 <- rbind(p1,p2,p3,p4) #dementia-free to death
+df2 <- df2 %>%
+  mutate(
+    power_category = factor(power_category, levels = c("Low (<50%)", "Moderate (50%-80%)", "High (>80%)"))
+  )
+
+p1 <- plots_power500[[3]]$data
+p2 <- plots_power500[[6]]$data
+p3 <- plots_power500[[9]]$data
+p4 <- plots_power500[[12]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years"
+p3$scenario <- "3-6 years"
+p4$scenario <- "irregular"
+
+df3 <- rbind(p1,p2,p3,p4) #dementia to death
+df3 <- df3 %>%
+  mutate(
+    power_category = factor(power_category, levels = c("Low (<50%)", "Moderate (50%-80%)", "High (>80%)"))
+  )
+
+df1$scenario <- factor(df1$scenario, levels = c("irregular", "3-6 years", "3 years", "1 year"))
+df2$scenario <- factor(df2$scenario, levels = c("irregular", "3-6 years", "3 years", "1 year"))
+df3$scenario <- factor(df3$scenario, levels = c("irregular", "3-6 years", "3 years", "1 year"))
+
+latex_labels <- c(
+  "beta[1]" = "beta[1]",
+  "beta[2]" = "beta[2]",
+  "beta[3]" = "beta[3]"
+)
+
+create_power_plot <- function(data, subtitle){
+  ggplot(data, aes(x = model, y = power_category, fill = power_category)) + 
+  geom_bar(stat = "identity", color = "black", position = position_dodge(), aes(y = 1)) +  # Add bar borders
+  scale_fill_manual(
+    values = c(
+      "Low (<50%)" = "#E57373",        
+      "Moderate (50%-80%)" = "#FFEB3B",       
+      "High (>80%)" =  "#8BC34A"      
+    )
+  ) + 
+  facet_grid(
+    scenario ~ covariate, 
+    labeller = labeller(covariate = as_labeller(latex_labels, label_parsed)),
+    switch ="y"
+  ) + 
+  labs(
+    title = "Power by Model and Observation Scheme",
+    subtitle = subtitle,
+    x = "Model",
+    y = "Observation scheme",
+    fill = "Category"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 18, face = "bold", hjust = 0.5, margin = margin(b = 15)),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, margin = margin(b = 15)),
+    axis.text.x = element_text(size = 10, angle = 0, hjust = 1, color = "black"),
+    axis.text.y = element_blank(),
+    axis.title.x = element_text(size = 14, face = "bold"),
+    axis.title.y = element_text(size = 14, face = "bold"),
+    strip.text.y = element_text(size = 12, angle = 0, face = "italic", hjust = 1, color = "black"),
+    strip.text.x = element_text(size = 12, face = "italic", color = "black"),
+    legend.position = element_blank(),
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    legend.key.size = unit(1, "lines"),  # Increase legend key size
+    plot.margin = margin(20, 10, 20, 10)  # Add margin around the plot for spacing
+  )
+}
+
+plot1 <- create_power_plot(df1, "Transition from Dementia-free status to Dementia") 
+plot2 <- create_power_plot(df2, "Transition from Dementia-free status to Death")
+plot3 <- create_power_plot(df3, "Transition from Dementia status to Death")
+
+plot1 <- plot1 + theme(legend.position = "none", plot.title = element_blank())  
+plot3 <- plot3 + theme(legend.position = "none", plot.title = element_blank())  
+plot2 <- plot2 + theme(legend.position = "right", plot.title = element_blank())  
+
+
+combined_plot <- (plot1 | plot2 | plot3) +plot_layout(guides = 'collect')
+
+combined_plot & 
+  plot_annotation( title = "Power by Model and Observation Scheme",
+                   theme = theme(plot.title = element_text(size = 18, face = "bold", hjust = 0.5)))
+```
+
 
 COEFFICIENTS DISTRIBUTION 500
 ```{r, warning=FALSE, message=FALSE} 
@@ -409,8 +580,8 @@ p4 <- plots_distr500[[4]][[1]] +
 
 distr_500_trans1 <- (p1 + p2) / (p3 + p4) + 
   plot_layout(guides = "collect") + plot_annotation(
-  title ="Coefficients density distribution for transition Dementia-free -> Dementia",  
-  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  title ="Coefficients density distribution for transition Dementia-free to Dementia",  
+  theme = theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5)))+  
   plot_layout(guides = "collect")
 
 p1 <- plots_distr500[[1]][[2]] + 
@@ -431,8 +602,8 @@ p4 <- plots_distr500[[4]][[2]] +
 
 distr_500_trans2 <- (p1 + p2) / (p3 + p4) + 
   plot_layout(guides = "collect") + plot_annotation(
-  title ="Coefficients density distribution for transition Dementia-free -> Death",  
-  theme = theme(plot.title = element_text(size = 15, hjust = 0.5)))+  
+  title ="Coefficients density distribution for transition Dementia-free to Death",  
+  theme = theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5)))+  
   plot_layout(guides = "collect")
 
 p1 <- plots_distr500[[1]][[3]] + 
@@ -452,17 +623,79 @@ p4 <- plots_distr500[[4]][[3]] +
   theme(axis.title.x = element_text(size = 8))
 distr_500_trans3 <- (p1 + p2) / (p3 + p4) + 
   plot_layout(guides = "collect") + plot_annotation(
-  title ="Coefficients density distribution for transition Dementia -> Death",  
-  theme = theme(plot.title = element_text(size = 14, hjust = 0.5)))+  
+  title ="Coefficients density distribution for transition Dementia to Death",  
+  theme = theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5)))+ 
   plot_layout(guides = "collect")
   
 distr_500_trans1
 distr_500_trans2
 distr_500_trans3
 ```
-RELATIVE BIAS OF TIME SPENT IN EACH STATE
 
-```{r}
+
+```{r,warning=FALSE, message=FALSE} 
+
+create_distr_plot <- function(plot, caption_text) {
+  plot + 
+    labs(
+      title = NULL, 
+      caption = caption_text  
+    ) + 
+    theme(
+      axis.title.x = element_text(size = 8, face = "bold"), 
+      axis.text.x = element_text(size = 8), 
+      axis.text.y = element_text(size = 7), 
+      plot.caption = element_text(size = 9, hjust = 0.5, vjust = 0.5, face = "bold"),
+      plot.margin = margin(10, 10, 10, 10)  
+    )
+}
+
+p1 <- create_distr_plot(plots_distr500[[1]][[1]], "1 year observation scheme")
+p2 <- create_distr_plot(plots_distr500[[2]][[1]], "3 years observation scheme")
+p3 <- create_distr_plot(plots_distr500[[3]][[1]], "3-6 years observation scheme")
+p4 <- create_distr_plot(plots_distr500[[4]][[1]], "irregular observation scheme")
+
+distr_500_trans1 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + 
+  plot_annotation(
+    title = "Coefficients Density Distribution for Transition Dementia-free to Dementia",
+    theme = theme(plot.title = element_text(size = 13, face = "bold", hjust = 0.5)) 
+  )
+
+#
+p1 <- create_distr_plot(plots_distr500[[1]][[2]], "1 year observation scheme")
+p2 <- create_distr_plot(plots_distr500[[2]][[2]], "3 years observation scheme")
+p3 <- create_distr_plot(plots_distr500[[3]][[2]], "3-6 years observation scheme")
+p4 <- create_distr_plot(plots_distr500[[4]][[2]], "irregular observation scheme")
+
+# Combine the plots for transition Dementia-free -> Death
+distr_500_trans2 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + 
+  plot_annotation(
+    title = "Coefficients Density Distribution for Transition Dementia-free to Death",
+    theme = theme(plot.title = element_text(size = 13, face = "bold", hjust = 0.5))  
+  )
+
+
+p1 <- create_distr_plot(plots_distr500[[1]][[3]], "1 year observation scheme")
+p2 <- create_distr_plot(plots_distr500[[2]][[3]], "3 years observation scheme")
+p3 <- create_distr_plot(plots_distr500[[3]][[3]], "3-6 years observation scheme")
+p4 <- create_distr_plot(plots_distr500[[4]][[3]], "irregular observation scheme")
+
+# Combine the plots for transition Dementia to Death
+distr_500_trans3 <- (p1 + p2) / (p3 + p4) + 
+  plot_layout(guides = "collect") + 
+  plot_annotation(
+    title = "Coefficients Density Distribution for Transition Dementia to Death",
+    theme = theme(plot.title = element_text(size = 13, face = "bold", hjust = 0.5))  
+  )
+
+
+distr_500_trans1 
+distr_500_trans2 
+distr_500_trans3 
+ 
+
 
 ```
 
