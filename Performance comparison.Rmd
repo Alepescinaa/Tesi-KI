@@ -48,6 +48,10 @@ remove(plots_power)
 
 plots_distr500 <- plots_distr
 remove(plots_distr)
+
+plfe500 <- plfe
+remove(plfe)
+
 ```
 
 
@@ -76,6 +80,11 @@ remove(plots_power)
 
 plots_distr2K <- plots_distr
 remove(plots_distr)
+
+plfe2K <- plfe
+remove(plfe)
+
+
 ```
 
 
@@ -104,6 +113,10 @@ remove(plots_power)
 
 plots_distr5K <- plots_distr
 remove(plots_distr)
+
+plfe5K <- plfe
+remove(plfe)
+
 ```
 
 
@@ -132,6 +145,10 @@ remove(plots_power)
 
 plots_distr10K <- plots_distr
 remove(plots_distr)
+
+plfe10K <- plfe
+remove(plfe)
+
 ```
 
 ### Plots 500 observations
@@ -142,12 +159,68 @@ p1 <- plots_bias500[[1]] + labs(title= "1 year observation scheme")
 p2 <- plots_bias500[[3]] + labs(title= "3 years observation scheme")
 p3 <- plots_bias500[[5]] + labs(title= "3-6 years observation scheme")
 p4 <- plots_bias500[[7]] + labs(title= "irregular observation scheme")
-
-bias_500 <- (p1+p2) / (p3+p4) + plot_layout(guides = "collect") 
-bias_500 & 
+bias_500 <- (p1+p2) / (p3+p4) + plot_layout(guides = "collect")
+bias_500 &
   ylim(0, 4)
 
+
 ```
+
+```{r}
+
+p1 <- plots_bias500[[1]]$data
+p2 <- plots_bias500[[3]]$data
+p3 <- plots_bias500[[5]]$data
+p4 <- plots_bias500[[7]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df_all <- rbind(p1,p2,p3,p4)
+latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1" = "beta[1]",
+    "cov2" = "beta[2]",
+    "cov3" = "beta[3]"
+  )
+
+
+ ggplot(data = df_all, aes(x = model, y = bias_mean, color = scenario)) + 
+  geom_point(size = 3, shape = 19) + 
+  
+  facet_grid(parameter ~ transition, scales = "free", 
+             labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
+                                 transition = as_labeller(latex_labels))) + 
+  
+  labs(title = "Bias of the estimates", 
+       x = "Model", 
+       y = "Bias",
+       color = "Observation Scheme") + 
+  
+  geom_line(aes(group = scenario), size = 1, linetype = "solid", alpha = 0.8) + 
+  
+  #geom_errorbar(aes(ymin = bias_lower, ymax = bias_upper), width = 0.3, color = "black") + 
+
+  theme_bw() + 
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12), 
+        plot.title = element_text(size = 14, hjust = 0.5),
+        strip.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        panel.spacing = unit(1, "lines"),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 14)) + 
+  
+  scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)
+
+```
+
+
 
 COVERAGE 500
 ```{r, warning=FALSE}
@@ -191,6 +264,89 @@ typeIerror_500_trans1
 typeIerror_500_trans3
 
 ```
+```{r}
+p1 <- plots_errorI500[[1]][[1]]$data
+p1$scenario <- "1 year"
+p2 <- plots_errorI500[[2]][[1]]$data
+p2$scenario <- "3 years"
+p3 <- plots_errorI500[[3]][[1]]$data
+p3$scenario <- "3-6 years"
+p4 <- plots_errorI500[[4]][[1]]$data
+p4$scenario <- "irregular"
+
+df1 <- rbind(p1,p2,p3,p4)
+df1 <- df1 %>%
+  mutate(
+    power_category = factor(power_category, levels = c("Low (<5%)", "Moderate (5%-10%)", "High (>10%)"))
+  )
+
+p1 <- plots_errorI500[[1]][[2]]$data
+p1$scenario <- "1 year"
+p2 <- plots_errorI500[[2]][[2]]$data
+p2$scenario <- "3 years"
+p3 <- plots_errorI500[[3]][[2]]$data
+p3$scenario <- "3-6 years"
+p4 <- plots_errorI500[[4]][[2]]$data
+p4$scenario <- "irregular"
+
+df2 <- rbind(p1,p2,p3,p4)
+df2 <- df2 %>%
+  mutate(
+    power_category = factor(power_category, levels = c("Low (<5%)", "Moderate (5%-10%)", "High (>10%)"))
+  )
+
+df_all <- rbind(df1,df2)
+
+ggplot(df, aes(x = model, y = power_category, color = scenario)) +
+  geom_point(size = 4, position = position_dodge(width = 0.7)) +
+  scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)+
+  labs(
+    title = "Error type I by Observation scheme",
+    x = "Model",
+    y = NULL,
+    color = "Observation scheme",
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    axis.text.x = element_text(size = 12, angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 12),
+    legend.position = "top"
+  )
+```
+
+```{r}
+df_all$scenario <- factor(df_all$scenario, levels = c("irregular", "3-6 years", "3 years", "1 year"))
+
+ggplot(df_all, aes(x = model, y = power_category, fill = power_category), group = interaction(model, covariate)) +
+  geom_bar(stat = "identity", color = "black", aes(y=1)) +  # Aggiungi il bordo nero per le barre
+ scale_fill_manual(
+    values = c(
+      "Low (<5%)" = "#8BC34A",  # Muted olive green
+      "Moderate (5%-10%)" = "#FFEB3B",  # Warm golden yellow
+      "High (>10%)" = "#E57373"  # Soft coral red
+    )
+  ) +
+  
+facet_wrap(~ scenario, ncol = 1, strip.position = "left") + 
+  labs(
+    title = "Type I Error by Model and Observation Scheme",
+    x = "Model",
+    y = "Observation scheme",
+    fill = "Category"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    axis.text.x = element_text(size = 12, angle = 45, hjust = 1),
+    axis.text.y = element_blank(),
+    legend.position = "top"
+  )
+
+
+
+```
+
 
 POWER 500
 
@@ -304,6 +460,13 @@ distr_500_trans1
 distr_500_trans2
 distr_500_trans3
 ```
+RELATIVE BIAS OF TIME SPENT IN EACH STATE
+
+```{r}
+
+```
+
+
 
 ### Plots 2K observations
 
@@ -319,6 +482,60 @@ plots_bias_2K <- (p1+p2) /
                  plot_layout(guides = "collect")
 plots_bias_2K & 
   ylim(0, 2)
+```
+
+```{r}
+
+p1 <- plots_bias2K[[1]]$data
+p2 <- plots_bias2K[[3]]$data
+p3 <- plots_bias2K[[5]]$data
+p4 <- plots_bias2K[[7]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df_all <- rbind(p1,p2,p3,p4)
+latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1" = "beta[1]",
+    "cov2" = "beta[2]",
+    "cov3" = "beta[3]"
+  )
+
+
+ ggplot(data = df_all, aes(x = model, y = bias_mean, color = scenario)) + 
+  geom_point(size = 3, shape = 19) + 
+  
+  facet_grid(parameter ~ transition, scales = "free", 
+             labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
+                                 transition = as_labeller(latex_labels))) + 
+  
+  labs(title = "Bias of the estimates", 
+       x = "Model", 
+       y = "Bias",
+       color = "Observation Scheme") + 
+  
+  geom_line(aes(group = scenario), size = 1, linetype = "solid", alpha = 0.8) + 
+  
+  #geom_errorbar(aes(ymin = bias_lower, ymax = bias_upper), width = 0.3, color = "black") + 
+
+  theme_bw() + 
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12), 
+        plot.title = element_text(size = 14, hjust = 0.5),
+        strip.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        panel.spacing = unit(1, "lines"),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 14)) + 
+  
+  scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)
+
 ```
 
 COVERAGE 2K
@@ -402,6 +619,7 @@ power_2K_trans1
 power_2K_trans2
 power_2K_trans3
 ```
+
 COEFFICIENTS DISTRIBUTION 2K
 ```{r, warning=FALSE, message=FALSE} 
 p1 <- plots_distr2K[[1]][[1]] + 
@@ -474,6 +692,13 @@ distr_2K_trans2
 distr_2K_trans3
 ```
 
+
+RELATIVE BIAS OF TIME SPENT IN EACH STATE
+
+```{r}
+plfe2K
+```
+
 ### Plots 5K observations
 
 BIAS_5K
@@ -488,6 +713,60 @@ plots_bias_5K <- (p1+p2) /
                  plot_layout(guides = "collect")
 plots_bias_5K & 
   ylim(0, 1)
+```
+
+```{r}
+
+p1 <- plots_bias5K[[1]]$data
+p2 <- plots_bias5K[[3]]$data
+p3 <- plots_bias5K[[5]]$data
+p4 <- plots_bias5K[[7]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df_all <- rbind(p1,p2,p3,p4)
+latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1" = "beta[1]",
+    "cov2" = "beta[2]",
+    "cov3" = "beta[3]"
+  )
+
+
+ ggplot(data = df_all, aes(x = model, y = bias_mean, color = scenario)) + 
+  geom_point(size = 3, shape = 19) + 
+  
+  facet_grid(parameter ~ transition, scales = "free", 
+             labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
+                                 transition = as_labeller(latex_labels))) + 
+  
+  labs(title = "Bias of the estimates", 
+       x = "Model", 
+       y = "Bias",
+       color = "Observation Scheme") + 
+  
+  geom_line(aes(group = scenario), size = 1, linetype = "solid", alpha = 0.8) + 
+  
+  #geom_errorbar(aes(ymin = bias_lower, ymax = bias_upper), width = 0.3, color = "black") + 
+
+  theme_bw() + 
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12), 
+        plot.title = element_text(size = 14, hjust = 0.5),
+        strip.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        panel.spacing = unit(1, "lines"),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 14)) + 
+  
+  scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)
+
 ```
 
 COVERAGE 5K
@@ -646,6 +925,12 @@ distr_5K_trans2
 distr_5K_trans3
 ```
 
+RELATIVE BIAS OF TIME SPENT IN EACH STATE
+```{r}
+plfe5K
+```
+
+
 ### Plots 10K observations
 
 BIAS_10K
@@ -662,6 +947,60 @@ plots_bias_10K &
   ylim(0, 1)
 ```
 
+
+```{r}
+
+p1 <- plots_bias10K[[1]]$data
+p2 <- plots_bias10K[[3]]$data
+p3 <- plots_bias10K[[5]]$data
+p4 <- plots_bias10K[[7]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df_all <- rbind(p1,p2,p3,p4)
+latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1" = "beta[1]",
+    "cov2" = "beta[2]",
+    "cov3" = "beta[3]"
+  )
+
+
+ ggplot(data = df_all, aes(x = model, y = bias_mean, color = scenario)) + 
+  geom_point(size = 3, shape = 19) + 
+  
+  facet_grid(parameter ~ transition, scales = "free", 
+             labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
+                                 transition = as_labeller(latex_labels))) + 
+  
+  labs(title = "Bias of the estimates", 
+       x = "Model", 
+       y = "Bias",
+       color = "Observation Scheme") + 
+  
+  geom_line(aes(group = scenario), size = 1, linetype = "solid", alpha = 0.8) + 
+  
+  #geom_errorbar(aes(ymin = bias_lower, ymax = bias_upper), width = 0.3, color = "black") + 
+
+  theme_bw() + 
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12), 
+        plot.title = element_text(size = 14, hjust = 0.5),
+        strip.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        panel.spacing = unit(1, "lines"),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 14)) + 
+  
+  scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)
+
+```
 COVERAGE 10K
 ```{r, warning=FALSE}
 
@@ -748,6 +1087,13 @@ power_10K_trans2
 power_10K_trans3
 ```
 
+
+RELATIVE BIAS OF TIME SPENT IN EACH STATE
+
+```{r}
+plfe10K
+```
+
 ### Comparing performances for different samples sizes for frequent and sporadic visits
 
 
@@ -793,7 +1139,7 @@ conv_long <- conv_long %>%
 
 ggplot(conv_long, aes(x = scheme, y = model, fill = convergence)) +
   geom_tile(color = "white") +
-  geom_text(aes(label = round(convergence, 1)), color = "black", size = 3) +
+  #geom_text(aes(label = round(convergence, 1)), color = "black", size = 3) +
   facet_wrap(~sample_size) +
   scale_fill_gradient(low = "white", high = "blue", name = "Percentage (%)") +
   labs(
@@ -801,9 +1147,12 @@ ggplot(conv_long, aes(x = scheme, y = model, fill = convergence)) +
     x = "Sample Size",
     y = "Model"
   ) +
-  theme_minimal()
-
+  theme_minimal()+
+   theme(
+    plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
+    legend.position = "top")
 ```
+
 
 
 COMPUTATIONAL TIME
@@ -822,26 +1171,36 @@ mean_ct_all <- mean_ct_all%>%
                names_to = "model",
                values_to = "time")
 
-ggplot(mean_ct_all, aes(x = sample_size, y = time, color = model, group = model)) +
-  geom_line(size = 1) +
-  geom_point(size = 2) +
-  facet_wrap(~ scheme) +
-  scale_x_discrete(labels = c("500", "2K", "5K", "10K")) +  
+ggplot(mean_ct_all, aes(x = factor(sample_size, labels = c("500", "2K", "5K", "10K")), 
+                        y = time, color = model, group = model)) +
+  geom_line(size = 1.2, alpha = 0.7) +
+  geom_point(size = 3, alpha = 0.7)+
+
+  facet_wrap(~ scheme, ncol = 2, scales = "fixed") + 
   scale_color_viridis_d() +
   labs(
-    title = "Trend of Average Computational Time Across sample sizes and observation schemes",
+    title = "Trend of Average Computational Time Across Sample Sizes and Observation Schemes",
     x = "Sample Size",
     y = "Time (s)",
     color = "Model"
   ) +
-  theme_minimal() +
+  theme_minimal(base_size = 14) + 
   theme(
-    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
-    axis.text.x = element_text(angle = 45, hjust = 1)
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  
+  
+    axis.title = element_text(size = 14, face = "bold"), 
+    axis.text = element_text(size = 12),  
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    legend.position = "top", 
+    legend.title = element_text(size = 12, face = "bold"),  
+    legend.text = element_text(size = 11),  
+    panel.grid.major = element_line(color = "gray80", size = 0.5),  
+    panel.grid.minor = element_blank()  
   )
 
 
 ```
+
 ```{r}
 disegna_scatter <- function(t, c, n, m) {
 
@@ -956,6 +1315,83 @@ plots_bias_all <- ( p1+p2) / (p3+p4) +
 
 plots_bias_all & 
   ylim(0, 3)
+```
+```{r}
+
+df_scenario <- function(scenario,title){
+  p1 <- plots_bias500[[scenario]]$data
+  p2 <- plots_bias2K[[scenario]]$data
+  p3 <- plots_bias5K[[scenario]]$data
+  p4 <- plots_bias10K[[scenario]]$data
+  
+  
+  p1$size <- "500 observations"
+  p2$size <- "2K observations"
+  p3$size <- "5K observations"
+  p4$size <- "10K observations"
+  
+  df_all <- rbind(p1,p2,p3,p4)
+  df_all$size <- factor(df_all$size, levels = c("500 observations", "2K observations", "5K observations", "10K observations"))
+  df_all <- df_all[order(df_all$size), ]
+  df_all$scenario <- title
+  return(df_all)
+}
+
+df_all1 <- df_scenario(1,"1 year")
+df_all2 <- df_scenario(3,"3 years")
+df_all3 <- df_scenario(5,"3-6 years")
+df_all4 <- df_scenario(7,"irregular")
+
+create_plot <- function(df){
+  latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1" = "beta[1]",
+    "cov2" = "beta[2]",
+    "cov3" = "beta[3]"
+  )
+  ggplot(data = df, aes(x = model, y = bias_mean, color = size)) + 
+  geom_point(size = 3, shape = 19) + 
+  
+  facet_grid(parameter ~ transition, scales = "free", 
+             labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
+                                 transition = as_labeller(latex_labels)),) + 
+  
+  labs(title = NULL, 
+       x = NULL, 
+       y = NULL) + 
+  
+  geom_line(aes(group = size), size = 1, linetype = "solid", alpha = 0.8) + 
+  theme_bw() + 
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12), 
+        plot.title = element_text(size = 14, hjust = 0.5),
+        strip.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        panel.spacing = unit(1, "lines"),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 14)) + 
+  
+  scale_color_viridis_d(option = "C", begin = 0.2, end = 0.8)
+  
+}
+
+plot1 <- create_plot(df_all1)+labs(caption = "1 year observation scheme")
+plot2 <- create_plot(df_all2)+labs(caption = "3 years observation scheme")
+plot3 <- create_plot(df_all3)+labs(caption = "3-6 years observation scheme")
+plot4 <- create_plot(df_all4)+labs(caption = "irregular observation scheme")
+
+ ( plot1+plot2) / (plot3+plot4) + plot_layout(guides = "collect")+
+  plot_annotation(title = "Bias of Estimates")& 
+  theme(legend.position = "top", 
+        legend.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        plot.title = element_text(size = 14, hjust = 0.5)) 
+ # ylim(0,3)
+  
+
 ```
 
 
@@ -1317,3 +1753,46 @@ plots_distr_all_trans1
 plots_distr_all_trans2
 plots_distr_all_trans3
 ```
+
+
+RELATIVE BIAS OF TIME SPENT IN EACH STATE (3-6 years)
+```{r}
+df_subset500 <- plfe500$data[plfe500$data$scenario == "3-6 years observation scheme", ]
+df_subset2K <- plfe2K$data[plfe2K$data$scenario == "3-6 years observation scheme", ]
+df_subset5K <- plfe5K$data[plfe5K$data$scenario == "3-6 years observation scheme", ]
+df_subset10K <- plfe10K$data[plfe10K$data$scenario == "3-6 years observation scheme", ]
+
+ df_all <- rbind(
+      transform(df_subset500, size = "500 observations"),
+      transform(df_subset2K, size = "2K observations"),
+      transform(df_subset5K, size = "5K observations"),
+      transform(df_subset10K, size = "10K observations")
+    )
+ df_all$size <- factor(df_all$size, levels = c("500 observations", "2K observations", "5K observations", "10K observations"))
+df_all <- df_all[order(df_all$size), ]
+
+  ggplot(df_all, aes(x = model, y = lfe_mean, fill = as.factor(dem))) +
+      geom_bar(stat = "identity", position = position_dodge(width = 0.7), width = 0.4) +
+      geom_errorbar(aes(ymin = lfe_lower_ci, ymax = lfe_upper_ci),
+                    position = position_dodge(width = 0.7), width = 0.25) +
+      labs(
+        title = "Relative Bias of Time Spent in State",
+        x = NULL,
+        y = "Relative Bias (%)",
+        fill = NULL
+      ) +
+      scale_y_continuous(limits = c(-1, 0.7)) +
+      scale_fill_manual(values = c("0" = "skyblue", "1" = "purple"),
+                        labels = c("Dementia-free", "Dementia")) +
+      theme_minimal() +
+      theme(
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(size = 12, hjust = 0.5),
+        legend.position = "top", 
+        legend.margin = margin(t = 10),  
+        panel.spacing = unit(1, "lines") 
+      ) +
+      facet_wrap(~size, ncol = 2)
+    
+```
+

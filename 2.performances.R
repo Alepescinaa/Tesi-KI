@@ -75,7 +75,7 @@ lapply(source_files, source)
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 10000
+n_pats <- 500
 cores <- 4
 
 

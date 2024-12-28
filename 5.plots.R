@@ -39,7 +39,7 @@ source_files <- c(
 lapply(source_files, source)
 
 
-n_pats <- 2000
+n_pats <- 500
 cores <- 4
 
 ###################
@@ -245,13 +245,11 @@ process_ci <- function(temp) {
 ci_lfe <- lapply(lfe_estimates, process_ci)
 
 
-plfe_b <- plot_lfe_bias(0)
-plfe_dem_b <- plot_lfe_bias(1)
-# 
-# ggsave("lfe.png", plot = plfe, path = model_dir, width = 10, height = 7) 
-# ggsave("years_dem.png", plot = plfe_dem, path = model_dir, width = 10, height = 7) 
-# ggsave("lfe_b.png", plot = plfe_b, path = model_dir, width = 10, height = 7) 
-# ggsave("years_dem_b.png", plot = plfe_dem_b, path = model_dir, width = 10, height = 7) 
+plfe <- plot_lfe_bias(ci_lfe)
+
+setwd(model_dir)
+save(plfe, file = "plfe500K.RData" )
+
 
 significant_covs <- data.frame("cov1"= c(0,1,1), "cov2"= c(1,1,0), "cov3"=c(1,1,1), "transition"=c(1,2,3))
 
