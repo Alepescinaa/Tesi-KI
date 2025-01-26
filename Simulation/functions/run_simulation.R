@@ -6,7 +6,7 @@ run_simulation <- function(n_pats, fits_wei, model_type, seed, followup, meanlog
   temp <- sim_data$sim_disease(max_t=120, max_age=120) 
   temp[, c("sample", "strategy_id", "grp_id") := NULL]
   
-  delete <- which(temp$to==2)
+  delete <- which(temp$to==2) #deleting fictitious transition
   temp <- temp[-delete,]
   temp$from <- temp$from-1
   temp$to <- temp$to-1

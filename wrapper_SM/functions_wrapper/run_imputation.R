@@ -187,8 +187,8 @@ run_imputation <- function(data, data_visits, m, type){
           maxt<-F$time[nF]
           S2t<-F$S2[nF] #surival fun of not dying at maximum timepoint in a,b
           S1t<-F$S1[nF] #surival fun of not developing dementia at maximum timepoint in a,b
-          S2_dem_a <- dem_df$S2_dem #survival fun of not dying having add dementia for time = b-a
-          S2h23P<-(S2t*exp(lp.02[i])+d*(1-S2_dem_a)*exp(lp.12[i]+delta*a))*(maxP-minP) #adjusted probability of developing dem (extra weight given to disease if patients die) 
+          S2_dem_a <- dem_df$S2_dem #survival fun of not dying having had dementia for time = b-a
+          S2h23P<-(S2t*exp(lp.02[i])*(maxP-minP) +d*(1-S2_dem_a)*exp(lp.12[i]+delta*a))*(maxP-minP) #adjusted probability of developing dem (extra weight given to disease if patients die) 
           # basically we are tring to give more probability of being extracted as ill patient to those that are dead since
           # dead people could have died because of unobserved dementia, so we are adding the survival function 
           # associated to the time spent in dementia status adjusted for the entry in dementia status

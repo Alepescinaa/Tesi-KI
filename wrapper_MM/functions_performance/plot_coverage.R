@@ -54,7 +54,7 @@ plot_coverage <- function (scheme, titles){
     "cov2" = "beta[2]",
     "cov3" = "beta[3]",
     "rate" ="lambda",
-    "shape"= "mu"
+    "shape"= "gamma" 
   )
   
   

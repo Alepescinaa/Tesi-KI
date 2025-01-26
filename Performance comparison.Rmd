@@ -208,28 +208,30 @@ latex_labels <- c(
     "1" = "Transition 1",
     "2" = "Transition 2",
     "3" = "Transition 3",
-    "cov1" = "beta[1]",
-    "cov2" = "beta[2]",
-    "cov3" = "beta[3]"
+    "cov1" = "hat(beta)[1]",
+    "cov2" = "hat(beta)[2]",
+    "cov3" = "hat(beta)[3]"
   )
+
 
 
  ggplot(data = df_all, aes(x = model, y = bias_mean, color = scenario)) + 
   geom_point(size = 3, shape = 19) + 
   
-  facet_grid(parameter ~ transition, scales = "free", 
+  facet_grid(parameter ~ transition, scales = "free_y", 
              labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
                                  transition = as_labeller(latex_labels))) + 
   
-  labs(title = "Bias of the estimates", 
+  labs(title = NULL, 
        x = "Model", 
        y = "Bias",
        color = "Observation Scheme") + 
   
   geom_line(aes(group = scenario), size = 1, linetype = "solid", alpha = 0.8) + 
-  
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50", size = 1) + 
   #geom_errorbar(aes(ymin = bias_lower, ymax = bias_upper), width = 0.3, color = "black") + 
-
+  
+   
   theme_bw() + 
   theme(legend.position = "top", 
         axis.text.x = element_text(angle = 45, hjust = 1, size = 12), 
@@ -239,11 +241,17 @@ latex_labels <- c(
         legend.text = element_text(size = 10),
         panel.spacing = unit(1, "lines"),
         axis.text.y = element_text(size = 12),
-        axis.title = element_text(size = 14)) + 
+        axis.title = element_text(size = 14),
+        plot.caption = element_text(hjust = 0, size = 8)) + 
   
   scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)
 
+ ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/official_plots/bias500.pdf", 
+       width = 8, height = 6, units = "in", dpi = 300)
+ 
 ```
+
+
 
 ### Coverage of estimates 
 
@@ -257,6 +265,121 @@ p4 <- plots_cov500[[4]] + labs(title= "irregular observation scheme")
 cov_500 <- (p1+p2) / (p3+p4) + plot_layout(guides = "collect") 
 cov_500
 ```
+
+# This includes all possibles combination of convergence we would like to observe
+```{r}
+
+q1 <- plots_cov500[[1]]$data
+q2 <- plots_cov500[[2]]$data
+q3 <- plots_cov500[[3]]$data
+q4 <- plots_cov500[[4]]$data
+
+q1$scenario <- "1 year"
+q2$scenario <- "3 years"
+q3$scenario <- "3-6 years"
+q4$scenario <- "irregular"
+
+q1$size <- 500
+q2$size <- 500
+q3$size <- 500
+q4$size <- 500
+
+p1 <- plots_cov2K[[1]]$data
+p2 <- plots_cov2K[[2]]$data
+p3 <- plots_cov2K[[3]]$data
+p4 <- plots_cov2K[[4]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years"
+p3$scenario <- "3-6 years"
+p4$scenario <- "irregular"
+
+p1$size <- 2000
+p2$size <- 2000
+p3$size <- 2000
+p4$size <- 2000
+
+r1 <- plots_cov5K[[1]]$data
+r2 <- plots_cov5K[[2]]$data
+r3 <- plots_cov5K[[3]]$data
+r4 <- plots_cov5K[[4]]$data
+
+r1$scenario <- "1 year"
+r2$scenario <- "3 years"
+r3$scenario <- "3-6 years"
+r4$scenario <- "irregular"
+
+r1$size <- 5000
+r2$size <- 5000
+r3$size <- 5000
+r4$size <- 5000
+
+f1 <- plots_cov10K[[1]]$data
+f2 <- plots_cov10K[[2]]$data
+f3 <- plots_cov10K[[3]]$data
+f4 <- plots_cov10K[[4]]$data
+
+f1$scenario <- "1 year"
+f2$scenario <- "3 years"
+f3$scenario <- "3-6 years"
+f4$scenario <- "irregular"
+
+f1$size <- 10000
+f2$size <- 10000
+f3$size <- 10000
+f4$size <- 10000
+
+df_all <- rbind(q1,q2,q3,q4, p1,p2,p3,p4,r1,r2,r3,r4,f1,f2,f3,f4)
+df_all$size <- as.factor(df_all$size)
+df_all <- subset(df_all, parameter %in% c("cov1", "cov2", "cov3"))
+df_all <- df_all[df_all$size %in% c("5000"),]
+#df_all <- df_all[df_all$scenario %in% c("1 year"),]
+
+latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1" = "hat(beta)[1]",
+    "cov2" = "hat(beta)[2]",
+    "cov3" = "hat(beta)[3]"
+)
+
+
+ggplot(data = df_all, aes(x = model, y = coverage_mean, color = scenario)) + 
+  geom_point(size = 3, shape = 19) + 
+  
+  facet_grid(parameter ~ transition, scales = "free_y", 
+             labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
+                                 transition = as_labeller(latex_labels))) +
+ 
+  
+  labs(title = NULL, 
+       x = "Model", 
+       y = "Coverage (%)",
+       color = "Observation Scheme") + 
+  
+  geom_line(aes(group = scenario), size = 1, linetype = "dashed", alpha = 0.8) + 
+  geom_hline(yintercept = 95, linetype = "dashed", color = "grey50", size = 1) + 
+  
+  theme_bw() + 
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12), 
+        plot.title = element_text(size = 14, hjust = 0.5),
+        strip.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        panel.spacing = unit(1, "lines"),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        plot.caption = element_text(hjust = 0, size = 8)) + 
+  
+  scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)
+
+ ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/official_plots/convergence.pdf", 
+        width = 8, height = 6, units = "in", dpi = 300)
+
+```
+
 
 ### Error type I in different models 
 
@@ -467,6 +590,198 @@ combined_plot_error500 &
  
 ```
 
+# This includes all possibles combination of error type I we would like to observe
+
+```{r}
+p1 <- plots_errorI500[[1]][[1]]$data
+p1$scenario <- "1 year"
+p2 <- plots_errorI500[[2]][[1]]$data
+p2$scenario <- "3 years"
+p3 <- plots_errorI500[[3]][[1]]$data
+p3$scenario <- "3-6 years"
+p4 <- plots_errorI500[[4]][[1]]$data
+p4$scenario <- "irregular"
+df1 <- rbind(p1,p2,p3,p4)
+df1$size <- "500 individuals"
+
+p1 <- plots_errorI2K[[1]][[1]]$data
+p1$scenario <- "1 year"
+p2 <- plots_errorI2K[[2]][[1]]$data
+p2$scenario <- "3 years"
+p3 <- plots_errorI2K[[3]][[1]]$data
+p3$scenario <- "3-6 years"
+p4 <- plots_errorI2K[[4]][[1]]$data
+p4$scenario <- "irregular"
+df2 <- rbind(p1,p2,p3,p4)
+df2$size <- "2000 individuals"
+
+
+p1 <- plots_errorI5K[[1]][[1]]$data
+p1$scenario <- "1 year"
+p2 <- plots_errorI5K[[2]][[1]]$data
+p2$scenario <- "3 years"
+p3 <- plots_errorI5K[[3]][[1]]$data
+p3$scenario <- "3-6 years"
+p4 <- plots_errorI5K[[4]][[1]]$data
+p4$scenario <- "irregular"
+df3 <- rbind(p1,p2,p3,p4)
+df3$size <- "5000 individuals"
+
+
+p1 <- plots_errorI10K[[1]][[1]]$data
+p1$scenario <- "1 year"
+p2 <- plots_errorI10K[[2]][[1]]$data
+p2$scenario <- "3 years"
+p3 <- plots_errorI10K[[3]][[1]]$data
+p3$scenario <- "3-6 years"
+p4 <- plots_errorI10K[[4]][[1]]$data
+p4$scenario <- "irregular"
+df4 <- rbind(p1,p2,p3,p4)
+df4$size <- "10000 individuals"
+
+df_all <- rbind(df1,df2,df3,df4)
+df_all$scenario <- factor(df_all$scenario, levels = c("1 year", "3 years", "3-6 years", "irregular"))
+df_all<- df_all %>%
+  mutate(
+    power_category = factor(power_category, levels = c("Low (<5%)", "Moderate (5%-10%)", "High (>10%)"))
+  )
+df_all<- df_all %>%
+  mutate(
+    size = factor(size, levels = c("500 individuals", "2000 individuals", "5000 individuals","10000 individuals"))
+  )
+
+
+plot1 <- ggplot(df_all, aes(x = model, y = scenario, fill = power_category)) + 
+  geom_tile(color = "white", width = 0.95, height = 0.95) +
+  scale_fill_viridis_d(option = "D", begin = 0.85, end = 0.2)+
+  # scale_fill_manual(
+  #   values = c(
+  #     "Low (<5%)" = "#8BC34A",  # Muted olive green
+  #     "Moderate (5%-10%)" = "#FFEB3B",  # Warm golden yellow
+  #     "High (>10%)" = "#E57373"  # Soft coral red
+  #   )
+  # ) + 
+  facet_wrap(~ size, nrow = 2, ncol = 2, strip.position = "top") + 
+  labs(
+    title = NULL,  # from Dementia-free to Dementia
+    x = "Model",
+    y = "Observation scheme",
+    fill = "Type I Error"
+  ) + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1, color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),  # Show y-axis labels
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    strip.text = element_text(size = 12,  color = "black"),  # Facet labels in bold
+    legend.position = "top",
+    legend.title = element_text(size = 12, face = "bold"),
+    legend.text = element_text(size = 12),
+    legend.key.size = unit(1, "lines"),  # Increase legend key size
+    plot.margin = margin(20, 10, 20, 10),  # Add spacing around the plot
+    panel.grid = element_blank(),  
+    panel.background = element_blank()  
+  )
+
+plot1
+
+ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/official_plots/errortypeI_Beta1.pdf", 
+       width = 8, height = 6, units = "in", dpi = 300)
+ 
+```
+
+```{r}
+p1 <- plots_errorI500[[1]][[2]]$data
+p1$scenario <- "1 year"
+p2 <- plots_errorI500[[2]][[2]]$data
+p2$scenario <- "3 years"
+p3 <- plots_errorI500[[3]][[2]]$data
+p3$scenario <- "3-6 years"
+p4 <- plots_errorI500[[4]][[2]]$data
+p4$scenario <- "irregular"
+df1 <- rbind(p1,p2,p3,p4)
+df1$size <- "500 individuals"
+
+p1 <- plots_errorI2K[[1]][[2]]$data
+p1$scenario <- "1 year"
+p2 <- plots_errorI2K[[2]][[2]]$data
+p2$scenario <- "3 years"
+p3 <- plots_errorI2K[[3]][[2]]$data
+p3$scenario <- "3-6 years"
+p4 <- plots_errorI2K[[4]][[2]]$data
+p4$scenario <- "irregular"
+df2 <- rbind(p1,p2,p3,p4)
+df2$size <- "2000 individuals"
+
+
+p1 <- plots_errorI5K[[1]][[2]]$data
+p1$scenario <- "1 year"
+p2 <- plots_errorI5K[[2]][[2]]$data
+p2$scenario <- "3 years"
+p3 <- plots_errorI5K[[3]][[2]]$data
+p3$scenario <- "3-6 years"
+p4 <- plots_errorI5K[[4]][[2]]$data
+p4$scenario <- "irregular"
+df3 <- rbind(p1,p2,p3,p4)
+df3$size <- "5000 individuals"
+
+
+p1 <- plots_errorI10K[[1]][[2]]$data
+p1$scenario <- "1 year"
+p2 <- plots_errorI10K[[2]][[2]]$data
+p2$scenario <- "3 years"
+p3 <- plots_errorI10K[[3]][[2]]$data
+p3$scenario <- "3-6 years"
+p4 <- plots_errorI10K[[4]][[2]]$data
+p4$scenario <- "irregular"
+df4 <- rbind(p1,p2,p3,p4)
+df4$size <- "10000 individuals"
+
+df_all <- rbind(df1,df2,df3,df4)
+df_all$scenario <- factor(df_all$scenario, levels = c("1 year", "3 years", "3-6 years", "irregular"))
+df_all<- df_all %>%
+  mutate(
+    power_category = factor(power_category, levels = c("Low (<5%)", "Moderate (5%-10%)", "High (>10%)"))
+  )
+df_all<- df_all %>%
+  mutate(
+    size = factor(size, levels = c("500 individuals", "2000 individuals", "5000 individuals","10000 individuals"))
+  )
+
+
+plot1 <- ggplot(df_all, aes(x = model, y = scenario, fill = power_category)) + 
+  geom_tile(color = "white", width = 0.95, height = 0.95) +
+  scale_fill_viridis_d(option = "D", begin = 0.85, end = 0.2)+
+  facet_wrap(~ size, nrow = 2, ncol = 2, strip.position = "top") + 
+  labs(
+    title = NULL,  # from Dementia to Death
+    x = "Model",
+    y = "Observation scheme",
+    fill = "Type I Error"
+  ) + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1, color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),  # Show y-axis labels
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    strip.text = element_text(size = 12,  color = "black"),  # Facet labels in bold
+    legend.position = "top",
+    legend.title = element_text(size = 12, face = "bold"),
+    legend.text = element_text(size = 12),
+    legend.key.size = unit(1, "lines"),  # Increase legend key size
+    plot.margin = margin(20, 10, 20, 10),  # Add spacing around the plot
+    panel.grid = element_blank(),  
+    panel.background = element_blank()  
+  )
+
+plot1
+ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/official_plots/errortypeI_Beta3.pdf", 
+       width = 8, height = 6, units = "in", dpi = 300)
+```
+
+
 ### Power of different models
 
 ```{r}
@@ -583,6 +898,105 @@ combined_plot_power500 &
   plot_annotation( title = "Power by Model and Observation Scheme",
                    theme = theme(plot.title = element_text(size = 18, face = "bold", hjust = 0.5), panel.spacing = unit(2, "cm")))
 ```
+# This includes all possibles combination of error type I we would like to observe
+
+dementia-free to dementia
+```{r}
+p1 <- plots_power500[[1]]$data
+p2 <- plots_power500[[4]]$data
+p3 <- plots_power500[[7]]$data
+p4 <- plots_power500[[10]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years"
+p3$scenario <- "3-6 years"
+p4$scenario <- "irregular"
+
+df1 <- rbind(p1,p2,p3,p4) 
+df1$size <- 500
+
+p1 <- plots_power2000[[1]]$data
+p2 <- plots_power2000[[4]]$data
+p3 <- plots_power2000[[7]]$data
+p4 <- plots_power2000[[10]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years"
+p3$scenario <- "3-6 years"
+p4$scenario <- "irregular"
+
+df2 <- rbind(p1,p2,p3,p4) 
+df2$size <- 2000
+
+p1 <- plots_power5000[[1]]$data
+p2 <- plots_power5000[[4]]$data
+p3 <- plots_power5000[[7]]$data
+p4 <- plots_power5000[[10]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years"
+p3$scenario <- "3-6 years"
+p4$scenario <- "irregular"
+
+df3 <- rbind(p1,p2,p3,p4) 
+df3$size <- 5000
+
+
+p1 <- plots_power10000[[1]]$data
+p2 <- plots_power10000[[4]]$data
+p3 <- plots_power10000[[7]]$data
+p4 <- plots_power10000[[10]]$data
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years"
+p3$scenario <- "3-6 years"
+p4$scenario <- "irregular"
+
+df4 <- rbind(p1,p2,p3,p4) 
+df4$size <- 10000
+
+df_all <- rbind(df1,df2,df3,df4)
+df_all <- df_all %>%
+  mutate(
+    power_category = factor(power_category, levels = c("Low (<50%)", "Moderate (50%-80%)", "High (>80%)"))
+  )
+
+df_all$scenario <- factor(df_all$scenario, levels = c("1 year", "3 years", "3-6 years", "irregular"))
+
+df_all<- df_all %>%
+  mutate(
+    size = factor(size, levels = c("500 individuals", "2000 individuals", "5000 individuals","10000 individuals"))
+  )
+
+
+plot1 <- ggplot(df_all, aes(x = model, y = scenario, fill = power_category)) + 
+  geom_tile(color = "white", width = 0.95, height = 0.95) +
+  scale_fill_viridis_d(option = "D", begin = 0.2, end = 0.85)+
+  facet_wrap(~ size, nrow = 2, ncol = 2, strip.position = "top") + 
+  labs(
+    title = NULL,  
+    x = "Model",
+    y = "Observation scheme",
+    fill = "Power"
+  ) + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1, color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),  # Show y-axis labels
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    strip.text = element_text(size = 12,  color = "black"),  # Facet labels in bold
+    legend.position = "top",
+    legend.title = element_text(size = 12, face = "bold"),
+    legend.text = element_text(size = 12),
+    legend.key.size = unit(1, "lines"),  # Increase legend key size
+    plot.margin = margin(20, 10, 20, 10),  # Add spacing around the plot
+    panel.grid = element_blank(),  
+    panel.background = element_blank()  
+  )
+
+plot1
+```
 
 ### Distribution of estimands associated to covariates
 
@@ -683,9 +1097,9 @@ latex_labels <- c(
     "1" = "Transition 1",
     "2" = "Transition 2",
     "3" = "Transition 3",
-    "cov1" = "beta[1]",
-    "cov2" = "beta[2]",
-    "cov3" = "beta[3]"
+    "cov1" = "hat(beta)[1]",
+    "cov2" = "hat(beta)[2]",
+    "cov3" = "hat(beta)[3]"
   )
 
 
@@ -696,12 +1110,13 @@ latex_labels <- c(
              labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
                                  transition = as_labeller(latex_labels))) + 
   
-  labs(title = "Bias of the estimates", 
+  labs(title = NULL, 
        x = "Model", 
        y = "Bias",
        color = "Observation Scheme") + 
   
   geom_line(aes(group = scenario), linewidth = 1, linetype = "solid", alpha = 0.8) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50", size = 1) + 
   
   #geom_errorbar(aes(ymin = bias_lower, ymax = bias_upper), width = 0.3, color = "black") + 
 
@@ -718,6 +1133,8 @@ latex_labels <- c(
   
   scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)
 
+ ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/official_plots/bias2K.pdf", 
+       width = 8, height = 6, units = "in", dpi = 300)
 ```
 
 ### Coverage of estimates
@@ -856,6 +1273,7 @@ combined_plot_error2K &
 
  
 ```
+
 
 ### Power of different models
 
@@ -1073,9 +1491,9 @@ latex_labels <- c(
     "1" = "Transition 1",
     "2" = "Transition 2",
     "3" = "Transition 3",
-    "cov1" = "beta[1]",
-    "cov2" = "beta[2]",
-    "cov3" = "beta[3]"
+    "cov1" = "hat(beta)[1]",
+    "cov2" = "hat(beta)[2]",
+    "cov3" = "hat(beta)[3]"
   )
 
 
@@ -1086,12 +1504,13 @@ latex_labels <- c(
              labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
                                  transition = as_labeller(latex_labels))) + 
   
-  labs(title = "Bias of the estimates", 
+  labs(title = NULL, 
        x = "Model", 
        y = "Bias",
        color = "Observation Scheme") + 
   
-  geom_line(aes(group = scenario), linewidth = 1, linetype = "solid", alpha = 0.8) + 
+  geom_line(aes(group = scenario), linewidth = 1, linetype = "solid", alpha = 0.8) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50", size = 1) + 
   
   #geom_errorbar(aes(ymin = bias_lower, ymax = bias_upper), width = 0.3, color = "black") + 
 
@@ -1107,7 +1526,10 @@ latex_labels <- c(
         axis.title = element_text(size = 14)) + 
   
   scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)
+ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/official_plots/bias5K.pdf", 
+       width = 8, height = 6, units = "in", dpi = 300)
 
+ 
 ```
 
 ### Coverage of estimates
@@ -1463,9 +1885,9 @@ latex_labels <- c(
     "1" = "Transition 1",
     "2" = "Transition 2",
     "3" = "Transition 3",
-    "cov1" = "beta[1]",
-    "cov2" = "beta[2]",
-    "cov3" = "beta[3]"
+    "cov1" = "hat(beta)[1]",
+    "cov2" = "hat(beta)[2]",
+    "cov3" = "hat(beta)[3]"
   )
 
 
@@ -1476,12 +1898,13 @@ latex_labels <- c(
              labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
                                  transition = as_labeller(latex_labels))) + 
   
-  labs(title = "Bias of the estimates", 
+  labs(title = NULL, 
        x = "Model", 
        y = "Bias",
        color = "Observation Scheme") + 
   
   geom_line(aes(group = scenario), linewidth = 1, linetype = "solid", alpha = 0.8) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50", size = 1) + 
   
   #geom_errorbar(aes(ymin = bias_lower, ymax = bias_upper), width = 0.3, color = "black") + 
 
@@ -1497,6 +1920,8 @@ latex_labels <- c(
         axis.title = element_text(size = 14)) + 
   
   scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)
+ ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/official_plots/bias10K.pdf", 
+       width = 8, height = 6, units = "in", dpi = 300)
 
 ```
 
@@ -1860,10 +2285,10 @@ conv_long <- table_convergence %>%
 conv_long <- conv_long %>%
     mutate(
       sample_size = case_when(
-        sample_size == "conv500" ~ "500 observations",
-        sample_size == "conv2K" ~ "2K observations",
-        sample_size == "conv5K" ~ "5K observations",
-        sample_size == "conv10K" ~ "10K observations",
+        sample_size == "conv500" ~ "500 individuals",
+        sample_size == "conv2K" ~ "2000 individuals",
+        sample_size == "conv5K" ~ "5000 individuals",
+        sample_size == "conv10K" ~ "10000 individuals",
       )) %>%
   mutate(
      scheme = case_when(
@@ -1872,23 +2297,26 @@ conv_long <- conv_long %>%
         scheme == "4" ~ "3-6 years",
         scheme == "5" ~ "irregular",
         )) %>%
-  mutate(sample_size = factor(sample_size, levels = c("500 observations", "2K observations", "5K observations", "10K observations"))) %>%
+  mutate(sample_size = factor(sample_size, levels = c("500 individuals", "2000 individuals", "5000 individuals", "10000 individuals"))) %>%
   arrange(sample_size, scheme, model)
 
-ggplot(conv_long, aes(x = scheme, y = model, fill = convergence)) +
+ggplot(conv_long, aes(x = model, y = scheme, fill = convergence)) +
   geom_tile(color = "white") +
   #geom_text(aes(label = round(convergence, 1)), color = "black", size = 3) +
   facet_wrap(~sample_size) +
-  scale_fill_gradient(low = "white", high = "blue", name = "Percentage (%)") +
+  scale_fill_viridis_c(option = "D", begin = 0.1, end = 0.9, name = "Percentage (%)")+
   labs(
-    title = "Heatmap of Models Convergence",
-    x = "Sample Size",
-    y = "Model"
+    title = NULL,
+    x = "Model",
+    y = "Observation Scheme"
   ) +
   theme_minimal()+
    theme(
     plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
     legend.position = "top")
+
+ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/official_plots/convergence.pdf", 
+       width = 8, height = 6, units = "in", dpi = 300)
 ```
 
 ### Averaged computational time for different models
@@ -1908,7 +2336,7 @@ mean_ct_all <- mean_ct_all%>%
                names_to = "model",
                values_to = "time")
 
-ggplot(mean_ct_all, aes(x = factor(sample_size, labels = c("500", "2K", "5K", "10K")), 
+ggplot(mean_ct_all, aes(x = factor(sample_size, labels = c("500", "2000", "5000", "10000")), 
                         y = time, color = model, group = model)) +
   geom_line(size = 1.2, alpha = 0.7) +
   geom_point(size = 3, alpha = 0.7)+
@@ -1916,7 +2344,7 @@ ggplot(mean_ct_all, aes(x = factor(sample_size, labels = c("500", "2K", "5K", "1
   facet_wrap(~ scheme, ncol = 2, scales = "fixed") + 
   scale_color_viridis_d() +
   labs(
-    title = "Trend of Average Computational Time Across Sample Sizes and Observation Schemes",
+    title = NULL,
     x = "Sample Size",
     y = "Time (s)",
     color = "Model"
@@ -1925,23 +2353,23 @@ ggplot(mean_ct_all, aes(x = factor(sample_size, labels = c("500", "2K", "5K", "1
   theme(
     plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  
   
-    axis.title = element_text(size = 14, face = "bold"), 
-    axis.text = element_text(size = 12),  
+    axis.title = element_text(size = 14), 
+    axis.text = element_text(size = 10),  
     axis.text.x = element_text(angle = 45, hjust = 1), 
     legend.position = "top", 
     legend.title = element_text(size = 12, face = "bold"),  
-    legend.text = element_text(size = 11),  
+    legend.text = element_text(size = 10),  
     panel.grid.major = element_line(color = "gray80", linewidth = 0.5),  
     panel.grid.minor = element_blank()  
   )
 
-
+ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/official_plots/comp_time.pdf", 
+       width = 8, height = 6, units = "in", dpi = 300)
 ```
 
 ### Bias of estimates comparison
 
 ```{r}
-
 df_scenario <- function(scenario,title){
   p1 <- plots_bias500[[scenario]]$data
   p2 <- plots_bias2K[[scenario]]$data
@@ -1971,14 +2399,16 @@ create_plot <- function(df){
     "1" = "Transition 1",
     "2" = "Transition 2",
     "3" = "Transition 3",
-    "cov1" = "beta[1]",
-    "cov2" = "beta[2]",
-    "cov3" = "beta[3]"
+    "cov1" = "hat(beta)[1]",
+    "cov2" = "hat(beta)[2]",
+    "cov3" = "hat(beta)[3]"
   )
+
+   
   ggplot(data = df, aes(x = model, y = bias_mean, color = size)) + 
   geom_point(size = 3, shape = 19) + 
   
-  facet_grid(parameter ~ transition, scales = "free", 
+  facet_grid(parameter ~ transition, scales = "fixed", 
              labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
                                  transition = as_labeller(latex_labels)),) + 
   
@@ -1987,6 +2417,7 @@ create_plot <- function(df){
        y = NULL) + 
   
   geom_line(aes(group = size), size = 1, linetype = "solid", alpha = 0.8) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50", size = 1) + 
   theme_bw() + 
   theme(legend.position = "top", 
         axis.text.x = element_text(angle = 45, hjust = 1, size = 12), 
@@ -2007,8 +2438,7 @@ plot2 <- create_plot(df_all2)+labs(caption = "3 years observation scheme")
 plot3 <- create_plot(df_all3)+labs(caption = "3-6 years observation scheme")
 plot4 <- create_plot(df_all4)+labs(caption = "irregular observation scheme")
 
- ( plot1+plot2) / (plot3+plot4) + plot_layout(guides = "collect")+
-  plot_annotation(title = "Bias of Estimates")& 
+ ( plot1+plot2) / (plot3+plot4) + plot_layout(guides = "collect")&
   theme(legend.position = "top", 
         legend.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 

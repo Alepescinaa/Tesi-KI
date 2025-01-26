@@ -56,7 +56,7 @@ sdlog <- sd(log(data_raw$cov1))
 # Data Simulation with hesim
 ############################
 
-n_pats <- 100000
+n_pats <- 1000
 model_type <- "forward"
 model <- load("ground_truthMM.RData")
 

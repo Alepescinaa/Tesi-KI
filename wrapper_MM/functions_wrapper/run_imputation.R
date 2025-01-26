@@ -33,9 +33,9 @@ run_imputation <- function(data, data_visits, m, type){
       deathhaz$h[i]<-(deathhaz$hazard[i+1]-deathhaz$hazard[i])/(deathhaz$time[i+1]-deathhaz$time[i])
     remove(tzero)
     
-    
+    #cumulative hazards
     combhaz<-merge(onsethaz,deathhaz,by.x="time", by.y="time",all.x=TRUE, all.y=TRUE, suffixes = c(".12",".13"))
-    #merging hazards from both models, since they are computed on different transition times we might have NA values
+    #merging cumulative hazards from both models, since they are computed on different transition times we might have NA values
     if (is.na(combhaz$hazard.12[1])) combhaz$hazard.12[1]<-0
     if (is.na(combhaz$hazard.13[1])) combhaz$hazard.13[1]<-0
     
@@ -44,8 +44,9 @@ run_imputation <- function(data, data_visits, m, type){
     {
       if (is.na(combhaz$h.12[i]))
       {
-        combhaz$h.12[i]<-combhaz$h.12[i-1]
+        combhaz$h.12[i]<-combhaz$h.12[i-1] #hazards
         combhaz$hazard.12[i]<-combhaz$hazard.12[i-1]+combhaz$h.12[i-1]*(combhaz$time[i]-combhaz$time[i-1])
+    
       }
       if (is.na(combhaz$h.13[i]))
       {
