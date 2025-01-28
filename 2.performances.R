@@ -64,7 +64,10 @@ source_files <- c(
   "./wrapper_MM/functions_performance/plot_lfe_bias.R",
   "./wrapper_MM/functions_performance/standard_error.R",
   "./wrapper_MM/functions_performance/mean_se.R",
-  "./wrapper_MM/functions_performance/simulation_probs.R"
+  "./wrapper_MM/functions_performance/simulation_probs.R",
+  "./wrapper_MM/functions_performance/run_baseline_bias.R",
+  "./wrapper_MM/functions_performance/ic_comparison_baseline.R",
+  "./wrapper_MM/functions_performance/mean_bias_comparison_baseline.R"
   
 )
 
@@ -75,7 +78,7 @@ lapply(source_files, source)
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 500
+n_pats <- 2000
 cores <- 4
 
 
@@ -224,6 +227,59 @@ save(estimates, file = file.path(model_dir,"all_estimates.RData"))
 save(mean_estimates, file = file.path(model_dir,"mean_estimates.RData"))
 save(bias_all_schemes, file = file.path(model_dir,"bias_all.RData"))
 save(res_bias, file = file.path(model_dir,"res_bias.RData"))
+
+
+###########################
+# baseline bias comparison #
+###########################
+
+baseline_all_schemes <- vector(mode = "list", length = 4)
+baseline_estimates <- vector(mode = "list", length = 4)
+
+for (scheme in 2:5){
+  results <- data.frame(
+    rate = numeric(0),
+    shape = numeric(0),
+    model = character(0),
+    seed = integer(0)
+  )
+  
+  plan(multisession, workers = cores) 
+  results_list <- future_lapply(1:100, function(seed) {
+    temp_results <- run_baseline_bias(n_pats, scheme, seed, combined_cov[[scheme - 1]])
+    return(temp_results)
+  })
+  
+  temp_bias <- list()
+  temp_est <- list()
+  for (seed in 1:100){
+    temp_bias[[seed]] <-results_list[[seed]][[1]]
+    temp_est[[seed]] <-results_list[[seed]][[2]]
+  }
+  
+  results <- do.call(rbind, temp_bias)
+  baseline_all_schemes[[scheme-1]] <- results
+  
+  results<- do.call(rbind, temp_est)
+  baseline_estimates[[scheme-1]] <- results
+}
+
+baseline_bias <- vector(mode = "list", length = 4)
+for (scheme in 2:5){
+  baseline_bias[[scheme-1]] <- ic_comparison_baseline(baseline_all_schemes, scheme)
+}
+
+mean_estimates_baseline <- vector(mode = "list", length = 4)
+for (scheme in 2:5){
+  mean_estimates_baseline[[scheme-1]] <- mean_bias_comparison_baseline(baseline_estimates, scheme)
+}
+
+setwd(here())
+save(baseline_bias, file = file.path(model_dir,"baseline_bias.RData"))
+save(mean_estimates_baseline, file = file.path(model_dir,"mean_estimates_baseline.RData"))
+save(baseline_estimates, file = file.path(model_dir,"baseline_estimates_all.RData"))
+
+
 
 
 ############################

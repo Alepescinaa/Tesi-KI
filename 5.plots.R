@@ -39,7 +39,7 @@ source_files <- c(
 lapply(source_files, source)
 
 
-n_pats <- 500
+n_pats <- 5000
 cores <- 4
 
 ###################
