@@ -42,6 +42,7 @@ simulation <- function(n_pats, fits, meanlog, sdlog, covs) {
   )
   
   
+  
   dismod <- create_IndivCtstmTrans(
     object,
     input_data,

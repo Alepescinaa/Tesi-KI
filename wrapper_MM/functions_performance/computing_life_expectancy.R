@@ -106,8 +106,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # ============================
 
   tmat <- mstate::transMat(x = list(c(2, 3),c(3),c()), names = c("Dementia-free","Dementia", "Death")) 
- 
-  #gt_tls <-  totlos.fs.mine(fits_wei, t_start= t_start,  trans=tmat, newdata = covs, t=120)[1,][1:2]
+  # gt_tls <-  totlos.fs.mine(fits_wei, t_start= t_start,  trans=tmat, newdata = covs, t=120)[1,][1:2]
   
   meanlog <- mean(log(fits_wei[[1]]$data$mml$rate[,2]))
   sdlog <- sd(log(fits_wei[[1]]$data$mml$rate[,2]))
@@ -118,13 +117,13 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==4] <- 1 # out from healthy state (death)
   sim_data_dis$transition[sim_data_dis$from==3 & sim_data_dis$to==4] <- 2 # out from dementia
   sim_data_dis$time <- sim_data_dis$time_stop-sim_data_dis$time_start
-  
+
   mean_time <- sim_data_dis %>%
     group_by(transition) %>%
     summarise(across(time, mean, na.rm = TRUE))
-  
+
   gt_tls <- as.numeric(unlist(mean_time[2:3,2]))
-  
+
 
  
   # ===============
@@ -193,7 +192,7 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   } 
     
  
-  
+
   # ==============
   # flexsurv
   # ==============
@@ -250,16 +249,35 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
   # }
   
   
-  if (convergence$msm[seed]==2){
-    msm_tls <- totlos.msm(model.msm, fromt=0, tot=105-t_start, covariates = list(covs[1],covs[2],covs[3])) [1:2]
-    bias_msm_tls <- (msm_tls-gt_tls)/gt_tls
-    
-    
-  } else{
-    msm_tls <- rep(NA,2)
-    bias_msm_tls <- rep(NA,2)
-  }
+  # if (convergence$msm[seed]==2){
+  #   msm_tls <- totlos.msm(model.msm, fromt=0, tot=105-t_start, covariates = list(covs[1],covs[2],covs[3])) [1:2]
+  #   bias_msm_tls <- (msm_tls-gt_tls)/gt_tls
+  #   
+  #   
+  # } else{
+  #   msm_tls <- rep(NA,2)
+  #   bias_msm_tls <- rep(NA,2)
+  # }
 
+  if (convergence$msm[seed]==2){
+  sim_data <- simulation_new(100000, model.msm, meanlog, sdlog, covs, ind=2)
+  sim_data_dis <- sim_data$sim_disease(max_t=120, max_age=120)
+  sim_data_dis$transition <- 0 #enter in the study
+  sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==3] <- 1 # out from healthy state (dem)
+  sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==4] <- 1 # out from healthy state (death)
+  sim_data_dis$transition[sim_data_dis$from==3 & sim_data_dis$to==4] <- 2 # out from dementia
+  sim_data_dis$time <- sim_data_dis$time_stop-sim_data_dis$time_start
+  
+  mean_time <- sim_data_dis %>%
+    group_by(transition) %>%
+    summarise(across(time, mean, na.rm = TRUE))
+  
+  msm_tls <- as.numeric(unlist(mean_time[2:3,2]))
+  bias_msm_tls <- (msm_tls-gt_tls)/gt_tls
+} else {
+  msm_tls <- rep(NA,2)
+  bias_msm_tls <- rep(NA,2)
+}
 
 
   # ========
@@ -310,57 +328,94 @@ computing_life_expectancy <- function(n_pats, scheme, seed, convergence, t_start
 
  # treating it just as msm understimates
   
+  # if(convergence$msm_age[seed]==2){
+  #   time <- seq(t_start,105,by=0.1)
+  #   time <- time-t_start
+  #   msm_age_probabilities <- matrix(ncol = 3, nrow = 0)
+  #   
+  #   
+  #   for (i in 1:length(time)) {
+  #     temp <- pmatrix.msm(model.msm_age, t = time[i])[1,]
+  #     msm_age_probabilities <- rbind(msm_age_probabilities, temp)
+  #   }
+  #   
+  #   msm_age_tls<- numeric(ncol(msm_age_probabilities))
+  #   
+  #   diff_time <- diff(time)
+  #   msm_age_probabilities <- msm_age_probabilities[1:length(diff_time),]
+  #   
+  #   for (i in 1:ncol(msm_age_probabilities)) {
+  #     msm_age_tls[i] <- sum(msm_age_probabilities[, i] * diff_time)
+  #   }
+  #   msm_age_tls <- msm_age_tls[1:2]
+  #   bias_msm_age_tls <- (msm_age_tls-gt_tls)/gt_tls
+  # }else{
+  #   msm_age_tls <- rep(NA,2)
+  #   bias_msm_age_tls <- rep(NA,2)
+  # }
+  
   if(convergence$msm_age[seed]==2){
-    time <- seq(t_start,105,by=0.1)
-    time <- time-t_start
-    msm_age_probabilities <- matrix(ncol = 3, nrow = 0)
-    
-    
-    for (i in 1:length(time)) {
-      temp <- pmatrix.msm(model.msm_age, t = time[i])[1,]
-      msm_age_probabilities <- rbind(msm_age_probabilities, temp)
-    }
-    
-    msm_age_tls<- numeric(ncol(msm_age_probabilities))
-    
-    diff_time <- diff(time)
-    msm_age_probabilities <- msm_age_probabilities[1:length(diff_time),]
-    
-    for (i in 1:ncol(msm_age_probabilities)) {
-      msm_age_tls[i] <- sum(msm_age_probabilities[, i] * diff_time)
-    }
-    msm_age_tls <- msm_age_tls[1:2]
-    bias_msm_age_tls <- (msm_age_tls-gt_tls)/gt_tls
-  }else{
-    msm_age_tls <- rep(NA,2)
-    bias_msm_age_tls <- rep(NA,2)
-  }
-
+  sim_data <- simulation_new(100000, model.msm_age, meanlog, sdlog, covs, ind=3)
+  sim_data_dis <- sim_data$sim_disease(max_t=120, max_age=120)
+  sim_data_dis$transition <- 0 #enter in the study
+  sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==3] <- 1 # out from healthy state (dem)
+  sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==4] <- 1 # out from healthy state (death)
+  sim_data_dis$transition[sim_data_dis$from==3 & sim_data_dis$to==4] <- 2 # out from dementia
+  sim_data_dis$time <- sim_data_dis$time_stop-sim_data_dis$time_start
+  
+  mean_time <- sim_data_dis %>%
+    group_by(transition) %>%
+    summarise(across(time, mean, na.rm = TRUE))
+  
+  msm_age_tls <- as.numeric(unlist(mean_time[2:3,2]))
+  bias_msm_age_tls <- (msm_age_tls-gt_tls)/gt_tls
+} else {
+  msm_age_tls <- rep(NA,2)
+  bias_msm_age_tls <- rep(NA,2)
+}
   # ======
   # nhm
   # ======
   
+if(convergence$nhm[seed]==2){
+  sim_data <- simulation_new(100000, model_nhm, meanlog, sdlog, covs, ind=1)
+  sim_data_dis <- sim_data$sim_disease(max_t=120, max_age=120)
+  sim_data_dis$transition <- 0 #enter in the study
+  sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==3] <- 1 # out from healthy state (dem)
+  sim_data_dis$transition[sim_data_dis$from==2 & sim_data_dis$to==4] <- 1 # out from healthy state (death)
+  sim_data_dis$transition[sim_data_dis$from==3 & sim_data_dis$to==4] <- 2 # out from dementia
+  sim_data_dis$time <- sim_data_dis$time_stop-sim_data_dis$time_start
   
+  mean_time <- sim_data_dis %>%
+    group_by(transition) %>%
+    summarise(across(time, mean, na.rm = TRUE))
   
-  if(convergence$nhm[seed]==2){
-    tcrit <- model_nhm$tcrit
-    time <- seq(t_start,tcrit-1,by=0.1)
-    nhm_probabilities <- predict(model_nhm, time0= t_start, times= time, covvalue = c(as.numeric(covs[1]),as.numeric(covs[2]),as.numeric(covs[3])))$probabilities
-    nhm_tls<- numeric(ncol(nhm_probabilities))
-    
-    diff_time <- diff(time)
-    nhm_probabilities <- nhm_probabilities[1:length(diff_time),]
-    
-    for (i in 1:ncol(nhm_probabilities)) {
-      nhm_tls[i] <- sum(nhm_probabilities[, i] * diff_time)
-    }
-    nhm_tls <- nhm_tls[1:2]
-    bias_nhm_tls <- (nhm_tls-gt_tls)/gt_tls
-  }else{
-    nhm_tls <- rep(NA,2)
-    bias_nhm_tls <- rep(NA,2)
-  }
+  nhm_tls <- as.numeric(unlist(mean_time[2:3,2]))
+  bias_nhm_tls <- (nhm_tls-gt_tls)/gt_tls
+} else {
+  nhm_tls <- rep(NA,2)
+  bias_nhm_tls <- rep(NA,2)
+}
   
+  # if(convergence$nhm[seed]==2){
+  #   tcrit <- model_nhm$tcrit
+  #   time <- seq(t_start,tcrit-1,by=0.1)
+  #   nhm_probabilities <- predict(model_nhm, time0= t_start, times= time, covvalue = c(as.numeric(covs[1]),as.numeric(covs[2]),as.numeric(covs[3])))$probabilities
+  #   nhm_tls<- numeric(ncol(nhm_probabilities))
+  #   
+  #   diff_time <- diff(time)
+  #   nhm_probabilities <- nhm_probabilities[1:length(diff_time),]
+  #   
+  #   for (i in 1:ncol(nhm_probabilities)) {
+  #     nhm_tls[i] <- sum(nhm_probabilities[, i] * diff_time)
+  #   }
+  #   nhm_tls <- nhm_tls[1:2]
+  #   bias_nhm_tls <- (nhm_tls-gt_tls)/gt_tls
+  # }else{
+  #   nhm_tls <- rep(NA,2)
+  #   bias_nhm_tls <- rep(NA,2)
+  # }
+  # 
   
 
 

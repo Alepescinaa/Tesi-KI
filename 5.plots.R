@@ -39,7 +39,7 @@ source_files <- c(
 lapply(source_files, source)
 
 
-n_pats <- 5000
+n_pats <- 10000
 cores <- 4
 
 ###################
@@ -146,6 +146,12 @@ pb3 <- plot_bias(res_bias, 3, titles)
 pb4 <- plot_bias(res_bias, 4, titles)
 pb5 <- plot_bias(res_bias, 5, titles)
 
+titles <- c("1 year observation scheme", "3 years observation scheme", "3-6 years observation scheme", "irregular observation scheme")
+pb2 <- plot_bias_baseline(baseline_bias, 2, titles)
+pb3 <- plot_bias_baseline(baseline_bias, 3, titles)
+pb4 <- plot_bias_baseline(baseline_bias, 4, titles)
+pb5 <- plot_bias_baseline(baseline_bias, 5, titles)
+
 setwd(here())
 ggsave("bias2_cov.png", plot = pb2[[1]], path = model_dir, width = 9, height = 7)
 ggsave("bias2_base.png", plot = pb2[[2]], path = model_dir, width = 9, height = 7)
@@ -159,6 +165,10 @@ ggsave("bias5_base.png", plot = pb5[[2]], path = model_dir, width = 9, height = 
 plots_bias <- list( pb2[[1]], pb2[[2]], pb3[[1]], pb3[[2]], pb4[[1]], pb4[[2]], pb5[[1]], pb5[[2]])
 setwd(model_dir)
 save(plots_bias, file = "bias_500.RData" )
+
+plots_bias <- list( pb2,  pb3, pb4, pb5)
+setwd(model_dir)
+save(plots_bias, file = "bias_baseline_5000.RData" )
 
 
 cov2 <- plot_coverage(2, titles)

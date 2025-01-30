@@ -65,6 +65,7 @@ source_files <- c(
   "./wrapper_MM/functions_performance/standard_error.R",
   "./wrapper_MM/functions_performance/mean_se.R",
   "./wrapper_MM/functions_performance/simulation_probs.R",
+  "./wrapper_MM/functions_performance/simulation_probs_nhm.R",
   "./wrapper_MM/functions_performance/run_baseline_bias.R",
   "./wrapper_MM/functions_performance/ic_comparison_baseline.R",
   "./wrapper_MM/functions_performance/mean_bias_comparison_baseline.R"
@@ -78,7 +79,8 @@ lapply(source_files, source)
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 2000
+n_pats <- 500
+
 cores <- 4
 
 
