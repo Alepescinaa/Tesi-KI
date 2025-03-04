@@ -1,6 +1,6 @@
-plot_bias <- function (scheme, titles, transition_num){
+plot_bias <- function (data, scheme, titles){
   
-  df <- res_bias[[scheme-1]]
+  df <- data[[scheme-1]]
   df_long <- df %>%
     pivot_longer(cols = c("rate", "shape", "cov1", "cov2", "cov3"),
                  names_to = "parameter",

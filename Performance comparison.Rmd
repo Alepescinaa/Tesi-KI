@@ -67,6 +67,7 @@ remove(plots_distr)
 plfe500 <- plfe
 remove(plfe)
 
+
 ```
 
 ```{r, results='hide'}
@@ -97,6 +98,7 @@ remove(plots_distr)
 
 plfe2K <- plfe
 remove(plfe)
+
 
 
 ```
@@ -1455,11 +1457,13 @@ p4$size <- "10000 individuals"
 lfe_all <- rbind(p1,p2,p3,p4)
 lfe_all$dem <- as.factor(lfe_all$dem)
 lfe_all$size <- factor(lfe_all$size , levels=c("500 individuals","2000 individuals","5000 individuals","10000 individuals"))
-#lfe_all <- lfe_all[lfe_all$scenario=="1 year observation scheme",]
-lfe_all <- lfe_all[lfe_all$size== "5000 individuals",]
+#lfe_all <- lfe_all[lfe_all$scenario=="3 years observation scheme",]
+lfe_all <- lfe_all[lfe_all$size== "2000 individuals",]
+lfe_all_0 <- lfe_all[lfe_all$dem==0,]
+lfe_all_1 <- lfe_all[lfe_all$dem==1,]
 
 pp <- ggplot(lfe_all, aes(x = model, y = lfe_mean, color = dem)) +
-  scale_colour_viridis_d(begin = 0.1, end=0.7)+
+  scale_colour_viridis_d(begin = 0.2, end=0.8)+
   geom_point(size = 3) + 
   geom_line(aes(group = dem), size = 1, linetype = "dashed", alpha = 0.8) + 
   #geom_errorbar(aes(ymin = lfe_lower_ci, ymax = lfe_upper_ci), width = 0.2) +  
@@ -1478,9 +1482,33 @@ pp <- ggplot(lfe_all, aes(x = model, y = lfe_mean, color = dem)) +
        y = "Relative Bias(%)", 
        color = "Dementia Onset")
 
-ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/official_plots/lfe.pdf", pp, 
-       width = 8, height = 6, units = "in", dpi = 300)
+pp2 <- ggplot(lfe_all_1, aes(x = model, y = lfe_mean, color = size)) +
+  scale_colour_viridis_d(begin = 0.2, end=0.9)+
+  geom_point(size = 3) + 
+  geom_line(aes(group = size), size = 1, linetype = "dashed", alpha = 0.8) + 
+  #geom_errorbar(aes(ymin = lfe_lower_ci, ymax = lfe_upper_ci), width = 0.2) +  
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +  
+  facet_wrap(~ scenario, ncol = 2) +  
+  theme_minimal() +  
+  theme(
+    strip.text = element_text( size = 12), 
+    axis.text = element_text(size = 10),  
+    legend.title = element_text(size = 12),  
+    legend.text = element_text(size = 10),
+    legend.position = "top"
+  ) +
+  labs(title = NULL, 
+       x = "Model", 
+       y = "Relative Bias(%)", 
+       color = "Sample size")
 
+pp
+pp2
+
+ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/official_plots/lfe2K.pdf", pp, 
+        width = 8, height = 6, units = "in", dpi = 300)
+# ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/official_plots/lfe1_acrosssize.pdf", pp2, 
+#         width = 8, height = 6, units = "in", dpi = 300)
 
 
 ```
@@ -2839,22 +2867,25 @@ create_plot <- function(df){
         axis.text.y = element_text(size = 12),
         axis.title = element_text(size = 14)) + 
   
-  scale_color_viridis_d(option = "C", begin = 0.2, end = 0.8)
+  scale_color_viridis_d(option = "D", begin = 0.2, end = 0.8)
   
 }
 
 plot1 <- create_plot(df_all1)+labs(caption = "1 year observation scheme")
 plot2 <- create_plot(df_all2)+labs(caption = "3 years observation scheme")
-plot3 <- create_plot(df_all3)+labs(caption = "3-6 years observation scheme")
+plot3 <- create_plot(df_all3)
 plot4 <- create_plot(df_all4)+labs(caption = "irregular observation scheme")
 
- ( plot1+plot2) / (plot3+plot4) + plot_layout(guides = "collect")&
-  theme(legend.position = "top", 
-        legend.title = element_text(size = 12), 
-        legend.text = element_text(size = 10), 
-        plot.title = element_text(size = 14, hjust = 0.5)) 
+plot3
+
+ # ( plot1+plot2) / (plot3+plot4) + plot_layout(guides = "collect")&
+ #  theme(legend.position = "top", 
+ #        legend.title = element_text(size = 12), 
+ #        legend.text = element_text(size = 10), 
+ #        plot.title = element_text(size = 14, hjust = 0.5)) 
  # ylim(0,3)
-  
+  ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/official_plots/bias_3y.pdf", plot3,
+       width = 8, height = 6, units = "in", dpi = 300)
 
 ```
 

@@ -1,4 +1,4 @@
-run_imputation <- function(data, data_visits, m, type){
+run_imputation <- function(data, data_visits, m, type, cores_imp){
   
   schemeA_data <- data
   schemeA_visits <- data_visits
@@ -70,13 +70,9 @@ run_imputation <- function(data, data_visits, m, type){
       deathhaz_dem$h[i]<-(deathhaz_dem$hazard[i+1]-deathhaz_dem$hazard[i])/(deathhaz_dem$time[i+1]-deathhaz_dem$time[i])
     remove(tzero)
    
-    #this treated as markovian case but I am gonna use it 
-    #time_rescaled <- deathhaz_dem$time + median(schemeA_data$entry[schemeA_data$entry!=0]) #this is an approx to fix time scale but keep cumhazards monotone
-    #deathhaz_dem$time <- time_rescaled
+   
     combhaz<-merge(onsethaz,deathhaz,by.x="time", by.y="time",all.x=TRUE, all.y=TRUE, suffixes = c(".01",".02"))
-    #combhaz<-merge(combhaz,deathhaz_dem,by.x="time", by.y="time",all.x=TRUE, all.y=TRUE)
-    #names(combhaz)[names(combhaz) == "hazard"] <- "hazard.12"
-    #names(combhaz)[names(combhaz) == "h"] <- "h.12"
+   
     #merging hazards from both models, since they are computed on different transition times we might have NA values
     if (is.na(combhaz$hazard.01[1])) combhaz$hazard.01[1]<-0
     if (is.na(combhaz$hazard.02[1])) combhaz$hazard.02[1]<-0
@@ -95,13 +91,8 @@ run_imputation <- function(data, data_visits, m, type){
         combhaz$h.02[i]<-combhaz$h.02[i-1]
         combhaz$hazard.02[i]<-combhaz$hazard.02[i-1]+combhaz$h.02[i-1]*(combhaz$time[i]-combhaz$time[i-1])
       }
-      # if (is.na(combhaz$h.12[i]))
-      # {
-      #   combhaz$h.12[i]<-combhaz$h.12[i-1]
-      #   combhaz$hazard.12[i]<-combhaz$hazard.12[i-1]+combhaz$h.12[i-1]*(combhaz$time[i]-combhaz$time[i-1])
-      # }
     }
-    
+  
     demstatus<-matrix(nrow=nrow(schemeA_data),ncol=m,rep(schemeA_data$onset,m))
     # matrix representing dementia status for each patient for each imputated dataset (set to 1 if dementia observed in original dataset)
     dementage<-matrix(nrow=nrow(schemeA_data),ncol=m,0)
@@ -129,12 +120,8 @@ run_imputation <- function(data, data_visits, m, type){
       for (j in 2:length(P)) P[j]<-min(1.0,P[j-1]+p[j-1]*(time[j]-time[j-1]))
       F<-data.frame(cbind(time,S1,S2,p,P))
       dem_df <- data.frame("time"=deathhaz_dem$time, S2_dem)
-      #F <- merge(F,temp_df,by.x="time", by.y="time",all.x=TRUE, all.y=TRUE)
-      #interp_function <- approxfun(F$time, F$S2_dem, method = "linear", rule = 2)
-      #interpolated_values <- interp_function(F$time)
-      #F$S2_dem <- interpolated_values
     
-      # names(F)<-c("time","S1","S2","p","P")
+  
       remove(time,S1,S2, S2_dem,p,P)
       
       patient_data <- schemeA_visits[schemeA_visits$patient_id==i,]
@@ -185,11 +172,11 @@ run_imputation <- function(data, data_visits, m, type){
           minP<-F$P[1]     
           maxP<-F$P[nF] 
           maxt<-F$time[nF]
-          S2t<-F$S2[nF] #surival fun of not dying at maximum timepoint in a,b
-          S1t<-F$S1[nF] #surival fun of not developing dementia at maximum timepoint in a,b
+          S2t<-F$S2[nF] #survival fun of not dying at maximum timepoint in a,b
+          S1t<-F$S1[nF] #survival fun of not developing dementia at maximum timepoint in a,b
           S2_dem_a <- dem_df$S2_dem #survival fun of not dying having had dementia for time = b-a
           S2h23P<-(S2t*exp(lp.02[i])*(maxP-minP) +d*(1-S2_dem_a)*exp(lp.12[i]+delta*a))*(maxP-minP) #adjusted probability of developing dem (extra weight given to disease if patients die) 
-          # basically we are tring to give more probability of being extracted as ill patient to those that are dead since
+          # basically we are trying to give more probability of being extracted as ill patient to those that are dead since
           # dead people could have died because of unobserved dementia, so we are adding the survival function 
           # associated to the time spent in dementia status adjusted for the entry in dementia status
           pD<-S2h23P/(S1t+S2h23P)   # probability of dementia onset during the interval, given survival without dementia up to the final time point  
@@ -203,7 +190,7 @@ run_imputation <- function(data, data_visits, m, type){
         
         for (j in 1:m) #creating m imputated datasets
         {
-          if (c2[i,j]<=pD) #if  probability of dementia onset is more than a threshold dementia status=1
+          if (c2[i,j]<=pD) #if probability of dementia onset is more than a threshold dementia status=1
             # and onset age computed as before: at maximum time for which cum probability of dementia is less of
             #a chosen threshold sampled from a uniform or in middle point
           {
@@ -227,20 +214,24 @@ run_imputation <- function(data, data_visits, m, type){
     
     all_fits <- vector(mode = "list", length = m)
     
-    #fitting the parametric model for each imputed dataset and averaging estimates
-    for (j in 1:m){
+    plan(multisession, workers = cores_imp)
+    
+    # Run loop in parallel
+    all_fits <- future_lapply(1:m, function(j) {
       temp <- schemeA_data
       
-      dem_generated <- which(demstatus[,j]==1)
-      dem_observed <- as.numeric(temp$patient_id[temp$onset==1])
+      dem_generated <- which(demstatus[,j] == 1)
+      dem_observed <- as.numeric(temp$patient_id[temp$onset == 1])
       dem_to_add <- setdiff(dem_generated, dem_observed)
       
       temp$onset[dem_to_add] <- 1
-      temp$onset_age[dem_generated] <- dementage[dem_generated,j]
+      temp$onset_age[dem_generated] <- dementage[dem_generated, j]
       
-      all_fits[[j]] <- fit_model(temp,type)
-      
-    }
+      fit_model(temp, type)  
+    })
+    
+    # Reset plan to sequential after parallel execution
+    plan(sequential)
     
     averaged_params <- averaging_params(all_fits,m)
 

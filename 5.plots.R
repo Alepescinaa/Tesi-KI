@@ -39,7 +39,7 @@ source_files <- c(
 lapply(source_files, source)
 
 
-n_pats <- 10000
+n_pats <- 500
 cores <- 4
 
 ###################
@@ -258,7 +258,7 @@ ci_lfe <- lapply(lfe_estimates, process_ci)
 plfe <- plot_lfe_bias(ci_lfe)
 
 setwd(model_dir)
-save(plfe, file = "plfe500K.RData" )
+save(plfe, file = "plfe500.RData" )
 
 
 significant_covs <- data.frame("cov1"= c(0,1,1), "cov2"= c(1,1,0), "cov3"=c(1,1,1), "transition"=c(1,2,3))
