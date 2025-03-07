@@ -111,9 +111,10 @@ run_baseline_bias <- function(n_pats, scheme, seed, convergence){
   
   
   
-  #  # ============
-  #  # flexsurv
-  #  # ============
+   # ============
+   # flexsurv
+   # ============
+  
   if (convergence$flexsurv[seed] == 2) {
     params_flexsurv <- matrix(0, nrow = 3, ncol = 2)
     param_names <- names(fits_gompertz[[1]]$coefficients[1:2])
@@ -137,9 +138,9 @@ run_baseline_bias <- function(n_pats, scheme, seed, convergence){
   gc()
   
 
-  #  # ============
-  #  # msm + age
-  #  # ============
+   # ============
+   # msm + age
+   # ============
   
   if (convergence$msm_age[seed]==2){
   
@@ -195,11 +196,12 @@ run_baseline_bias <- function(n_pats, scheme, seed, convergence){
   }
   
   gc()
-  #  #
-  #  # ============
-  #  # imputation
-  #  # ============
+   
   
+   # ============
+   # imputation
+   # ============
+
   if (convergence$imputation[seed]==2){
     params_imp <- results_imp[[1]]
     params_imp <- params_imp[, c(2, 1)]

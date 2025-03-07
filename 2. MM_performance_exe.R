@@ -23,55 +23,42 @@ setwd(here())
 load("./wrapper_MM/ground_truthMM.RData")
 
 source_files <- c(
+  "./wrapper_MM/functions_performance/check_convergence.R",
+  "./wrapper_MM/functions_performance/computing_life_expectancy.R",
   "./wrapper_MM/functions_performance/compute_bias.R",
   "./wrapper_MM/functions_performance/compute_bias_rel.R",
+  "./wrapper_MM/functions_performance/compute_CI.R",
+  "./wrapper_MM/functions_performance/compute_coverage.R",
+  "./wrapper_MM/functions_performance/compute_power.R",
+  "./wrapper_MM/functions_performance/extract_comp_time.R",
+  "./wrapper_MM/functions_performance/get_params_nhm.R",
+  "./wrapper_MM/functions_performance/get_time.R",
+  "./wrapper_MM/functions_performance/gt_flexsurv.R",
   "./wrapper_MM/functions_performance/hazards_mine.R",
+  "./wrapper_MM/functions_performance/ic_comparison.R",
+  "./wrapper_MM/functions_performance/ic_comparison_baseline.R",
+  "./wrapper_MM/functions_performance/is.flexsurvlist.R",
+  "./wrapper_MM/functions_performance/level_convergence.R",
+  "./wrapper_MM/functions_performance/mean_bias_comparison.R",
+  "./wrapper_MM/functions_performance/mean_bias_comparison_baseline.R",
+  "./wrapper_MM/functions_performance/mean_coverage_comparison.R",
+  "./wrapper_MM/functions_performance/mean_lfe_comparison.R",
+  "./wrapper_MM/functions_performance/mean_power.R",
+  "./wrapper_MM/functions_performance/mean_se.R",
+  "./wrapper_MM/functions_performance/mean_width_ic.R",
+  "./wrapper_MM/functions_performance/p.matrix.age.R",
+  "./wrapper_MM/functions_performance/power_categorical.R",
+  "./wrapper_MM/functions_performance/run_baseline_bias.R",
   "./wrapper_MM/functions_performance/run_performance_bias.R",
   "./wrapper_MM/functions_performance/run_performance_bias_rel.R",
   "./wrapper_MM/functions_performance/run_performance_coverage.R",
-  "./wrapper_MM/functions_performance/compute_CI.R",
-  "./wrapper_MM/functions_performance/compute_coverage.R",
-  "./wrapper_MM/functions_performance/get_params_nhm.R",
-  "./wrapper_MM/functions_performance/mean_bias_comparison.R",
-  "./wrapper_MM/functions_performance/mean_coverage_comparison.R",
-  "./wrapper_MM/functions_performance/check_convergence.R",
-  "./wrapper_MM/functions_performance/level_convergence.R",
-  "./wrapper_MM/functions_performance/wrapper_convergence.R",
-  "./wrapper_MM/functions_performance/plot_convergence.R",
-  "./wrapper_MM/functions_performance/plot_bias.R",
-  "./wrapper_MM/functions_performance/plot_bias_rel.R",
-  "./wrapper_MM/functions_performance/plot_coverage.R",
-  "./wrapper_MM/functions_performance/extract_comp_time.R",
-  "./wrapper_MM/functions_performance/plot_boxplot.R",
-  "./wrapper_MM/functions_performance/plot_ct.R",
-  "./wrapper_MM/functions_performance/prepare_data_boxplot.R",
-  "./wrapper_MM/functions_performance/gt_flexsurv.R",
-  "./wrapper_MM/functions_performance/ic_comparison.R",
-  "./wrapper_MM/functions_performance/totlos.fs.mine .R",
-  "./wrapper_MM/functions_performance/is.flexsurvlist.R",
-  "./wrapper_MM/functions_performance/computing_life_expectancy.R",
-  "./wrapper_MM/functions_performance/mean_lfe_comparison.R",
-  "./wrapper_MM/functions_performance/plot_bias_lfe.R",
-  "./wrapper_MM/functions_performance/p.matrix.age.R",
-  "./wrapper_MM/functions_performance/get_time.R",
-  "./wrapper_MM/functions_performance/compute_power.R",
-  "./wrapper_MM/functions_performance/mean_power.R",
-  "./wrapper_MM/functions_performance/table_power.R",
-  "./wrapper_MM/functions_performance/width_ic.R",
-  "./wrapper_MM/functions_performance/mean_width_ic.R",
-  "./wrapper_MM/functions_performance/plot_width.R",
-  "./wrapper_MM/functions_performance/plot_lfe.R",
-  "./wrapper_MM/functions_performance/plot_lfe_bias.R",
-  "./wrapper_MM/functions_performance/standard_error.R",
-  "./wrapper_MM/functions_performance/mean_se.R",
   "./wrapper_MM/functions_performance/simulation_probs.R",
   "./wrapper_MM/functions_performance/simulation_probs_nhm.R",
-  "./wrapper_MM/functions_performance/run_baseline_bias.R",
-  "./wrapper_MM/functions_performance/ic_comparison_baseline.R",
-  "./wrapper_MM/functions_performance/mean_bias_comparison_baseline.R"
-  
+  "./wrapper_MM/functions_performance/standard_error.R",
+  "./wrapper_MM/functions_performance/table_power.R",
+  "./wrapper_MM/functions_performance/type_1_error.R",
+  "./wrapper_MM/functions_performance/wrapper_convergence.R",
 )
-
 
 lapply(source_files, source)
 
@@ -79,9 +66,9 @@ lapply(source_files, source)
 # this code has to be run over each different sample size, is not taken as parameter !
 # select number of patients and core to use 
 
-n_pats <- 5000
+n_pats <- 10000
 
-cores <- 4
+cores <- detectCores()
 
 
 ###################
@@ -117,7 +104,7 @@ if (n_pats==500){
 }
 
 
-# directory to save things
+# directory to save results
 model_dir <- here() 
 setwd(model_dir)
 if (n_pats==500){
@@ -138,15 +125,14 @@ if (n_pats==500){
 # fitting parametric model over exactly observed data #
 #######################################################
 
-# this is gonna be useful to understand the smaller bias we can reach in out estimates
-# since we have to account for the problematics introduced by the sample size
+# Computation of the benchmark model
 
-# plan(multisession, workers = cores)
-# future_lapply(1:100, function(seed) {gt_flexsurv(n_pats, seed)})
+plan(multisession, workers = cores)
+future_lapply(1:100, function(seed) {gt_flexsurv(n_pats, seed)})
 
-########################
-# check of convergence #
-########################
+###############
+# convergence #
+###############
 
 temp <- vector(mode = "list", length = 4)
 convergence_schemes <- vector(mode = "list", length = 4)
@@ -173,9 +159,9 @@ setwd(here())
 save(combined_cov, file = file.path(model_dir,"convergence.RData"))
 
 
-###################
-# bias comparison #
-###################
+######################################
+# absolute bias of covariates effect #
+######################################
 
 bias_all_schemes <- vector(mode = "list", length = 4)
 estimates <- vector(mode = "list", length = 4)
@@ -225,15 +211,23 @@ for (scheme in 2:5){
 }
 
 setwd(here())
-save(estimates, file = file.path(model_dir,"all_estimates.RData"))
+save(estimates, file = file.path(model_dir,"all_estimates.RData")) 
+#contains estimates of baseline parameters, covariates effect, HR for each seed
+
 save(mean_estimates, file = file.path(model_dir,"mean_estimates.RData"))
+#contains estimates of baseline parameters, covariates effect, HR averaged over the seed
+
 save(bias_all_schemes, file = file.path(model_dir,"bias_all.RData"))
+#contains absolute bias of baseline parameters, covariates effect, HR for each seed
+
 save(res_bias, file = file.path(model_dir,"res_bias.RData"))
+#contains mean and IC of absolute bias of baseline parameters and covariates effect
 
+########################################
+# relative bias of baseline parameters #
+########################################
 
-###########################
-# baseline bias comparison #
-###########################
+#computed over parametric models only following Gompertz distribution
 
 baseline_all_schemes <- vector(mode = "list", length = 4)
 baseline_estimates <- vector(mode = "list", length = 4)
@@ -278,56 +272,18 @@ for (scheme in 2:5){
 
 setwd(here())
 save(baseline_bias, file = file.path(model_dir,"baseline_bias.RData"))
+#contains mean and IC of relative bias of baseline parameters and covariates effect
+
 save(mean_estimates_baseline, file = file.path(model_dir,"mean_estimates_baseline.RData"))
+#contains estimates of baseline parameters averaged over seeds
+
 save(baseline_estimates, file = file.path(model_dir,"baseline_estimates_all.RData"))
+#contains estimates of baseline parameters for each seed
 
 
-
-
-############################
-# relative bias comparison #
-############################
-
-# rel_bias_all_schemes <- vector(mode = "list", length = 4)
-# 
-# for (scheme in 2:5){
-#   results_bias_rel <- data.frame(
-#     rate = numeric(0),
-#     shape = numeric(0),
-#     cov1 = numeric(0),
-#     cov2 = numeric(0),
-#     cov3 = numeric(0),
-#     `exp(cov1)` = numeric(0),
-#     `exp(cov2)` = numeric(0),
-#     `exp(cov3)` = numeric(0),
-#     model = character(0),
-#     seed = integer(0)
-#   )
-# 
-#   plan(multisession, workers = cores)
-#   results_list <- future_lapply(1:100, function(seed) {
-#     temp_results <- run_performance_bias_rel(n_pats, scheme, seed, combined_cov[[scheme - 1]])
-#     return(temp_results)
-#   })
-# 
-#   results_bias_rel <- do.call(rbind, results_list)
-# 
-#   rel_bias_all_schemes[[scheme-1]] <- results_bias_rel
-# }
-# 
-# res_bias_rel <- vector(mode = "list", length = 4)
-# for (scheme in 2:5){
-#   res_bias_rel[[scheme-1]] <- ic_comparison(rel_bias_all_schemes, scheme)
-# }
-# 
-# setwd(here())
-# save(rel_bias_all_schemes, file = file.path(model_dir,"bias_all_rel.RData"))
-# save(res_bias_rel, file = file.path(model_dir,"res_bias_rel.RData"))
-# 
-# 
-# ############################
-# # 95 % coverage comparison #
-# ############################
+# ######################################
+#  95 % coverage of covariates effect  #
+# ######################################
 
 coverage_all_schemes <- vector(mode = "list", length = 4)
 
@@ -366,41 +322,15 @@ for (scheme in 2:5){
 
 setwd(here())
 save(coverage_all_schemes, file = file.path(model_dir,"all_coverage.RData"))
+#contains coverage of baseline parameters and covariates effects for each seed
+
 save(res_cov_ic, file = file.path(model_dir,"95%coverage.RData"))
+#contains coverage mean and IC of baseline parameters and covariates effects 
 
 
-###############################
-#  width confidence intervals #
-###############################
-
-# width_all_schemes <- vector(mode = "list", length = 4)
-# 
-# for (scheme in 2:5){
-#   plan(multisession, workers = cores) 
-#   results_list <- future_lapply(1:100, function(seed) {
-#     temp_results <- width_ic(n_pats, scheme, seed, combined_cov[[scheme-1]])
-#     return(temp_results)
-#   })
-#   
-#   results_width<- do.call(rbind, results_list)
-#   
-#   width_all_schemes[[scheme-1]] <- results_width
-#   
-# }
-# 
-# mean_width <- vector(mode = "list", length = 4)
-# for (scheme in 2:5){
-#   mean_width[[scheme-1]] <- mean_width_ic(width_all_schemes, scheme)
-# }
-# 
-# setwd(here())
-# save(width_all_schemes, file = file.path(model_dir,"width_all_ic.RData"))
-# save(mean_width, file = file.path(model_dir,"width_ic.RData"))
-
-
-###############################
-#  standard error #
-###############################
+########################################
+# standard error of covariates effect  #
+########################################
 
 se_all_schemes <- vector(mode = "list", length = 4)
 
@@ -424,7 +354,10 @@ for (scheme in 2:5){
 
 setwd(here())
 save(se_all_schemes, file = file.path(model_dir,"se_all.RData"))
+#contains standard error of covariates effects for each seed
+
 save(se_mean, file = file.path(model_dir,"mean_se.RData"))
+#contains mean standard error of covariates effects 
 
 
 ####################
@@ -448,8 +381,6 @@ for (scheme in 2:5){
   # I've been using msm age without accounting for age as time varying
   plan(multisession, workers = cores) 
   results_list <- future_lapply(1:100, function(seed) {
-    #temp <- data[[seed]][[scheme]]
-    #t_start <- min(temp$age)
     t_start <- 60
     temp_results <- computing_life_expectancy(n_pats, scheme, seed, combined_cov[[scheme-1]], t_start, covs)
     return(temp_results)
@@ -480,22 +411,23 @@ for (scheme in 2:5){
 }
 
 setwd(here())
-save(gt_tls, file = file.path(model_dir,"gt_tls.RData"))
-save(lfe_estimates, file = file.path(model_dir,"all_estimates_lfe.RData")) #to be used if I wannna compute ic
-save(mean_estimates_lfe, file = file.path(model_dir,"mean_estimates_lfe.RData"))
-save(res_bias_lfe, file = file.path(model_dir,"bias_lfe.RData"))
+#save(gt_tls, file = file.path(model_dir,"gt_tls.RData"))
+# contains the ground truth averaged time spent in each state 
 
+save(lfe_estimates, file = file.path(model_dir,"all_estimates_lfe.RData")) 
+# contains average time spent in each state for each seed
+save(mean_estimates_lfe, file = file.path(model_dir,"mean_estimates_lfe.RData"))
+# contains average time spent in each state averaged over seeds
+
+save(res_bias_lfe, file = file.path(model_dir,"bias_lfe.RData"))
+# contains average bias of the time spent in each state averaged over seeds
 
 ##########################
 # Power and type 1 error #
 ##########################
 
-# In the table I will represent P(p_i<=alpha) i.e. percentage of times for which the covs effect is significant
-# the yellow values represent when the covariate was significant in the ground truth 
-# H0 is variable not significant
-# Type 1 error -> refuse H0|H0 true -> significant|no sign
-# Type 2 error ->  accept H0| H0 false -> no sign|sign
-# Power -> refuse H0|H0 false -> significant|sign
+# Type 1 error -> refuse H0|H0 true -> significant|no significant
+# Power -> refuse H0|H0 false -> significant|significant
 
 significancy <- vector(mode = "list", length = 4)
 significancy_all <- vector(mode = "list", length = 4)
@@ -520,9 +452,39 @@ significant_covs <- data.frame("cov1"= c(0,1,1), "cov2"= c(1,1,0), "cov3"=c(1,1,
 
 setwd(here())
 save(significancy, file = file.path(model_dir,"significancy.RData"))
-save(significancy_all, file = file.path(model_dir,"significancy_all.RData"))
-save(significant_covs, file = file.path(model_dir,"significancy_covs.RData"))
+# mean probability that the covariates are predicted to be significant 
 
+save(significancy_all, file = file.path(model_dir,"significancy_all.RData"))
+# whether each covariate is predicted to be significant for each seed
+
+save(significant_covs, file = file.path(model_dir,"significancy_covs.RData"))
+# presence/absence of covariates effect in the simulation process
+
+
+pw2 <- power_categorical(significant_covs, significancy, scheme=2)
+pw3 <- power_categorical(significant_covs, significancy, scheme=3)
+pw4 <- power_categorical(significant_covs, significancy, scheme=4)
+pw5 <- power_categorical(significant_covs, significancy, scheme=5)
+
+setwd(model_dir)
+plots_power <- list(pw2,pw3,pw4,pw5)
+save(plots_power, file = "power.RData" )
+# contains mean power for each transition
+
+
+setwd(here())
+
+err2 <- type_1_error(significant_covs, significancy, scheme=2)
+err3 <- type_1_error(significant_covs, significancy, scheme=3)
+err4 <- type_1_error(significant_covs, significancy, scheme=4)
+err5 <- type_1_error(significant_covs, significancy, scheme=5)
+
+setwd(model_dir)
+plots_errorI <- list(err2,err3,err4,err5)
+save(plots_errorI, file = "typeIerr.RData" )
+#contains mean type I error for each feasible transition
+
+setwd(here())
 
 ######################
 # computational time #
@@ -544,6 +506,7 @@ for (scheme in 2:5){
 
 setwd(here())
 save(ct_all_schemes, file = file.path(model_dir,"comp_time.RData"))
+#contains mean computational time 
 
 
 ##########
@@ -657,4 +620,3 @@ ct_plot <- ct_plot & theme(legend.position = "left")
 ggsave("ct.png", plot = ct_plot, path = NULL, width = 9, height = 7)
 
 
-# keep in mind that these estimates of the bias are accounted only for the models for which convergence at optimum is met

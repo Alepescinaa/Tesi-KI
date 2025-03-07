@@ -41,79 +41,8 @@ power_categorical <- function(significant_covs, data, scheme){
         x < 80 ~ "Moderate (50%-80%)",
         TRUE ~ "High (>80%)"
       ),
-      covariate = case_when (
-        covariate == "cov1"  ~ "beta[1]",
-        covariate == "cov2"  ~ "beta[2]",
-        covariate == "cov3"  ~ "beta[3]",
-        TRUE ~ covariate
-      )
     )
   
-  df_long1 <- df_long[df_long$transition==1,]
-  df_long2 <- df_long[df_long$transition==2,]
-  df_long3 <- df_long[df_long$transition==3,]
   
-  p1 <- ggplot(df_long1, aes(x = covariate, y = model, fill = power_category)) +
-    geom_tile(color = "white", linewidth = 0.5) +
-    scale_fill_manual(
-      values = c("Low (<50%)" = "red", "Moderate (50%-80%)" = "yellow", "High (>80%)" = "green"),
-      name = "Power Category"
-    ) +
-    labs(
-      title = "Heatmap of Power by Method and Covariate for transition from Dementia-free to Dementia",
-      x = NULL,
-      y = NULL
-    ) +
-    theme_minimal() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      plot.title = element_text(size = 12, hjust = 0.5),
-      axis.title.x = element_blank(),
-      axis.title.y = element_blank() 
-    )+
-    scale_x_discrete(labels = function(x) parse(text = x))
-  
-
-  
-  p2 <- ggplot(df_long2, aes(x = covariate, y = model, fill = power_category)) +
-    geom_tile(color = "white", linewidth = 0.5) +
-    scale_fill_manual(
-      values = c("Low (<50%)" = "red", "Moderate (50%-80%)" = "yellow", "High (>80%)" = "green"),
-      name = "Power Category"
-    ) +
-    labs(
-      title = "Heatmap of Power by Method and Covariate for transition from Dementia-free to Death",
-      x = NULL,
-      y = NULL
-    ) +
-    theme_minimal() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      plot.title = element_text(size = 12, hjust = 0.5),
-      axis.title.x = element_blank(), 
-      axis.title.y = element_blank() 
-    ) +
-    scale_x_discrete(labels = function(x) parse(text = x))
-  
-  p3 <- ggplot(df_long3, aes(x = covariate, y = model, fill = power_category)) +
-    geom_tile(color = "white", linewidth = 0.5) +
-    scale_fill_manual(
-      values = c("Low (<50%)" = "red", "Moderate (50%-80%)" = "yellow", "High (>80%)" = "green"),
-      name = "Power (%)"
-    ) +
-    labs(
-      title = "Heatmap of Power by Method and Covariate for transition from Dementia to Death",
-      x = NULL,
-      y = NULL
-    ) +
-    theme_minimal() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      plot.title = element_text(size = 12, hjust = 0.5),
-      axis.title.x = element_blank(), 
-      axis.title.y = element_blank() 
-    )+
-    scale_x_discrete(labels = function(x) parse(text = x))
-  
-  return (list(p1,p2,p3))
+  return (df_long)
 }

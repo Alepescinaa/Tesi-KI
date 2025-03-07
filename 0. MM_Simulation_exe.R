@@ -56,7 +56,7 @@ dir.create("Simulated_data_MM", showWarnings = FALSE, recursive= T)
 
 #######################################################################
 dataset_all_MM_500 <- dataset_all_MM
-n_pats = 5
+n_pats = 500
 
 for (i in 1:n_sim){
   for (j in 1:5){

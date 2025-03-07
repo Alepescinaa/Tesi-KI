@@ -1,0 +1,1419 @@
+---
+title: "Performance Comparison"
+author: "Alessandra Pescina"
+date: "2024-12-16"
+output: html_document
+---
+
+```{r setup, include=FALSE, warning=FALSE, results='hide'}
+
+
+knitr::opts_chunk$set(
+  echo = FALSE,           
+  warning = FALSE,      
+  message = FALSE,       
+  fig.align = "center",  
+  fig.width = 12,        
+  fig.height = 8,        
+  out.width = "100%"     
+)
+
+
+
+```
+
+
+
+```{r}
+library(fs)
+library(parallel)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(patchwork)
+library(here)
+library(kableExtra)
+library(plotly)
+```
+
+
+```{r}
+setwd(here())
+path <- "./wrapper_MM/saved_performance_500/"
+files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
+lapply(files, load, .GlobalEnv)
+
+combined_cov500 <- combined_cov 
+remove(combined_cov)
+
+res_cov_ic500 <- res_cov_ic
+remove(res_cov_ic)
+
+ct_all_schemes500 <- ct_all_schemes
+remove(ct_all_schemes)
+
+mean_estimates_lfe500 <- mean_estimates_lfe
+remove(mean_estimates_lfe)
+
+res_bias500 <- res_bias
+remove(res_bias)
+
+res_bias_lfe500 <- res_bias_lfe
+remove(res_bias_lfe)
+
+plots_errorI500 <- plots_errorI
+remove(plots_errorI)
+
+plots_power500 <- plots_power 
+remove(plots_power)
+```
+
+```{r, results='hide'}
+
+setwd(here())
+path <- "./wrapper_MM/saved_performance_2K/"
+files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
+lapply(files, load, .GlobalEnv)
+
+combined_cov2K <- combined_cov 
+remove(combined_cov)
+
+res_cov_ic2K <- res_cov_ic
+remove(res_cov_ic)
+
+ct_all_schemes2K <- ct_all_schemes
+remove(ct_all_schemes)
+
+mean_estimates_lfe2K <- mean_estimates_lfe
+remove(mean_estimates_lfe)
+
+res_bias2K <- res_bias
+remove(res_bias)
+
+res_bias_lfe2K <- res_bias_lfe
+remove(res_bias_lfe)
+
+plots_errorI2K<- plots_errorI
+remove(plots_errorI)
+
+plots_power2K <- plots_power 
+remove(plots_power)
+
+```
+
+```{r, results='hide'}
+
+setwd(here())
+path <- "./wrapper_MM/saved_performance_5K/"
+files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
+lapply(files, load, .GlobalEnv)
+
+combined_cov5K <- combined_cov 
+remove(combined_cov)
+
+res_cov_ic5K <- res_cov_ic
+remove(res_cov_ic)
+
+ct_all_schemes5K <- ct_all_schemes
+remove(ct_all_schemes)
+
+mean_estimates_lfe5K <- mean_estimates_lfe
+remove(mean_estimates_lfe)
+
+res_bias5K <- res_bias
+remove(res_bias)
+
+res_bias_lfe5K <- res_bias_lfe
+remove(res_bias_lfe)
+
+plots_errorI5K <- plots_errorI
+remove(plots_errorI)
+
+plots_power5K <- plots_power 
+remove(plots_power)
+
+```
+
+```{r}
+setwd(here())
+path <- "./wrapper_MM/saved_performance_10K/"
+files <- list.files(path, pattern = "\\.RData$", full.names = TRUE)
+lapply(files, load, .GlobalEnv)
+
+combined_cov10K <- combined_cov 
+remove(combined_cov)
+
+res_cov_ic10K <- res_cov_ic
+remove(res_cov_ic)
+
+ct_all_schemes10K <- ct_all_schemes
+remove(ct_all_schemes)
+
+mean_estimates_lfe10K <- mean_estimates_lfe
+remove(mean_estimates_lfe)
+
+res_bias10K <- res_bias
+remove(res_bias)
+
+res_bias_lfe10K <- res_bias_lfe
+remove(res_bias_lfe)
+
+plots_errorI10K <- plots_errorI
+remove(plots_errorI)
+
+plots_power10K <- plots_power 
+remove(plots_power)
+
+
+
+```
+
+```{r}
+model_dir <- here() 
+setwd(model_dir)
+model_dir <- paste0("wrapper_MM/plots")
+dir.create(model_dir, showWarnings = FALSE, recursive= T)
+```
+
+### Absolute Bias of covariates effect 
+
+
+Absolute bias of covariates effect varying observational scheme for a chosen sample size
+```{r}
+
+p1 <- res_bias500[[1]]
+p2 <- res_bias500[[2]]
+p3 <- res_bias500[[3]]
+p4 <- res_bias500[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df1 <- rbind(p1,p2,p3,p4)
+df1$size <- "500 individuals"
+
+p1 <- res_bias2K[[1]]
+p2 <- res_bias2K[[2]]
+p3 <- res_bias2K[[3]]
+p4 <- res_bias2K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df2 <- rbind(p1,p2,p3,p4)
+df2$size <- "2000 individuals"
+
+
+p1 <- res_bias5K[[1]]
+p2 <- res_bias5K[[2]]
+p3 <- res_bias5K[[3]]
+p4 <- res_bias5K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df3 <- rbind(p1,p2,p3,p4)
+df3$size <- "5000 individuals"
+
+
+p1 <- res_bias10K[[1]]
+p2 <- res_bias10K[[2]]
+p3 <- res_bias10K[[3]]
+p4 <- res_bias10K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df4 <- rbind(p1,p2,p3,p4)
+df4$size <- "10000 individuals"
+
+df_all <- rbind(df1,df2,df3,df4)
+
+
+df_all <- df_all %>% 
+  mutate(model = case_when(
+    model == "flexsurv_EO" ~ "0",
+     model == "flexsurv" ~ "a",
+    model == "coxph" ~ "b",
+    model == "msm"  ~ "c",
+    model == "msm_age"  ~ "d",
+    model == "nhm"  ~ "e",
+    model == "imputation" ~ "f",
+    TRUE ~ model  
+  ))
+
+latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1_mean" = "hat(beta)[1]",
+    "cov2_mean" = "hat(beta)[2]",
+    "cov3_mean" = "hat(beta)[3]"
+  )
+
+df_all<- df_all %>%
+   mutate(
+    size = factor(size, levels = c("500 individuals", "2000 individuals", "5000 individuals","10000 individuals"))
+    )
+
+df_all <- df_all[df_all$size=="500 individuals",] #CHANGE HERE
+
+
+df_all_long <- df_all %>%
+  gather(key = "parameter", value = "bias_mean", cov1_mean, cov2_mean, cov3_mean) 
+
+ plot <- ggplot(data = df_all_long, aes(x = model, y = bias_mean, color = scenario)) + 
+  geom_point(size = 3, shape = 19) + 
+  
+  facet_grid(parameter ~ transition, scales = "free_y", 
+             labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
+                                 transition = as_labeller(latex_labels))) + 
+  
+  labs(title = NULL, 
+       x = "Model", 
+       y = "Bias",
+       color = "Observation Scheme") + 
+  
+  geom_line(aes(group = scenario), size = 1, linetype = "solid", alpha = 0.8) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50", size = 1) + 
+  #geom_errorbar(aes(ymin = bias_lower, ymax = bias_upper), width = 0.3, color = "black") + 
+  
+   
+  theme_bw() + 
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12), 
+        plot.title = element_text(size = 14, hjust = 0.5),
+        strip.text = element_text(size = 12),
+        legend.title = element_text(size = 12, face = "bold"),
+        legend.text = element_text(size = 10),
+        panel.spacing = unit(1, "lines"),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        plot.caption = element_text(hjust = 0, size = 8)) + 
+  
+  scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)
+ 
+  
+plot
+ ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/plots/bias_scheme.pdf", plot, width = 8, height = 6, units = "in", dpi = 300)
+ 
+```
+
+Absolute bias of covariates effect varying sample size for a chosen observational scheme
+```{r}
+
+p1 <- res_bias500[[1]]
+p2 <- res_bias500[[2]]
+p3 <- res_bias500[[3]]
+p4 <- res_bias500[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df1 <- rbind(p1,p2,p3,p4)
+df1$size <- "500 individuals"
+
+p1 <- res_bias2K[[1]]
+p2 <- res_bias2K[[2]]
+p3 <- res_bias2K[[3]]
+p4 <- res_bias2K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df2 <- rbind(p1,p2,p3,p4)
+df2$size <- "2000 individuals"
+
+
+p1 <- res_bias5K[[1]]
+p2 <- res_bias5K[[2]]
+p3 <- res_bias5K[[3]]
+p4 <- res_bias5K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df3 <- rbind(p1,p2,p3,p4)
+df3$size <- "5000 individuals"
+
+
+p1 <- res_bias10K[[1]]
+p2 <- res_bias10K[[2]]
+p3 <- res_bias10K[[3]]
+p4 <- res_bias10K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df4 <- rbind(p1,p2,p3,p4)
+df4$size <- "10000 individuals"
+
+df_all <- rbind(df1,df2,df3,df4)
+
+
+df_all <- df_all %>% 
+  mutate(model = case_when(
+    model == "flexsurv_EO" ~ "0",
+     model == "flexsurv" ~ "a",
+    model == "coxph" ~ "b",
+    model == "msm"  ~ "c",
+    model == "msm_age"  ~ "d",
+    model == "nhm"  ~ "e",
+    model == "imputation" ~ "f",
+    TRUE ~ model  # Keep other values unchanged
+  ))
+
+latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1_mean" = "hat(beta)[1]",
+    "cov2_mean" = "hat(beta)[2]",
+    "cov3_mean" = "hat(beta)[3]"
+  )
+
+df_all<- df_all %>%
+   mutate(
+    size = factor(size, levels = c("500 individuals", "2000 individuals", "5000 individuals","10000 individuals"))
+    )
+
+
+df_all <- df_all[df_all$scenario=="1 year",]
+
+df_all_long <- df_all %>%
+  gather(key = "parameter", value = "bias_mean", cov1_mean, cov2_mean, cov3_mean) 
+
+ plot <- ggplot(data = df_all_long, aes(x = model, y = bias_mean, color = size)) + 
+  geom_point(size = 3, shape = 19) + 
+  
+  facet_grid(parameter ~ transition, scales = "free_y", 
+             labeller = labeller(parameter = as_labeller(latex_labels, label_parsed), 
+                                 transition = as_labeller(latex_labels))) + 
+  
+  labs(title = NULL, 
+       x = "Model", 
+       y = "Bias",
+       color = "Sample size") + 
+  
+  geom_line(aes(group = size), size = 1, linetype = "solid", alpha = 0.8) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50", size = 1) + 
+  #geom_errorbar(aes(ymin = bias_lower, ymax = bias_upper), width = 0.3, color = "black") + 
+  
+   
+  theme_bw() + 
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12), 
+        plot.title = element_text(size = 14, hjust = 0.5),
+        strip.text = element_text(size = 12),
+        legend.title = element_text(size = 12, face = "bold"),
+        legend.text = element_text(size = 10),
+        panel.spacing = unit(1, "lines"),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        plot.caption = element_text(hjust = 0, size = 8)) + 
+  
+  
+  scale_color_viridis_d(option = "D", begin = 0.2, end = 0.8)
+  
+plot
+ ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/plots/bias_size.pdf", plot, width = 8, height = 6, units = "in", dpi = 300)
+ 
+```
+
+
+### 95% Coverage of covariates effect
+
+95% Coverage of covariates effect varying observational scheme for a chosen sample size
+```{r}
+p1 <- res_cov_ic500[[1]]
+p2 <- res_cov_ic500[[2]]
+p3 <- res_cov_ic500[[3]]
+p4 <- res_cov_ic500[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df1 <- rbind(p1,p2,p3,p4)
+df1$size <- "500 individuals"
+
+p1 <- res_cov_ic2K[[1]]
+p2 <- res_cov_ic2K[[2]]
+p3 <- res_cov_ic2K[[3]]
+p4 <- res_cov_ic2K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df2 <- rbind(p1,p2,p3,p4)
+df2$size <- "2000 individuals"
+
+
+p1 <- res_cov_ic5K[[1]]
+p2 <- res_cov_ic5K[[2]]
+p3 <- res_cov_ic5K[[3]]
+p4 <- res_cov_ic5K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df3 <- rbind(p1,p2,p3,p4)
+df3$size <- "5000 individuals"
+
+
+p1 <- res_cov_ic10K[[1]]
+p2 <- res_cov_ic10K[[2]]
+p3 <- res_cov_ic10K[[3]]
+p4 <- res_cov_ic10K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df4 <- rbind(p1,p2,p3,p4)
+df4$size <- "10000 individuals"
+
+df_all <- rbind(df1,df2,df3,df4)
+
+df_all <- df_all %>% 
+  mutate(model = case_when(
+    model == "flexsurv_EO" ~ "0",
+     model == "flexsurv" ~ "a",
+    model == "coxph" ~ "b",
+    model == "msm"  ~ "c",
+    model == "msm_age"  ~ "d",
+    model == "nhm"  ~ "e",
+    model == "imputation" ~ "f",
+    TRUE ~ model  # Keep other values unchanged
+  ))
+
+latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1_mean" = "hat(beta)[1]",
+    "cov2_mean" = "hat(beta)[2]",
+    "cov3_mean" = "hat(beta)[3]"
+  )
+
+df_all<- df_all %>%
+   mutate(
+    size = factor(size, levels = c("500 individuals", "2000 individuals", "5000 individuals","10000 individuals"))
+    )
+
+
+df_all <- df_all[df_all$size=="500 individuals",]
+
+
+df_all_long <- df_all %>%
+  gather(key = "parameter", value = "coverage", cov1_mean, cov2_mean, cov3_mean) %>%
+  select(model, transition, parameter, coverage, scenario, size)
+df_all_long$coverage <- df_all_long$coverage*100
+
+plot <- ggplot(data = df_all_long, aes(x = model, y = coverage, color = scenario)) +
+  geom_point(size = 3, shape = 19) +
+  geom_line(aes(group = scenario), size = 1, linetype = "dashed", alpha = 0.8) +
+  geom_hline(yintercept = 95, linetype = "dashed", color = "grey50", size = 1) +
+  
+  facet_grid(parameter ~ transition, scales = "free_y",
+             labeller = labeller(parameter = as_labeller(latex_labels, label_parsed),
+                                 transition = as_labeller(latex_labels))) +
+  
+  labs(x = "Model", y = "Coverage (%)", color = "Sample Size") +
+  
+  theme_bw() +
+  theme(legend.position = "top",
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        plot.title = element_text(size = 14, hjust = 0.5),
+        strip.text = element_text(size = 12),
+        legend.title = element_text(size = 12, face = "bold"),
+        legend.text = element_text(size = 10),
+        panel.spacing = unit(1, "lines"),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        plot.caption = element_text(hjust = 0, size = 8)) +
+  
+  scale_color_viridis_d(option = "B", begin = 0.2, end = 0.8)
+
+plot
+ ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/plots/coverage_scheme.pdf", 
+plot, width = 8, height = 6, units = "in", dpi = 300)
+
+```
+95% Coverage of covariates effect varying sample size for a chosen observational scheme
+
+```{r}
+p1 <- res_cov_ic500[[1]]
+p2 <- res_cov_ic500[[2]]
+p3 <- res_cov_ic500[[3]]
+p4 <- res_cov_ic500[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df1 <- rbind(p1,p2,p3,p4)
+df1$size <- "500 individuals"
+
+p1 <- res_cov_ic2K[[1]]
+p2 <- res_cov_ic2K[[2]]
+p3 <- res_cov_ic2K[[3]]
+p4 <- res_cov_ic2K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df2 <- rbind(p1,p2,p3,p4)
+df2$size <- "2000 individuals"
+
+
+p1 <- res_cov_ic5K[[1]]
+p2 <- res_cov_ic5K[[2]]
+p3 <- res_cov_ic5K[[3]]
+p4 <- res_cov_ic5K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df3 <- rbind(p1,p2,p3,p4)
+df3$size <- "5000 individuals"
+
+
+p1 <- res_cov_ic10K[[1]]
+p2 <- res_cov_ic10K[[2]]
+p3 <- res_cov_ic10K[[3]]
+p4 <- res_cov_ic10K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df4 <- rbind(p1,p2,p3,p4)
+df4$size <- "10000 individuals"
+
+df_all <- rbind(df1,df2,df3,df4)
+
+df_all <- df_all %>% 
+  mutate(model = case_when(
+    model == "flexsurv_EO" ~ "0",
+     model == "flexsurv" ~ "a",
+    model == "coxph" ~ "b",
+    model == "msm"  ~ "c",
+    model == "msm_age"  ~ "d",
+    model == "nhm"  ~ "e",
+    model == "imputation" ~ "f",
+    TRUE ~ model  # Keep other values unchanged
+  ))
+
+latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1_mean" = "hat(beta)[1]",
+    "cov2_mean" = "hat(beta)[2]",
+    "cov3_mean" = "hat(beta)[3]"
+  )
+
+df_all<- df_all %>%
+   mutate(
+    size = factor(size, levels = c("500 individuals", "2000 individuals", "5000 individuals","10000 individuals"))
+    )
+
+df_all <- df_all[df_all$scenario=="1 year",]
+
+df_all_long <- df_all %>%
+  gather(key = "parameter", value = "coverage", cov1_mean, cov2_mean, cov3_mean) %>%
+  select(model, transition, parameter, coverage, scenario, size)
+df_all_long$coverage <- df_all_long$coverage*100
+
+plot <- ggplot(data = df_all_long, aes(x = model, y = coverage, color = size)) +
+  geom_point(size = 3, shape = 19) +
+  geom_line(aes(group = size), size = 1, linetype = "dashed", alpha = 0.8) +
+  geom_hline(yintercept = 95, linetype = "dashed", color = "grey50", size = 1) +
+  
+  facet_grid(parameter ~ transition, scales = "free_y",
+             labeller = labeller(parameter = as_labeller(latex_labels, label_parsed),
+                                 transition = as_labeller(latex_labels))) +
+  
+  labs(x = "Model", y = "Coverage (%)", color = "Observation Scheme") +
+  
+  theme_bw() +
+  theme(legend.position = "top",
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        plot.title = element_text(size = 14, hjust = 0.5),
+        strip.text = element_text(size = 12),
+        legend.title = element_text(size = 12, face = "bold"),
+        legend.text = element_text(size = 10),
+        panel.spacing = unit(1, "lines"),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        plot.caption = element_text(hjust = 0, size = 8)) +
+  
+  scale_color_viridis_d(option = "D", begin = 0.2, end = 0.8)
+
+plot
+ ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/plots/coverage_size.pdf", 
+plot, width = 8, height = 6, units = "in", dpi = 300)
+
+```
+
+
+### Type I Error in different models 
+
+Type I error for transition to Dementia and for transition from Dementia to Death 
+
+```{r}
+p1 <- plots_errorI500[[1]]
+p2 <- plots_errorI500[[2]]
+p3 <- plots_errorI500[[3]]
+p4 <- plots_errorI500[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df1 <- rbind(p1,p2,p3,p4)
+df1$size <- "500 individuals"
+
+p1 <- plots_errorI2K[[1]]
+p2 <- plots_errorI2K[[2]]
+p3 <- plots_errorI2K[[3]]
+p4 <- plots_errorI2K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df2 <- rbind(p1,p2,p3,p4)
+df2$size <- "2000 individuals"
+
+p1 <- plots_errorI5K[[1]]
+p2 <- plots_errorI5K[[2]]
+p3 <- plots_errorI5K[[3]]
+p4 <- plots_errorI5K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df3 <- rbind(p1,p2,p3,p4)
+df3$size <- "5000 individuals"
+
+p1 <- plots_errorI10K[[1]]
+p2 <- plots_errorI10K[[2]]
+p3 <- plots_errorI10K[[3]]
+p4 <- plots_errorI10K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df4 <- rbind(p1,p2,p3,p4)
+df4$size <- "10000 individuals"
+
+
+df_all <- rbind(df1,df2,df3,df4)
+
+df_all <- df_all %>% 
+  mutate(model = case_when(
+    model == "flexsurv_EO" ~ "0",
+     model == "flexsurv" ~ "a",
+    model == "coxph" ~ "b",
+    model == "msm"  ~ "c",
+    model == "msm_age"  ~ "d",
+    model == "nhm"  ~ "e",
+    model == "imputation" ~ "f",
+    TRUE ~ model  # Keep other values unchanged
+  ))
+
+latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1" = "hat(beta)[1]",
+    "cov2" = "hat(beta)[2]",
+    "cov3" = "hat(beta)[3]"
+  )
+
+df_all<- df_all %>%
+  mutate(
+    power_category = factor(power_category, levels = c("Low (<5%)", "Moderate (5%-10%)", "High (>10%)"))
+  )
+df_all<- df_all %>%
+  mutate(
+    size = factor(size, levels = c("500 individuals", "2000 individuals", "5000 individuals","10000 individuals"))
+  )
+
+df_trans1 <- df_all[df_all$transition==1,]
+df_trans3 <- df_all[df_all$transition==3,]
+
+plot1 <- ggplot(df_trans1, aes(x = model, y = scenario, fill = power_category)) + 
+  geom_tile(color = "white", width = 0.95, height = 0.95) +
+  scale_fill_viridis_d(option = "D", begin = 0.85, end = 0.2)+
+  
+  facet_wrap(~ size, nrow = 2, ncol = 2, strip.position = "top") + 
+  labs(
+    title = NULL,  # from Dementia-free to Dementia
+    x = "Model",
+    y = "Observation scheme",
+    fill = "Type I Error"
+  ) + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1, color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),  
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    strip.text = element_text(size = 12,  color = "black"), 
+    legend.position = "top",
+    legend.title = element_text(size = 12, face = "bold"),
+    legend.text = element_text(size = 12),
+    legend.key.size = unit(1, "lines"),  
+    plot.margin = margin(20, 10, 20, 10),  
+    panel.grid = element_blank(),  
+    panel.background = element_blank()  
+  )
+
+plot1
+
+plot2 <- ggplot(df_trans3, aes(x = model, y = scenario, fill = power_category)) + 
+  geom_tile(color = "white", width = 0.95, height = 0.95) +
+  scale_fill_viridis_d(option = "D", begin = 0.85, end = 0.2)+
+  
+  facet_wrap(~ size, nrow = 2, ncol = 2, strip.position = "top") + 
+  labs(
+    title = NULL,  # from Dementia-free to Dementia
+    x = "Model",
+    y = "Observation scheme",
+    fill = "Type I Error"
+  ) + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1, color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),  
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    strip.text = element_text(size = 12,  color = "black"),  
+    legend.position = "top",
+    legend.title = element_text(size = 12, face = "bold"),
+    legend.text = element_text(size = 12),
+    legend.key.size = unit(1, "lines"),  
+    plot.margin = margin(20, 10, 20, 10),  
+    panel.grid = element_blank(),  
+    panel.background = element_blank()  
+  )
+
+plot2
+
+ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/plots/errortypeI_Beta1.pdf",  plot1,  width = 8, height = 6, units = "in", dpi = 300)
+ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/plots/errortypeI_Beta2.pdf",  plot2,  width = 8, height = 6, units = "in", dpi = 300)
+
+```
+
+
+### Power of different models
+
+Statistical Power for each transition
+
+```{r}
+p1 <- plots_power500[[1]]
+p2 <- plots_power500[[2]]
+p3 <- plots_power500[[3]]
+p4 <- plots_power500[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df1 <- rbind(p1,p2,p3,p4)
+df1$size <- "500 individuals"
+
+p1 <- plots_power2K[[1]]
+p2 <- plots_power2K[[2]]
+p3 <- plots_power2K[[3]]
+p4 <- plots_power2K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df2 <- rbind(p1,p2,p3,p4)
+df2$size <- "2000 individuals"
+
+p1 <- plots_power5K[[1]]
+p2 <- plots_power5K[[2]]
+p3 <- plots_power5K[[3]]
+p4 <- plots_power5K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df3 <- rbind(p1,p2,p3,p4)
+df3$size <- "5000 individuals"
+
+p1 <- plots_power10K[[1]]
+p2 <- plots_power10K[[2]]
+p3 <- plots_power10K[[3]]
+p4 <- plots_power10K[[4]]
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df4 <- rbind(p1,p2,p3,p4)
+df4$size <- "10000 individuals"
+
+df_all <- rbind(df1,df2,df3,df4)
+
+df_all <- df_all %>% 
+  mutate(model = case_when(
+    model == "flexsurv_EO" ~ "0",
+     model == "flexsurv" ~ "a",
+    model == "coxph" ~ "b",
+    model == "msm"  ~ "c",
+    model == "msm_age"  ~ "d",
+    model == "nhm"  ~ "e",
+    model == "imputation" ~ "f",
+    TRUE ~ model  
+  ))
+
+
+latex_labels <- c(
+    "1" = "Transition 1",
+    "2" = "Transition 2",
+    "3" = "Transition 3",
+    "cov1" = "hat(beta)[1]",
+    "cov2" = "hat(beta)[2]",
+    "cov3" = "hat(beta)[3]"
+  )
+
+df_all<- df_all %>%
+  mutate(
+    power_category = factor(power_category, levels = c("Low (<50%)", "Moderate (50%-80%)", "High (>80%)"))
+  )
+df_all<- df_all %>%
+  mutate(
+    size = factor(size, levels = c("500 individuals", "2000 individuals", "5000 individuals","10000 individuals"))
+  )
+
+df_trans1 <- df_all[df_all$transition==1,]
+df_trans2 <- df_all[df_all$transition==2,]
+df_trans3 <- df_all[df_all$transition==3,]
+
+plot1 <- ggplot(df_trans1, aes(x = model, y = scenario, fill = power_category)) + 
+  geom_tile(color = "white", width = 0.95, height = 0.95) +
+  scale_fill_viridis_d(option = "D", begin = 0.2, end = 0.85)+
+  facet_grid(rows = vars(covariate), cols = vars(size), 
+             labeller = labeller(covariate = as_labeller(latex_labels, label_parsed))) +
+  labs(
+    title = NULL,  
+    x = "Model",
+    y = "Observation scheme",
+    fill = "Power"
+  ) + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1, color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"), 
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    strip.text = element_text(size = 12,  color = "black"),  
+    legend.position = "top",
+    legend.title = element_text(size = 12, face = "bold"),
+    legend.text = element_text(size = 12),
+    legend.key.size = unit(1, "lines"),  
+    plot.margin = margin(20, 10, 20, 10),  
+    panel.grid = element_blank(),  
+    panel.background = element_blank()  
+  )
+
+plot1
+
+ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/plots/powertrans1.pdf",plot1, width = 8, height = 6, units = "in", dpi = 300)
+
+plot2 <- ggplot(df_trans2, aes(x = model, y = scenario, fill = power_category)) + 
+  geom_tile(color = "white", width = 0.95, height = 0.95) +
+  scale_fill_viridis_d(option = "D", begin = 0.2, end = 0.85)+
+  facet_grid(rows = vars(covariate), cols = vars(size), 
+             labeller = labeller(covariate = as_labeller(latex_labels, label_parsed))) +
+  labs(
+    title = NULL,  
+    x = "Model",
+    y = "Observation scheme",
+    fill = "Power"
+  ) + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1, color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),  
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    strip.text = element_text(size = 12,  color = "black"),  
+    legend.position = "top",
+    legend.title = element_text(size = 12, face = "bold"),
+    legend.text = element_text(size = 12),
+    legend.key.size = unit(1, "lines"),  
+    plot.margin = margin(20, 10, 20, 10),  
+    panel.grid = element_blank(),  
+    panel.background = element_blank()  
+  )
+
+plot2
+
+ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/plots/powertrans2.pdf",plot2, width = 8, height = 6, units = "in", dpi = 300)
+
+plot3 <- ggplot(df_trans3, aes(x = model, y = scenario, fill = power_category)) + 
+  geom_tile(color = "white", width = 0.95, height = 0.95) +
+  scale_fill_viridis_d(option = "D", begin = 0.2, end = 0.85)+
+  facet_grid(rows = vars(covariate), cols = vars(size), 
+             labeller = labeller(covariate = as_labeller(latex_labels, label_parsed))) +
+  labs(
+    title = NULL,  
+    x = "Model",
+    y = "Observation scheme",
+    fill = "Power"
+  ) + 
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1, color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),  
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    strip.text = element_text(size = 12,  color = "black"),  
+    legend.position = "top",
+    legend.title = element_text(size = 12, face = "bold"),
+    legend.text = element_text(size = 12),
+    legend.key.size = unit(1, "lines"),  
+    plot.margin = margin(20, 10, 20, 10),  
+    panel.grid = element_blank(),  
+    panel.background = element_blank()  
+  )
+
+plot3
+
+ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/plots/powertrans3.pdf",plot3, width = 8, height = 6, units = "in", dpi = 300)
+
+```
+
+
+### Relative Bias of time spent in each state
+
+```{r}
+p1 <-  res_bias_lfe500[[1]][[1]]
+p2 <-  res_bias_lfe500[[2]][[1]]
+p3 <-  res_bias_lfe500[[3]][[1]]
+p4 <-  res_bias_lfe500[[4]][[1]]
+
+p1$dem <- 0
+p2$dem <- 0
+p3$dem <- 0
+p4$dem <- 0
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df1_nodem <- rbind(p1,p2,p3,p4)
+
+p1 <-  res_bias_lfe500[[1]][[2]]
+p2 <-  res_bias_lfe500[[2]][[2]]
+p3 <-  res_bias_lfe500[[3]][[2]]
+p4 <-  res_bias_lfe500[[4]][[2]]
+
+p1$dem <- 1
+p2$dem <- 1
+p3$dem <- 1
+p4$dem <- 1
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df1_dem <- rbind(p1,p2,p3,p4)
+
+df1 <- rbind(df1_nodem,df1_dem)
+df1$size <- "500 individuals"
+
+p1 <-  res_bias_lfe2K[[1]][[1]]
+p2 <-  res_bias_lfe2K[[2]][[1]]
+p3 <-  res_bias_lfe2K[[3]][[1]]
+p4 <-  res_bias_lfe2K[[4]][[1]]
+
+p1$dem <- 0
+p2$dem <- 0
+p3$dem <- 0
+p4$dem <- 0
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df2_nodem <- rbind(p1,p2,p3,p4)
+
+p1 <-  res_bias_lfe2K[[1]][[2]]
+p2 <-  res_bias_lfe2K[[2]][[2]]
+p3 <-  res_bias_lfe2K[[3]][[2]]
+p4 <-  res_bias_lfe2K[[4]][[2]]
+
+p1$dem <- 1
+p2$dem <- 1
+p3$dem <- 1
+p4$dem <- 1
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df2_dem <- rbind(p1,p2,p3,p4)
+
+df2 <- rbind(df2_nodem,df2_dem)
+df2$size <- "2000 individuals"
+
+p1 <-  res_bias_lfe5K[[1]][[1]]
+p2 <- res_bias_lfe5K[[2]][[1]]
+p3 <- res_bias_lfe5K[[3]][[1]]
+p4 <- res_bias_lfe5K[[4]][[1]]
+
+p1$dem <- 0
+p2$dem <- 0
+p3$dem <- 0
+p4$dem <- 0
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df3_nodem <- rbind(p1,p2,p3,p4)
+
+p1 <- res_bias_lfe5K[[1]][[2]]
+p2 <- res_bias_lfe5K[[2]][[2]]
+p3 <- res_bias_lfe5K[[3]][[2]]
+p4 <- res_bias_lfe5K[[4]][[2]]
+
+p1$dem <- 1
+p2$dem <- 1
+p3$dem <- 1
+p4$dem <- 1
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df3_dem <- rbind(p1,p2,p3,p4)
+
+df3 <- rbind(df3_nodem,df3_dem)
+df3$size <- "5000 individuals"
+
+p1 <-  res_bias_lfe10K[[1]][[1]]
+p2 <- res_bias_lfe10K[[2]][[1]]
+p3 <- res_bias_lfe10K[[3]][[1]]
+p4 <- res_bias_lfe10K[[4]][[1]]
+
+p1$dem <- 0
+p2$dem <- 0
+p3$dem <- 0
+p4$dem <- 0
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df4_nodem <- rbind(p1,p2,p3,p4)
+
+p1 <- res_bias_lfe10K[[1]][[2]]
+p2 <- res_bias_lfe10K[[2]][[2]]
+p3 <- res_bias_lfe10K[[3]][[2]]
+p4 <- res_bias_lfe10K[[4]][[2]]
+
+p1$dem <- 1
+p2$dem <- 1
+p3$dem <- 1
+p4$dem <- 1
+
+p1$scenario <- "1 year"
+p2$scenario <- "3 years "
+p3$scenario <- "3-6 years "
+p4$scenario <- "irregular "
+
+df4_dem <- rbind(p1,p2,p3,p4)
+
+df4 <- rbind(df4_nodem,df4_dem)
+df4$size <- "10000 individuals"
+
+df_all <- rbind(df1,df2,df3,df4)
+df_all$dem <- as.factor(df_all$dem)
+
+df_all<- df_all %>%
+  mutate(
+    size = factor(size, levels = c("500 individuals", "2000 individuals", "5000 individuals","10000 individuals"))
+  )
+
+df_all <- df_all %>% 
+  mutate(model = case_when(
+    model == "flexsurv_EO" ~ "0",
+     model == "flexsurv" ~ "a",
+    model == "coxph" ~ "b",
+    model == "msm"  ~ "c",
+    model == "msm_age"  ~ "d",
+    model == "nhm"  ~ "e",
+    model == "imputation" ~ "f",
+    TRUE ~ model  
+  ))
+
+df_nodem <- df_all[df_all$dem==0,]
+df_dem <- df_all[df_all$dem==1,]
+
+p0 <- ggplot(df_nodem, aes(x = model, y = lfe, color = size)) +
+  scale_colour_viridis_d(begin = 0.2, end=0.8)+
+  geom_point(size = 3) + 
+  geom_line(aes(group = size), size = 1, linetype = "dashed", alpha = 0.8) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +  
+  facet_wrap(~ scenario, ncol = 2) +  
+  theme_minimal() +  
+  theme(
+    strip.text = element_text( size = 12), 
+    axis.text = element_text(size = 10),  
+    legend.title = element_text(size = 12, face = "bold"),  
+    legend.text = element_text(size = 10),
+    legend.position = "top"
+  ) +
+  labs(title = NULL, 
+       x = "Model", 
+       y = "Relative Bias(%)", 
+       color = "Sample Size")
+
+p0
+ ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/plots/T0.pdf", p0, 
+       width = 8, height = 6, units = "in", dpi = 300)
+ 
+p1 <- ggplot(df_dem, aes(x = model, y = lfe, color = size)) +
+  scale_colour_viridis_d(begin = 0.2, end=0.8)+
+  geom_point(size = 3) + 
+  geom_line(aes(group = size), size = 1, linetype = "dashed", alpha = 0.8) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +  
+  facet_wrap(~ scenario, ncol = 2) +  
+  theme_minimal() +  
+  theme(
+    strip.text = element_text( size = 12), 
+    axis.text = element_text(size = 10),  
+    legend.title = element_text(size = 12, face = "bold"),  
+    legend.text = element_text(size = 10),
+    legend.position = "top"
+  ) +
+  labs(title = NULL, 
+       x = "Model", 
+       y = "Relative Bias(%)", 
+       color = "Sample Size")
+
+p1
+ ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/plots/T1.pdf", p1, 
+       width = 8, height = 6, units = "in", dpi = 300)
+
+```
+
+
+### Convergence of different models
+
+```{r}
+convergence500 <- rbind(combined_cov500[[1]],combined_cov500[[2]],combined_cov500[[3]],combined_cov500[[4]])
+convergence500$size <- "500 individuals"
+convergence500$scenario <- rep(2:5,each=100)
+
+convergence2K <- rbind(combined_cov2K[[1]],combined_cov2K[[2]],combined_cov2K[[3]],combined_cov2K[[4]])
+convergence2K$size <- "2000 individuals"
+convergence2K$scenario <- rep(2:5,each=100)
+
+convergence5K <- rbind(combined_cov5K[[1]],combined_cov5K[[2]],combined_cov5K[[3]],combined_cov5K[[4]])
+convergence5K$size <- "5000 individuals"
+convergence5K$scenario <- rep(2:5,each=100)
+
+convergence10K <- rbind(combined_cov10K[[1]],combined_cov10K[[2]],combined_cov10K[[3]],combined_cov10K[[4]])
+convergence10K$size <- "10000 individuals"
+convergence10K$scenario <- rep(2:5,each=100)
+
+tot_convergence <- rbind(convergence500,convergence2K,convergence5K,convergence10K)
+
+tot_convergence<- tot_convergence %>%
+  mutate(
+    size = factor(size, levels = c("500 individuals", "2000 individuals", "5000 individuals","10000 individuals"))
+  )
+
+tot_convergence <- tot_convergence %>%
+  mutate(a=coxph, b=flexsurv, c=msm, d=msm_age, e=nhm, f=imputation, coxph=NULL, flexsurv=NULL, msm=NULL, msm_age=NULL, nhm=NULL, imputation=NULL)
+
+conv_long <- tot_convergence %>%
+  pivot_longer(cols = c("a","b","c","d","e","f"),
+               names_to = "model",
+               values_to = "convergence")
+
+conv_summary <- conv_long %>%
+  group_by(size, model, convergence, scenario) %>%
+  summarise(count = n(), .groups = "drop")%>%
+  group_by(size, model, scenario) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+conv_table <- conv_summary %>%
+  select(scenario, size, model, convergence, percentage) %>%
+  pivot_wider(names_from = convergence, values_from = percentage, values_fill = 0) %>%
+  rename( "suboptimal" = "1", "Convergence" = "2")
+
+conv_table <- conv_table %>%
+  mutate(
+     scenario = case_when(
+        scenario == "2" ~ "1 year",
+        scenario == "3" ~ "3 years",
+        scenario == "4" ~ "3-6 years",
+        scenario == "5" ~ "irregular",
+        )) 
+ 
+
+plot <- ggplot(conv_table, aes(x = model, y = scenario, fill = Convergence)) +
+  geom_tile(color = "white") +
+  facet_wrap(~size) +
+  scale_fill_viridis_c(option = "D", begin = 0.1, end = 0.9, name = "Percentage (%)")+
+  labs(
+    title = NULL,
+    x = "Model",
+    y = "Observation Scheme"
+  ) +
+  theme_minimal()+
+   theme(
+    plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
+    legend.position = "top")
+
+ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/plots/convergence.pdf", plot,
+       width = 8, height = 6, units = "in", dpi = 300)
+```
+
+### Averaged computational time for different models
+
+```{r}
+
+computational_time500 <- rbind(ct_all_schemes500[[1]], ct_all_schemes500[[2]], ct_all_schemes500[[3]], ct_all_schemes500[[4]])
+computational_time500 <- as.data.frame(computational_time500)
+computational_time500$scheme <- rep(2:5, each=100)
+mean_ct500 <- computational_time500 %>%
+  group_by(scheme)%>%
+  summarise(across(everything(), mean, na.rm = TRUE))
+
+computational_time2K <- rbind(ct_all_schemes2K[[1]], ct_all_schemes2K[[2]], ct_all_schemes2K[[3]], ct_all_schemes2K[[4]])
+computational_time2K <- as.data.frame(computational_time2K)
+computational_time2K$scheme <- rep(2:5, each=100)
+mean_ct2K <- computational_time2K %>%
+  group_by(scheme)%>%
+  summarise(across(everything(), mean, na.rm = TRUE))
+
+computational_time5K <- rbind(ct_all_schemes5K[[1]], ct_all_schemes5K[[2]], ct_all_schemes5K[[3]], ct_all_schemes5K[[4]])
+computational_time5K <- as.data.frame(computational_time5K)
+computational_time5K$scheme <- rep(2:5, each=100)
+mean_ct5K <- computational_time5K %>%
+  group_by(scheme)%>%
+  summarise(across(everything(), mean, na.rm = TRUE))
+
+computational_time10K <- rbind(ct_all_schemes10K[[1]], ct_all_schemes10K[[2]], ct_all_schemes10K[[3]], ct_all_schemes10K[[4]])
+computational_time10K <- as.data.frame(computational_time10K)
+computational_time10K$scheme <- rep(2:5, each=100)
+mean_ct10K <- computational_time10K %>%
+  group_by(scheme)%>%
+  summarise(across(everything(), mean, na.rm = TRUE))
+
+
+
+t1 <- mean_ct500
+t2 <- mean_ct2K
+t3 <- mean_ct5K
+t4 <- mean_ct10K
+
+mean_ct_all <- rbind(t1,t2,t3,t4)
+mean_ct_all$size <- rep(1:4, each=4)
+
+colnames(mean_ct_all) <- c("scheme","a","b","c","d","e","f", "size")
+mean_ct_all <- mean_ct_all%>%
+  mutate(
+    scheme = case_when(
+      scheme == "2" ~ "1 year",
+      scheme == "3" ~ "3 years",
+      scheme == "4" ~ "3-6 years",
+      scheme == "5" ~ "irregular",
+      ))
+
+mean_ct_all <- mean_ct_all%>%
+  pivot_longer(cols=c("a","b","c","d","e","f"),
+               names_to = "model",
+               values_to = "time")
+
+plot <- ggplot(mean_ct_all, aes(x = factor(size, labels = c("500", "2000", "5000", "10000")), 
+                        y = time, color = model, group = model)) +
+  geom_line(size = 1.2, alpha = 0.7) +
+  geom_point(size = 3, alpha = 0.7)+
+
+  facet_wrap(~ scheme, ncol = 2, scales = "fixed") + 
+  scale_color_viridis_d() +
+  labs(
+    title = NULL,
+    x = "Sample Size",
+    y = "Time (s)",
+    color = "Model"
+  ) +
+  theme_minimal(base_size = 14) + 
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  
+  
+    axis.title = element_text(size = 14), 
+    axis.text = element_text(size = 10),  
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    legend.position = "top", 
+    legend.title = element_text(size = 12, face = "bold"),  
+    legend.text = element_text(size = 10),  
+    panel.grid.major = element_line(color = "gray80", linewidth = 0.5),  
+    panel.grid.minor = element_blank()  
+  )
+
+ggsave("/Users/AlessandraPescina/OneDrive - Politecnico di Milano/ANNO 5/secondo semestre/TESI/Tesi/Tesi-KI/wrapper_MM/plots/comp_time.pdf", plot,
+       width = 8, height = 6, units = "in", dpi = 300)
+```
+

@@ -65,7 +65,7 @@ check_convergence <- function(n_pats, scheme, seed) {
   
   models_imp <- results_imp[[2]]
   
-  convergence_results <- tibble( # value to zero no convergence of the algorithm (1 in msm mean reached maxiter)
+  convergence_results <- tibble( # value to zero no convergence of the algorithm 
     converged_coxph = 1,
     converged_flexsurv = 1,
     converged_nhm = 1,
@@ -116,7 +116,7 @@ check_convergence <- function(n_pats, scheme, seed) {
   
 
 
-  if (det(model_cox$var < 1e-7)) {
+  if (det(model_cox$var < 1e-7)) { # hessian always computable but we set a threshold to check when it is bad conditioned
     hessian_results$hessian_coxph <- 0
   }
   
@@ -151,20 +151,12 @@ check_convergence <- function(n_pats, scheme, seed) {
 }
 
 
-# what are we checking here?
-# if the model nhm has been computed
-# -> if not it means that the transition probability matrix is singular for some intervals of time
-# By default nhm finds the transition probabilities by solving a single initial value problem for each unique covariate pattern. 
-# Specifically solves a single system of differential equations starting from 0 to obtain P(0,t) for each t, then uses it to   
-# find P(t0,t)=P(0,t0)^-1*P(0,t) for t0>0 
-# The method relies on the fact that P(0,t0) is invertible, if the algorithm fails because of the presence of a 
-# singular matrix a message error is raised. This problem can be solved by split option in control.
-# If a split s is given, P(t0,t) will be find by solving the system of equations for P(t*,t) where t0>t* 
-# and t* closest to the s  (that apparently is not always working for me also in those cases I had a warning form 
-# LSODA asking for increasing step size )
-
-# if the covariance matrix of the estimated parameter has been computed for msm model and msm_age model
-# -> if not we won't compute the confidence intervals. The cov matrix = H^-1 so it is NULL when the Hessian is not definite positive.
-# This means that actually the global maximum of the likelihood has not been reached but if optmim reports that convergence is 
-# reached it means that the criteria imposed has been satisfied so parameters were not improving anymore. We could try to select
-# other criteria or intial values or other method for algorithm...
+# Checking model convergence :
+# - For nhm: If not reached, it indicates a singular transition probability matrix for some time intervals.
+#   nhm estimates transition probabilities by solving differential equations from 0 to t.
+#   If P(0,t0) is not invertible, an error occurs. The 'split' option can help but may not always work (LSODA warnings).
+#
+# - For msm and msm_age: If the covariance matrix of estimated parameters is NULL, confidence intervals won't be computed.
+#   This happens when the Hessian is not positive definite, meaning the likelihood’s global maximum was not reached.
+#   If optim reports convergence, it met stopping criteria, but parameters may still be improvable.
+#   Alternative criteria, initial values, or optimization methods could be explored.

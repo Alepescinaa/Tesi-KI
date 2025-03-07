@@ -78,8 +78,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
                        "msm_model.RData", 
                        "model_msm_age.RData", 
                        "model_nhm.RData", 
-                       "results_imp.RData", 
-                       "computational_time.RData")
+                       "results_imp.RData")
     for (file in files_to_load) {
       if (file.exists(file)) {
         load(file)
@@ -114,10 +113,11 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
   
   bias_EO <- compute_bias(params_EO, ground_truth_params)
   
- #
- #  # =========
- #  # coxph
- #  # =========
+ 
+  # =========
+  # coxph
+  # =========
+  
   if (convergence$coxph[seed] == 2) {
     param_names <- c("cov1", "cov2", "cov3")
     params_coxph <- matrix(model_cox$coefficients, 3, 3, byrow = TRUE)
@@ -134,9 +134,10 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     rownames(bias_coxph) <- rownames(ground_truth_params)
   }
   
- #  # ============
- #  # flexsurv
- #  # ============
+  # ============
+  # flexsurv
+  # ============
+  
   if (convergence$flexsurv[seed] == 2) {
     params_flexsurv <- matrix(0, nrow = 3, ncol = 5)
     param_names <- names(fits_gompertz[[1]]$coefficients)
@@ -161,9 +162,9 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
   }
   gc()
   
- #  # ============
- #  # msm
- #  # ============
+   # ============
+   # msm
+   # ============
 
    if (convergence$msm[seed]==2){
      params_msm <- matrix(model.msm$estimates[4:12], nrow = 3, ncol = 3) #1:3 rate
@@ -177,10 +178,11 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
      bias_msm <- matrix(NA, nrow = 3, ncol = ncol(ground_truth_params))
      colnames(bias_msm) <- colnames(ground_truth_params)
      rownames(bias_msm) <- rownames(ground_truth_params)
-  }
- #  # ============
- #  # msm + age
- #  # ============
+   }
+  
+  # ============
+  # msm + age
+  # ============
 
   if (convergence$msm_age[seed]==2){
     params_msm_age <- matrix(model.msm_age$estimates[4:12], nrow = 3, ncol = 3) #1:3 rate 12:15 age
@@ -189,7 +191,6 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
 
     min_age <- min(model.msm_age$data[[1]]$age)
     max_age <- max(model.msm_age$data[[1]]$age)
-    #mean_age <- mean(model.msm_age$data[[1]]$age)
     covs <- colMeans(model.msm_age$data[[1]][,1:3])
     haz <- hazards_mine(model.msm_age, b.covariates = list(age = min_age , cov1 = covs[1], cov2 = covs[2], cov3 = covs[3]), no.years = max_age-min_age, CI = F)
     
@@ -198,6 +199,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
     # h(t)=rate*exp(shape*t)
     # log(h(t))= log(rate) + shape*t
     # can be seen as y(t)= a+b*t
+    
     shape <- numeric()
     rate <- numeric()
 
@@ -220,6 +222,7 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
   }
 
   gc()
+  
   # ============
   # nhm
   # ============
@@ -239,10 +242,10 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
   }
 
   gc()
- #  #
- #  # ============
- #  # imputation
- #  # ============
+  
+  # ============
+  # imputation
+  # ============
 
   if (convergence$imputation[seed]==2){
     params_imp <- results_imp[[1]]
@@ -258,7 +261,10 @@ run_performance_bias <- function(n_pats, scheme, seed, convergence){
 
   }
 
-
+  # =========
+  # wrapper 
+  # =========
+  
   bias_tot <- rbind(
     cbind(bias_EO, model = "flexsurv_EO", seed=seed, transition = c(1,2,3)),
     cbind(bias_coxph, model = "coxph", seed = seed, transition = c(1,2,3)),
