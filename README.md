@@ -103,4 +103,4 @@ To execute the pipeline:
 
 ## Contact
 
-For questions or issues, contact: [alessandra.pescina\@gmail.com](mailto:alessandra.pescina@gmail.com){.email}
+For questions or issues, contact: alessandra.pescina\@gmail.com
