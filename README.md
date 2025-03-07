@@ -25,19 +25,19 @@ The code is organized into the following main scripts:
 
 -   `0.MM_Simulation_exe.R`: Simulates data under the Markovian assumption.
 -   `0.SM_Simulation_exe.R`: Simulates data under the Semi-Markovian assumption.
--   Both scripts load simulation functions, set parameters, and generate datasets of different sizes (500, 2K, 5K, 10K patients), saving them in the `Simulated_data_MM` or `Simulated_data_SM` folder.
+-   Both scripts load simulation functions, ground truth parameters, and generate datasets of different sizes (500, 2K, 5K, 10K patients), saving them in the `Simulated_data_MM` or `Simulated_data_SM` folder.
 
 ### **Model Fitting**
 
 -   `1.MM_fit_exe.R`: Fits various multi-state models to Markovian simulated data.
 -   `1.SM_fit_exe.R`: Fits various multi-state models to Semi-Markovian simulated data.
--   Uses specific functions for data preparation and model fitting, saving the results in the `wrapper_MM` or `wrapper_SM` folder according to the Markovian or Semi-Markovian simulation assumption. Inside this folder, the results are saved in different subfolders categorized by sample size (`results_size`), which further contain results nested by observation scheme and seed.
+-   Uses specific functions for data preparation and model fitting, saving the results in the `wrapper_MM` or `wrapper_SM` folder according to the Markovian or Semi-Markovian simulation assumption. Inside this folder, the results are saved in different subfolders categorized by sample size (`results_"size"`), which further contain results nested by observation scheme and seed.
 
 ### **Performance Evaluation**
 
 -   `2.MM_fit_exe.R`: Computes performance metrics for multi-state models fitted to Markovian simulated data.
 -   `2.SM_fit_exe.R`: Computes performance metrics for multi-state models fitted to Semi-Markovian simulated data.
--   Uses specific functions for performance evaluation, saving the results in the `wrapper_MM` or `wrapper_SM` folder. The results are stored in different folders categorized by sample size (`saved_performance_size`), further divided by observation scheme and seed.
+-   Uses specific functions for performance evaluation, saving the results in the `wrapper_MM` or `wrapper_SM` folder. The results are stored in different folders categorized by sample size (`saved_performance_"size"`), further divided by observation scheme and seed.
 
 The following files store different performance measures for all models analyzed and the benchmark model:
 
@@ -65,8 +65,8 @@ The following files store different performance measures for all models analyzed
 
 ### **Results Visualization**
 
--   `3.MM_plots.R`: Markdown report to visualize key results for different models compared across observation schemes and sample sizes.
--   `3.SM_plots.R`: Markdown report to visualize key results for different models compared across observation schemes and sample sizes.
+-   `3.MM_plots.R`: Markdown report to visualize key results for different models compared across observation schemes and sample sizes from data generaed under Markov assumption.
+-   `3.SM_plots.R`: Markdown report to visualize key results for different models compared across observation schemes and sample sizes from data generaed under Semi-Markov assumption.
 
 ------------------------------------------------------------------------
 
@@ -91,8 +91,8 @@ To execute the pipeline:
 3.  **Performance Evaluation and Visualization**: The process must be repeated for each sample size (500, 2K, 5K, 10K) and set manually by the user:
 
     ``` r
-    source("1.MM_performance_exe.R")
-    source("1.SM_performance_exe.R")
+    source("2.MM_performance_exe.R")
+    source("2.SM_performance_exe.R")
     ```
 
 ------------------------------------------------------------------------
